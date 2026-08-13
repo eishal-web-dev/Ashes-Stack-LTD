@@ -1,0 +1,1 @@
+export default function Brand(){return <a className="brand" href="#top" aria-label="Ashes home"><svg viewBox="0 0 56 34" aria-hidden="true"><path d="M4 30 18 4l8 15L34 4l18 26H40l-7-12-7 12-8-13-6 13Z"/><path className="brand-cut" d="M18 21c8-8 17-6 23-16-1 11-8 17-19 18Z"/></svg><span>ASHES</span></a>}

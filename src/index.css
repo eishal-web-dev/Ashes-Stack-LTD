@@ -43,8 +43,8 @@ section{content-visibility:auto;contain-intrinsic-size:800px}section.hero{conten
 .hero-left>a{margin-top:22px}
 .scroll-cue{position:absolute;z-index:8;bottom:3.5vh;left:50%;transform:translateX(-50%);margin:0}
 .signal-network{position:absolute;z-index:4;inset:0;width:100%;height:100%;pointer-events:none}
-.energy-aura{position:absolute;z-index:2;left:50%;top:44%;width:62vw;height:55vh;transform:translate(-50%,-50%);pointer-events:none;background:radial-gradient(ellipse at 15% 42%,#66ebf21d,transparent 28%),radial-gradient(ellipse at 85% 42%,#ff62c71d,transparent 28%),radial-gradient(ellipse at 50% 82%,#ad77ff1f,transparent 25%);filter:blur(20px);mix-blend-mode:screen}
-.hero:hover .energy-aura{filter:blur(16px) brightness(1.35)}
+.energy-aura{position:absolute;z-index:2;left:50%;top:44%;width:62vw;height:55vh;transform:translate(-50%,-50%);pointer-events:none;background:radial-gradient(ellipse at 15% 42%,#66ebf218,transparent 28%),radial-gradient(ellipse at 85% 42%,#ff62c718,transparent 28%),radial-gradient(ellipse at 50% 82%,#ad77ff1a,transparent 25%);opacity:.9;transition:opacity .25s}
+.hero:hover .energy-aura{opacity:1}
 .signal{position:absolute;width:1px;height:1px;transform:translate(var(--x),var(--y));animation:signal-out 7s cubic-bezier(.3,.7,.2,1) var(--delay) infinite}
 .signal i{position:absolute;width:5px;height:5px;left:-2px;top:-2px;border-radius:50%;background:var(--signal);box-shadow:0 0 12px var(--signal),0 0 28px var(--signal)}
 .signal span{position:absolute;width:clamp(70px,12vw,190px);height:1px;right:0;top:0;background:linear-gradient(90deg,transparent,var(--signal));opacity:.3;transform-origin:right;transform:rotate(calc(var(--x) * .035))}

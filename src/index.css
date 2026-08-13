@@ -32,3 +32,43 @@ body{font-family:"Courier New",ui-monospace,SFMono-Regular,Menlo,monospace}
 .cta>div:last-child{max-width:900px}.cta .kicker{margin-bottom:24px}.cta a{display:inline-flex;align-items:center;gap:12px;border:1px solid #777;border-radius:999px;padding:13px 18px;font-size:.58rem;transition:.2s}.cta a:hover{background:var(--acid);border-color:var(--acid);color:#080909;transform:translateY(-2px)}
 section{content-visibility:auto;contain-intrinsic-size:800px}section.hero{content-visibility:visible}
 @media(max-width:800px){.nav{left:12px;right:12px}.hero{min-height:680px}.scroll-cue{display:inline-flex!important}.power-grid{grid-template-columns:1fr}.power-card,.power-card:nth-child(even){height:64vh;min-height:500px}.work-stage{min-height:0}.work-cards{top:auto;grid-template-columns:1fr}.work-cards article{height:46vh}.philosophy{min-height:760px}.principles{margin-top:12vh;gap:22px}.process-grid{width:88%;gap:12vh 6vw}.about{height:auto;min-height:680px;grid-template-columns:1fr;align-content:center}.about ul{border-left:0;border-top:1px solid #4e4b47;padding:22px 0}.cta{height:auto;min-height:600px;padding:70px 6vw}.cta-energy{width:80vw;right:-32vw;opacity:.42}.cta h2{font-size:12vw}}
+
+/* Art direction v2 */
+:root{--paper:#d8d5ce;--muted:#8c8982}
+.hero-phoenix{animation:none!important;transform:translateX(-50%)!important}
+.hero-copy h1{font-family:var(--display);font-weight:800;line-height:.78;letter-spacing:-.075em;color:var(--paper)}
+.hero-left{left:4vw;top:30%}.hero-right{right:4vw;top:30%;text-align:right}
+.hero-index{margin:0 0 18px!important;color:#777!important;font:500 .5rem/1 "Courier New",monospace!important;letter-spacing:.18em}
+.hero-intro{margin:23px 0 0!important;color:#aaa7a0!important;font:400 .68rem/1.65 "Courier New",monospace!important}
+.hero-left>a{margin-top:22px}
+.scroll-cue{position:absolute;z-index:8;bottom:3.5vh;left:50%;transform:translateX(-50%);margin:0}
+.signal-network{position:absolute;z-index:4;left:50%;top:45%;width:1px;height:1px;pointer-events:none}
+.signal{position:absolute;width:1px;height:1px;transform:translate(var(--x),var(--y));animation:signal-out 7s cubic-bezier(.3,.7,.2,1) var(--delay) infinite}
+.signal i{position:absolute;width:5px;height:5px;left:-2px;top:-2px;border-radius:50%;background:var(--signal);box-shadow:0 0 12px var(--signal),0 0 28px var(--signal)}
+.signal span{position:absolute;width:clamp(70px,12vw,190px);height:1px;right:0;top:0;background:linear-gradient(90deg,transparent,var(--signal));opacity:.3;transform-origin:right;transform:rotate(calc(var(--x) * .035))}
+.signal b{position:absolute;width:36px;height:36px;left:-18px;top:-18px;border:1px solid color-mix(in srgb,var(--signal) 40%,transparent);border-radius:50%;animation:pulse-ring 2.8s ease-out infinite}
+@keyframes signal-out{0%{translate:0 0;opacity:0}12%{opacity:1}75%{opacity:.85}100%{translate:calc(var(--x) * 1.45) calc(var(--y) * 1.45);opacity:0}}
+@keyframes pulse-ring{0%{scale:.2;opacity:0}22%{opacity:.8}100%{scale:1.8;opacity:0}}
+.capabilities,.work,.philosophy,.process,.about{padding-left:4vw;padding-right:4vw}
+.capabilities>.reveal,.work>.reveal,.philosophy>.reveal,.process>.reveal,.about>.reveal{max-width:1440px;margin-inline:auto}
+.kicker{font-weight:700;letter-spacing:.2em;color:#777}
+.capabilities h2,.title-row h2,.philosophy h2,.about h2{font-family:var(--display);font-weight:800;letter-spacing:-.065em;color:var(--paper)}
+.capabilities h2 span,.title-row h2 span{color:#85817b}
+.section-lede{max-width:520px;margin-top:24px;color:#8d8a84;font:.72rem/1.75 "Courier New",monospace}
+.hint{margin-top:28px}
+.power-grid{max-width:1440px;margin:7vh auto 0;gap:16px}
+.power-card h3{font-weight:700;letter-spacing:-.04em}.power-card>p{font-family:"Courier New",monospace;font-size:.66rem;line-height:1.65;color:#aaa}
+.title-row{max-width:1440px;margin-inline:auto}.title-row h2{font-size:clamp(2.8rem,5vw,6.6rem);line-height:.9}.title-row>p{color:#777;letter-spacing:.16em}
+.work-cards{max-width:1200px;margin-inline:auto}.work-cards span{font-family:"Courier New",monospace;font-weight:600;letter-spacing:.06em}
+.philosophy h2{max-width:1250px}.principles{left:4vw}
+.about h2{font-size:clamp(2.5rem,4.5vw,6rem);line-height:.92}
+@media(max-width:800px){
+ .hero-phoenix{width:145vw;height:57vh;top:18%}.hero-left{top:17%;left:5vw}.hero-right{top:60%;right:5vw}.hero-copy h1{font-size:16vw}.hero-index{display:none}
+ .hero-intro{display:none!important}.hero-left>a{display:none!important}.scroll-cue{bottom:3vh;white-space:nowrap}
+ .signal-network{top:44%}.signal span{width:80px}.signal:nth-child(n+9){display:none}
+ .capabilities,.work,.philosophy,.process,.about{padding-left:5vw;padding-right:5vw}
+ .capabilities h2,.title-row h2{font-size:12vw}.section-lede{font-size:.68rem}
+ .power-card h3{font-size:1.8rem}.power-card>p{font-size:.72rem}
+ .title-row{align-items:start;flex-direction:column}.title-row>p{margin-top:16px}
+}
+@media(prefers-reduced-motion:reduce){.signal{animation:none}.signal b{animation:none}}

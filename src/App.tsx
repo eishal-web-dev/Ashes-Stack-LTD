@@ -9,26 +9,34 @@ const powers=[
   {number:'04',title:'IMMERSIVE\n3D',copy:'Cinematic experiences that move people and brands.',icon:Box,accent:'#ff54c8',mode:'vr'}
 ];
 
+const signals=[
+  [-34,-19,'#66ebf2',1.1],[-25,-30,'#ff62c7',2.4],[-14,-23,'#d8ff62',.3],[-5,-32,'#ff875c',3.1],
+  [9,-29,'#ad77ff',1.8],[19,-24,'#66ebf2',.7],[30,-17,'#ff62c7',2.8],[36,-5,'#d8ff62',1.5],
+  [33,12,'#ff875c',.1],[24,23,'#ad77ff',2.1],[12,30,'#66ebf2',1.2],[-10,29,'#ff62c7',3.4],
+  [-23,23,'#d8ff62',.9],[-35,10,'#ff875c',2.6]
+] as const;
+
 function Reveal({children,className=''}:{children:React.ReactNode,className?:string}){const ref=useRef<HTMLDivElement>(null);useEffect(()=>{const el=ref.current;if(!el)return;const io=new IntersectionObserver(([entry])=>{if(entry.isIntersecting)el.classList.add('shown')},{threshold:.12});io.observe(el);return()=>io.disconnect()},[]);return <div ref={ref} className={`reveal ${className}`}>{children}</div>}
 function Phoenix({className='',variant='plain',priority=false}:{className?:string,variant?:string,priority?:boolean}){return <div className={`phoenix ${className} phoenix-${variant}`}><img src="/ashes-phoenix-hero.webp" alt="Ashes phoenix" draggable={false} loading={priority?'eager':'lazy'} decoding="async" fetchPriority={priority?'high':'auto'}/></div>}
 function PowerPhoenix({mode}:{mode:string}){return <img className="power-phoenix" src={`/powers/${mode}.webp`} alt={`${mode} phoenix`} loading="lazy" decoding="async"/>}
+function SignalNetwork(){return <div className="signal-network" aria-hidden="true">{signals.map(([x,y,color,delay],i)=><div className="signal" key={i} style={{'--x':`${x}vw`,'--y':`${y}vh`,'--signal':color,'--delay':`-${delay}s`} as React.CSSProperties}><i/><span/><b/></div>)}</div>}
 
 export default function App(){const [power,setPower]=useState(0);return <>
   <div className="grain"/><Nav/>
   <main>
-    <section id="top" className="hero"><div className="ash-field" aria-hidden="true">{Array.from({length:28},(_,i)=><i key={i}/>)}</div><div className="radar radar-a"/><div className="radar radar-b"/><Phoenix className="hero-phoenix" priority/><div className="hero-energy"/>
-      <div className="hero-copy hero-left"><h1>WE<br/>BUILD</h1><p>Design-led software.<br/>Engineered beyond the ordinary.</p><a href="#capabilities">ENTER THE EXPERIENCE <ArrowDownRight/></a></div>
-      <div className="hero-copy hero-right"><h1>WHAT<br/>RISES<br/>NEXT.</h1></div>
+    <section id="top" className="hero"><div className="radar radar-a"/><div className="radar radar-b"/><SignalNetwork/><Phoenix className="hero-phoenix" priority/><div className="hero-energy"/>
+      <div className="hero-copy hero-left"><p className="hero-index">01 / DESIGN-LED SOFTWARE</p><h1>WE<br/>BUILD</h1><p className="hero-intro">Digital products engineered<br/>to move people and business.</p><a href="#capabilities">EXPLORE ASHES <ArrowDownRight/></a></div>
+      <div className="hero-copy hero-right"><p className="hero-index">ISLAMABAD · EVERYWHERE</p><h1>WHAT<br/>RISES<br/>NEXT.</h1></div>
       <div className="orbit-label orbit-ai"><i/>AI</div><div className="orbit-label orbit-web"><i/>WEB</div><div className="orbit-label orbit-apps"><i/>APPS</div><div className="orbit-label orbit-3d"><i/>3D</div>
       <a className="scroll-cue" href="#capabilities">SCROLL TO EXPLORE <ArrowDownRight/></a>
     </section>
 
-    <section id="capabilities" className="capabilities"><Reveal><p className="kicker">CAPABILITIES.</p><h2>PICK A WORLD.<br/>WATCH ME TRANSFORM.</h2><p className="hint"><span>◉</span> HOVER — I CHANGE PERSONALITY</p></Reveal>
+    <section id="capabilities" className="capabilities"><Reveal><p className="kicker">02 / CAPABILITIES</p><h2>ONE STUDIO.<br/><span>FOUR WAYS TO BUILD.</span></h2><p className="section-lede">Strategy, design and engineering—connected from first thought to final release.</p><p className="hint"><span>◉</span> HOVER TO ENTER EACH WORLD</p></Reveal>
       <div className="power-grid">{powers.map((p,i)=>{const Icon=p.icon;return <article key={p.mode} className={`power-card ${power===i?'active':''}`} style={{'--accent':p.accent} as React.CSSProperties} onMouseEnter={()=>setPower(i)}>
         <span className="power-no">{p.number}</span><Icon className="power-icon"/><h3>{p.title.split('\n').map(x=><span key={x}>{x}</span>)}</h3><p>{p.copy}</p><div className="power-scene"><PowerPhoenix mode={p.mode}/><div className="power-device">{p.mode==='ai'?<><span>&gt; PROMPT</span><span>&gt; SOLVE</span><span>&gt; THINK</span></>:p.mode==='web'?<><b>{'{ CODE }'}</b><em>SHIP IT</em></>:p.mode==='mobile'?<div className="phone"><i/><i/><i/></div>:<div className="visor"/>}</div></div><ArrowUpRight className="card-arrow"/></article>})}</div>
     </section>
 
-    <section id="work" className="work"><Reveal><p className="kicker">SELECTED WORK.</p><div className="title-row"><h2>STUFF WE’VE<br/>BROUGHT TO LIFE.</h2><p>MOVE TO EXPLORE</p></div></Reveal><div className="work-stage"><div className="work-cards">
+    <section id="work" className="work"><Reveal><p className="kicker">03 / SELECTED WORK</p><div className="title-row"><h2>BUILT TO WORK.<br/><span>MADE TO BE REMEMBERED.</span></h2><p>THREE PRODUCTS · ONE STANDARD</p></div></Reveal><div className="work-stage"><div className="work-cards">
       <article><span>ASHES AI —<br/>ONE IMAGE.<br/>REAL 3D.</span><div className="face-mesh">A</div><b>SPIN IT</b></article>
       <article><span>NAZAR AI —<br/>COMPUTER VISION<br/>FOR THE PHYSICAL WORLD.</span><div className="network-eye"><i/></div><b>IT SAW THAT</b></article>
       <article><span>WAKULAW —<br/>PAKISTAN'S LEGAL<br/>INTELLIGENCE.</span><div className="law-ui">§<small>ASK · ANALYZE · ACT</small></div><b>ASK THE LAW</b></article>

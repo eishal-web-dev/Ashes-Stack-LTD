@@ -9,17 +9,16 @@ const powers=[
   {number:'04',title:'IMMERSIVE\n3D',copy:'Cinematic experiences that move people and brands.',icon:Box,accent:'#ff54c8',mode:'vr'}
 ];
 
-const signals=[
-  [-34,-19,'#66ebf2',1.1],[-25,-30,'#ff62c7',2.4],[-14,-23,'#d8ff62',.3],[-5,-32,'#ff875c',3.1],
-  [9,-29,'#ad77ff',1.8],[19,-24,'#66ebf2',.7],[30,-17,'#ff62c7',2.8],[36,-5,'#d8ff62',1.5],
-  [33,12,'#ff875c',.1],[24,23,'#ad77ff',2.1],[12,30,'#66ebf2',1.2],[-10,29,'#ff62c7',3.4],
-  [-23,23,'#d8ff62',.9],[-35,10,'#ff875c',2.6]
-] as const;
-
 function Reveal({children,className=''}:{children:React.ReactNode,className?:string}){const ref=useRef<HTMLDivElement>(null);useEffect(()=>{const el=ref.current;if(!el)return;const io=new IntersectionObserver(([entry])=>{if(entry.isIntersecting)el.classList.add('shown')},{threshold:.12});io.observe(el);return()=>io.disconnect()},[]);return <div ref={ref} className={`reveal ${className}`}>{children}</div>}
 function Phoenix({className='',variant='plain',priority=false}:{className?:string,variant?:string,priority?:boolean}){return <div className={`phoenix ${className} phoenix-${variant}`}><img src="/ashes-phoenix-hero.webp" alt="Ashes phoenix" draggable={false} loading={priority?'eager':'lazy'} decoding="async" fetchPriority={priority?'high':'auto'}/></div>}
 function PowerPhoenix({mode}:{mode:string}){return <img className="power-phoenix" src={`/powers/${mode}.webp`} alt={`${mode} phoenix`} loading="lazy" decoding="async"/>}
-function SignalNetwork(){return <div className="signal-network" aria-hidden="true">{signals.map(([x,y,color,delay],i)=><div className="signal" key={i} style={{'--x':`${x}vw`,'--y':`${y}vh`,'--signal':color,'--delay':`-${delay}s`} as React.CSSProperties}><i/><span/><b/></div>)}</div>}
+function SignalNetwork(){const canvasRef=useRef<HTMLCanvasElement>(null);useEffect(()=>{const canvas=canvasRef.current;if(!canvas)return;const context=canvas.getContext('2d');if(!context)return;const colors=['#66ebf2','#ff62c7','#d8ff62','#ff875c','#ad77ff'];let width=0,height=0,frame=0,last=0;type Node={x:number,y:number,vx:number,vy:number,r:number,color:string,life:number};let nodes:Node[]=[];
+  const reset=(node?:Node)=>{const angle=Math.random()*Math.PI*2;const radius=Math.random()*Math.min(width,height)*.13;const speed=.16+Math.random()*.34;const next={x:width*.5+Math.cos(angle)*radius,y:height*.45+Math.sin(angle)*radius,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed,r:1+Math.random()*1.5,color:colors[Math.floor(Math.random()*colors.length)],life:.55+Math.random()*.45};if(node)Object.assign(node,next);else return next};
+  const resize=()=>{const rect=canvas.getBoundingClientRect();width=rect.width;height=rect.height;const dpr=Math.min(devicePixelRatio,1.5);canvas.width=Math.round(width*dpr);canvas.height=Math.round(height*dpr);context.setTransform(dpr,0,0,dpr,0,0);const count=width<700?34:68;nodes=Array.from({length:count},()=>reset() as Node)};resize();const observer=new ResizeObserver(resize);observer.observe(canvas);
+  const draw=(time:number)=>{if(time-last<32){frame=requestAnimationFrame(draw);return}last=time;context.clearRect(0,0,width,height);for(const node of nodes){node.x+=node.vx;node.y+=node.vy;node.life-=.0008;if(node.x< -30||node.x>width+30||node.y< -30||node.y>height+30||node.life<=0)reset(node)}
+    const reach=width<700?82:125;for(let i=0;i<nodes.length;i++){for(let j=i+1;j<nodes.length;j++){const a=nodes[i],b=nodes[j],dx=a.x-b.x,dy=a.y-b.y,distance=Math.hypot(dx,dy);if(distance<reach){context.beginPath();context.moveTo(a.x,a.y);context.lineTo(b.x,b.y);context.strokeStyle=`rgba(153,225,232,${(1-distance/reach)*.24*Math.min(a.life,b.life)})`;context.lineWidth=.65;context.stroke()}}}
+    for(const node of nodes){context.beginPath();context.arc(node.x,node.y,node.r,0,Math.PI*2);context.fillStyle=node.color;context.globalAlpha=Math.min(1,node.life*1.7);context.shadowBlur=12;context.shadowColor=node.color;context.fill();context.globalAlpha=1;context.shadowBlur=0}frame=requestAnimationFrame(draw)}
+  if(!matchMedia('(prefers-reduced-motion: reduce)').matches)frame=requestAnimationFrame(draw);return()=>{cancelAnimationFrame(frame);observer.disconnect()}},[]);return <canvas ref={canvasRef} className="signal-network" aria-hidden="true"/>}
 
 export default function App(){const [power,setPower]=useState(0);return <>
   <div className="grain"/><Nav/>

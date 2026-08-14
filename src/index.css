@@ -42,7 +42,7 @@ section{content-visibility:auto;contain-intrinsic-size:800px}section.hero{conten
 .hero-intro{margin:23px 0 0!important;color:#aaa7a0!important;font:400 .68rem/1.65 "Courier New",monospace!important}
 .hero-left>a{margin-top:22px}
 .scroll-cue{position:absolute;z-index:8;bottom:3.5vh;left:50%;transform:translateX(-50%);margin:0}
-.signal-network{position:absolute;z-index:4;inset:0;width:100%;height:100%;pointer-events:none;contain:strict}
+.signal-network{position:fixed;z-index:4;inset:0;width:100vw;height:100vh;pointer-events:none;contain:strict}
 .energy-aura{position:absolute;z-index:2;left:50%;top:44%;width:62vw;height:55vh;transform:translate(-50%,-50%);pointer-events:none;background:radial-gradient(ellipse at 15% 42%,#66ebf218,transparent 28%),radial-gradient(ellipse at 85% 42%,#ff62c718,transparent 28%),radial-gradient(ellipse at 50% 82%,#ad77ff1a,transparent 25%);opacity:.9;transition:opacity .25s}
 .hero:hover .energy-aura{opacity:1}
 .signal{position:absolute;width:1px;height:1px;transform:translate(var(--x),var(--y));animation:signal-out 7s cubic-bezier(.3,.7,.2,1) var(--delay) infinite}

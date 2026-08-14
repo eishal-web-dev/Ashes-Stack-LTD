@@ -96,10 +96,10 @@ section{content-visibility:auto;contain-intrinsic-size:800px}section.hero{conten
 
 /* Hero creature composition — keep the phoenix inside the scene, not on top of it. */
 .hero-phoenix{
- width:min(70vw,1320px);
- height:72vh;
+ width:min(75vw,1400px);
+ height:76vh;
  left:52%;
- top:13%;
+ top:11%;
  opacity:.96;
  isolation:isolate;
  filter:none;
@@ -130,8 +130,8 @@ section{content-visibility:auto;contain-intrinsic-size:800px}section.hero{conten
 
 @media(max-width:800px){
  .hero-phoenix{
-  width:118vw;
-  height:55vh;
+  width:124vw;
+  height:58vh;
   left:53%;
   top:22%;
   opacity:.7;

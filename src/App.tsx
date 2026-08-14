@@ -32,7 +32,7 @@ export default function App(){const [power,setPower]=useState(0);return <>
     </section>
 
     <section id="capabilities" className="capabilities"><Reveal><p className="kicker">02 / CAPABILITIES</p><h2>ONE STUDIO.<br/><span>FOUR WAYS TO BUILD.</span></h2><p className="section-lede">Strategy, design and engineering—connected from first thought to final release.</p><p className="hint"><span>◉</span> HOVER TO ENTER EACH WORLD</p></Reveal>
-      <div className="power-grid">{powers.map((p,i)=>{const Icon=p.icon;return <article key={p.mode} className={`power-card ${power===i?'active':''}`} style={{'--accent':p.accent} as React.CSSProperties} onMouseEnter={()=>setPower(i)}>
+      <div className="power-grid">{powers.map((p,i)=>{const Icon=p.icon;return <article key={p.mode} className={`power-card power-${p.mode} ${power===i?'active':''}`} style={{'--accent':p.accent} as React.CSSProperties} onMouseEnter={()=>setPower(i)}>
         <span className="power-no">{p.number}</span><Icon className="power-icon"/><h3>{p.title.split('\n').map(x=><span key={x}>{x}</span>)}</h3><p>{p.copy}</p><div className="power-scene"><PowerPhoenix mode={p.mode}/></div><ArrowUpRight className="card-arrow"/></article>})}</div>
     </section>
 

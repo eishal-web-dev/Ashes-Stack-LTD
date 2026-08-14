@@ -96,11 +96,11 @@ section{content-visibility:auto;contain-intrinsic-size:800px}section.hero{conten
 
 /* Hero creature composition — keep the phoenix inside the scene, not on top of it. */
 .hero-phoenix{
- width:min(66vw,1240px);
+ width:min(70vw,1320px);
  height:72vh;
  left:52%;
  top:13%;
- opacity:.82;
+ opacity:.9;
  isolation:isolate;
  filter:none;
  -webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 8%,#000 82%,transparent 100%);
@@ -109,7 +109,7 @@ section{content-visibility:auto;contain-intrinsic-size:800px}section.hero{conten
 .hero-phoenix.phoenix-vr img{
  transform:none!important;
  object-position:center;
- filter:brightness(.62) saturate(.82) contrast(1.16) drop-shadow(0 24px 48px #000c) drop-shadow(0 0 28px #ff623826)!important;
+ filter:brightness(.74) saturate(1.02) contrast(1.13) drop-shadow(0 24px 48px #000c) drop-shadow(0 0 34px #ff62382e)!important;
 }
 .hero-phoenix:after{
  content:"";

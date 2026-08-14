@@ -100,7 +100,7 @@ section{content-visibility:auto;contain-intrinsic-size:800px}section.hero{conten
  height:72vh;
  left:52%;
  top:13%;
- opacity:.9;
+ opacity:.96;
  isolation:isolate;
  filter:none;
  -webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 8%,#000 82%,transparent 100%);
@@ -109,7 +109,7 @@ section{content-visibility:auto;contain-intrinsic-size:800px}section.hero{conten
 .hero-phoenix.phoenix-vr img{
  transform:none!important;
  object-position:center;
- filter:brightness(.74) saturate(1.02) contrast(1.13) drop-shadow(0 24px 48px #000c) drop-shadow(0 0 34px #ff62382e)!important;
+ filter:brightness(.9) saturate(1.08) contrast(1.1) drop-shadow(0 28px 54px #000d) drop-shadow(0 0 30px #825cff2b)!important;
 }
 .hero-phoenix:after{
  content:"";

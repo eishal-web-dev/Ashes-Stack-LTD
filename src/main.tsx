@@ -4,4 +4,5 @@ import App from './App';
 import './index.css';
 import './card-image-size.css';
 import './performance.css';
+import './selected-work.css';
 createRoot(document.getElementById('root')!).render(<StrictMode><App/></StrictMode>);

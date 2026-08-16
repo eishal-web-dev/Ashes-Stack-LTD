@@ -6,4 +6,5 @@ import './card-image-size.css';
 import './performance.css';
 import './selected-work.css';
 import './philosophy.css';
+import './process-section.css';
 createRoot(document.getElementById('root')!).render(<StrictMode><App/></StrictMode>);

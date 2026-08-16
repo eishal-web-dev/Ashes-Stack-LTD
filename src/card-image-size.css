@@ -1,0 +1,7 @@
+.power-scene .power-phoenix {
+  width: calc(100% + 50px);
+  height: calc(100% + 50px);
+  margin-left: -25px;
+  margin-top: -25px;
+  max-width: none;
+}

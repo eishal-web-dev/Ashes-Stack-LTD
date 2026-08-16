@@ -1,0 +1,36 @@
+/* Performance layer — keep the same visual direction while making motion feel lighter. */
+html{scroll-behavior:smooth;scroll-padding-top:76px}
+body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;overscroll-behavior-y:none}
+img{transform:translateZ(0);backface-visibility:hidden}
+
+/* Keep reveal motion fluid and avoid long compositing work. */
+.reveal{transition:opacity .62s cubic-bezier(.22,1,.36,1),transform .62s cubic-bezier(.22,1,.36,1);will-change:opacity,transform}
+.reveal.shown{will-change:auto}
+
+/* Cards get their own paint layer so hover effects do not repaint the whole section. */
+.power-card,.work-cards article{contain:paint;backface-visibility:hidden;transform-style:preserve-3d}
+.power-card{transition:transform .18s cubic-bezier(.22,1,.36,1),border-color .28s ease,box-shadow .28s ease!important}
+.power-phoenix{backface-visibility:hidden;transition:transform .3s cubic-bezier(.22,1,.36,1)!important}
+.work-cards article{transition:transform .26s cubic-bezier(.22,1,.36,1),border-color .26s ease!important}
+
+/* The canvas stays GPU-composited instead of forcing page repaints. */
+.signal-network{pointer-events:none;contain:strict;transform:translateZ(0);backface-visibility:hidden}
+.grain{transform:translateZ(0);backface-visibility:hidden}
+
+/* Slow decorative loops slightly; visually the same, with less continuous work. */
+.power-card:hover .scan-line{animation-duration:3s!important}
+.power-card:hover .card-particles i{animation-duration:2.4s!important}
+
+/* Avoid expensive hover compositing on touch/mobile devices where it adds no value. */
+@media (hover:none),(pointer:coarse){
+  .signal-network{display:none!important}
+  .card-glare,.card-particles,.scan-line{display:none!important}
+  .power-card,.power-card:nth-child(even),.power-card:hover,.power-card.active,.power-card:nth-child(even):hover,.power-card:nth-child(even).active{transform:none!important;will-change:auto!important}
+  .power-phoenix{will-change:auto!important}
+}
+
+@media (max-width:800px){
+  .grain{opacity:.04!important}
+  .cyber-lines{opacity:.22!important}
+  .power-card{box-shadow:none!important}
+}

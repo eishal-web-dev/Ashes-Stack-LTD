@@ -1,10 +1,11 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App';
+import ProcessScrollFlight from './ProcessScrollFlight';
 import './index.css';
 import './card-image-size.css';
 import './performance.css';
 import './selected-work.css';
 import './philosophy.css';
 import './process-section.css';
-createRoot(document.getElementById('root')!).render(<StrictMode><App/></StrictMode>);
+createRoot(document.getElementById('root')!).render(<StrictMode><App/><ProcessScrollFlight/></StrictMode>);

@@ -1,4 +1,4 @@
-import { ArrowDownRight, ArrowUpRight, Box, Braces, BrainCircuit, Crosshair, Smartphone } from 'lucide-react';
+import { ArrowDownRight, ArrowUpRight, Box, Braces, BrainCircuit, Camera, Crosshair, Scale, Smartphone } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import Nav from './components/Nav';
 
@@ -41,9 +41,9 @@ export default function App(){const [power,setPower]=useState(0);return <>
     </section>
 
     <section id="work" className="work"><Reveal><p className="kicker">03 / SELECTED WORK</p><div className="title-row"><h2>BUILT TO WORK.<br/><span>MADE TO BE REMEMBERED.</span></h2><p>THREE PRODUCTS · ONE STANDARD</p></div></Reveal><div className="work-stage"><div className="work-cards">
-      <article><span>ASHES AI —<br/>ONE IMAGE.<br/>REAL 3D.</span><div className="face-mesh">A</div><b>SPIN IT</b></article>
-      <article><span>NAZAR AI —<br/>COMPUTER VISION<br/>FOR THE PHYSICAL WORLD.</span><div className="network-eye"><i/></div><b>IT SAW THAT</b></article>
-      <article><span>WAKULAW —<br/>PAKISTAN'S LEGAL<br/>INTELLIGENCE.</span><div className="law-ui">§<small>ASK · ANALYZE · ACT</small></div><b>ASK THE LAW</b></article>
+      <article className="work-project work-ashes"><div className="work-copy"><small>01 / IMAGE → 3D</small><h3>ASHES AI</h3><p>One image in. A product you can spin, explore and sell in 3D.</p></div><div className="project-scene"><img src="/ashes-phoenix-hero.webp" alt="Red Ashes phoenix presenting a 3D product"/><div className="scene-prop prop-3d"><Box/><span>3D</span></div><i className="scene-orbit orbit-one"/><i className="scene-orbit orbit-two"/></div><b>EXPLORE 3D</b></article>
+      <article className="work-project work-nazar"><div className="work-copy"><small>02 / VISION AI</small><h3>NAZAR AI</h3><p>A funky camera-powered watcher for activity, safety and the physical world.</p></div><div className="project-scene"><img src="/ashes-phoenix-hero.webp" alt="Ashes phoenix with a camera for Nazar AI"/><div className="scene-prop prop-camera"><Camera/><span>REC</span></div><i className="camera-bracket bracket-a"/><i className="camera-bracket bracket-b"/><div className="camera-label">TRACKING · LIVE</div></div><b>SEE NAZAR</b></article>
+      <article className="work-project work-law"><div className="work-copy"><small>03 / LEGAL AI</small><h3>WAKULAW</h3><p>Pakistani legal intelligence with research, reasoning and case support.</p></div><div className="project-scene"><img src="/ashes-phoenix-hero.webp" alt="Ashes phoenix holding the scales of justice for WakuLAW"/><div className="scene-prop prop-scales"><Scale/><span>LAW</span></div><div className="law-line line-a"/><div className="law-line line-b"/></div><b>ASK THE LAW</b></article>
     </div></div></section>
 
     <section className="philosophy"><Reveal><p className="kicker">OUR PHILOSOPHY</p><h2>SERIOUS ENGINEERING.<br/><span>UNREASONABLY GOOD DESIGN.</span></h2><p>BUILT TO WORK. MADE TO HIT DIFFERENT.</p></Reveal><div className="principles"><div><Crosshair/><span><b>THINK SHARP</b>Curious minds.<br/>Clear thinking.</span></div><div><Box/><span><b>BUILD SOLID</b>Clean code.<br/>Strong foundations.</span></div><div><span className="spark">✳</span><span><b>MAKE IT ICONIC</b>Details that click.<br/>Design that lasts.</span></div></div></section>

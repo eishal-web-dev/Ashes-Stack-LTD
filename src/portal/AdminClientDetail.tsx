@@ -95,6 +95,18 @@ export default function AdminClientDetail() {
     }
   }
 
+  async function deleteDoc(docId: string, title: string) {
+    if (!confirm(`Delete "${title}"? The client will no longer be able to see or download it.`)) return;
+    const res = await fetch(`/api/documents/${docId}`, { method: 'DELETE' });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setMessage(`Error: ${data.error || 'Could not delete document.'}`);
+      return;
+    }
+    setMessage(`"${title}" deleted.`);
+    refreshDocs();
+  }
+
   async function onLogout() {
     await logout();
     navigate('/login');
@@ -226,7 +238,10 @@ export default function AdminClientDetail() {
                     <td>{d.title}</td>
                     <td>{new Date(d.createdAt).toLocaleDateString('en-GB')}</td>
                     <td><span className={`portal-badge ${d.status}`}>{d.status}</span></td>
-                    <td><a className="pill-btn tiny" href={`/api/documents/${d._id}/download`} target="_blank" rel="noreferrer">View</a></td>
+                    <td style={{ display: 'flex', gap: 8 }}>
+                      <a className="pill-btn tiny" href={`/api/documents/${d._id}/download`} target="_blank" rel="noreferrer">View</a>
+                      <button className="pill-btn tiny" style={{ color: '#ff8fa3', borderColor: 'rgba(255,73,108,.4)' }} onClick={() => deleteDoc(d._id, d.title)}>Delete</button>
+                    </td>
                   </tr>
                 ))}
               </tbody>

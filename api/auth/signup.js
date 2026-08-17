@@ -2,6 +2,7 @@ import { dbConnect } from "../../lib/mongodb.js";
 import User from "../../models/User.js";
 import bcrypt from "bcryptjs";
 import { signToken, setAuthCookie } from "../../lib/auth.js";
+import { logActivity } from "../../lib/logActivity.js";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
@@ -33,6 +34,7 @@ export default async function handler(req, res) {
 
     const token = signToken({ id: user._id.toString(), role: user.role, name: user.name, email: user.email });
     setAuthCookie(res, token);
+    await logActivity(user._id, "account_created", { via: "signup", role: user.role });
     res.status(201).json({ id: user._id, role: user.role, name: user.name, email: user.email });
   } catch (e) {
     res.status(500).json({ error: e.message });

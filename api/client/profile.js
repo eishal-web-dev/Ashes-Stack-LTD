@@ -2,6 +2,7 @@ import { dbConnect } from "../../lib/mongodb.js";
 import User from "../../models/User.js";
 import bcrypt from "bcryptjs";
 import { getUserFromReq } from "../../lib/auth.js";
+import { logActivity } from "../../lib/logActivity.js";
 
 export default async function handler(req, res) {
   const authUser = getUserFromReq(req);
@@ -43,6 +44,7 @@ export default async function handler(req, res) {
     await user.save();
     const clean = user.toObject();
     delete clean.password;
+    await logActivity(user._id, "profile_updated", { passwordChanged: !!newPassword }, authUser.id);
     return res.status(200).json(clean);
   }
 

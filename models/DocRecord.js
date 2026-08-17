@@ -24,6 +24,14 @@ const DocRecordSchema = new mongoose.Schema(
     fileName: { type: String },
     status: { type: String, enum: ["sent", "downloaded"], default: "sent" },
     sentBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+
+    // Invoice payment tracking
+    paymentStatus: { type: String, enum: ["unpaid", "paid"], default: "unpaid" },
+    paidAt: { type: Date },
+
+    // Contract e-signature
+    signedAt: { type: Date },
+    signedByName: { type: String },
   },
   { timestamps: true }
 );

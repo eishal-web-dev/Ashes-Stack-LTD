@@ -2,6 +2,7 @@ import { dbConnect } from "../../lib/mongodb.js";
 import User from "../../models/User.js";
 import bcrypt from "bcryptjs";
 import { getUserFromReq } from "../../lib/auth.js";
+import { logActivity } from "../../lib/logActivity.js";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
@@ -31,4 +32,5 @@ export default async function handler(req, res) {
   });
 
   res.status(201).json({ id: user._id, name: user.name, email: user.email, role: user.role });
+  await logActivity(user._id, "account_created", { via: "admin_panel", role: user.role }, authUser.id);
 }

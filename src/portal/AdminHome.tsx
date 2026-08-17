@@ -15,6 +15,7 @@ export default function AdminHome() {
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [search, setSearch] = useState('');
 
   async function loadClients() {
     const c = await fetch('/api/admin/clients').then((r) => r.json());
@@ -118,21 +119,38 @@ export default function AdminHome() {
         </div>
 
         <div className="portal-card">
+          <div className="portal-field" style={{ maxWidth: 320, marginBottom: clients.length ? 16 : 0 }}>
+            <input
+              placeholder="Search clients by name, email or company…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
           {clients.length === 0 ? (
             <div className="portal-empty">No clients yet. Add one above, or they can sign up themselves at /signup.</div>
           ) : (
             <table className="portal-table">
               <thead><tr><th>Name</th><th>Email</th><th>Company</th><th>Docs sent</th><th></th></tr></thead>
               <tbody>
-                {clients.map((c) => (
-                  <tr key={c._id}>
-                    <td>{c.name}</td>
-                    <td>{c.email}</td>
-                    <td>{c.company}</td>
-                    <td>{c.docCount}</td>
-                    <td><Link className="pill-btn tiny solid" to={`/admin/client/${c._id}`}>Open</Link></td>
-                  </tr>
-                ))}
+                {clients
+                  .filter((c) => {
+                    const q = search.toLowerCase().trim();
+                    if (!q) return true;
+                    return (
+                      c.name.toLowerCase().includes(q) ||
+                      c.email.toLowerCase().includes(q) ||
+                      (c.company || '').toLowerCase().includes(q)
+                    );
+                  })
+                  .map((c) => (
+                    <tr key={c._id}>
+                      <td>{c.name}</td>
+                      <td>{c.email}</td>
+                      <td>{c.company}</td>
+                      <td>{c.docCount}</td>
+                      <td><Link className="pill-btn tiny solid" to={`/admin/client/${c._id}`}>Open</Link></td>
+                    </tr>
+                  ))}
               </tbody>
             </table>
           )}

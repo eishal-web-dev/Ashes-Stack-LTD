@@ -3,6 +3,7 @@ import User from "../../models/User.js";
 import DocRecord from "../../models/DocRecord.js";
 import { getUserFromReq } from "../../lib/auth.js";
 import { generateDocPdf } from "../../lib/pdfTemplates.js";
+import { logActivity } from "../../lib/logActivity.js";
 
 const TITLES = {
   welcome: "Welcome Packet",
@@ -40,6 +41,7 @@ export default async function handler(req, res) {
     });
 
     res.status(201).json({ id: doc._id, title: doc.title, type: doc.type, createdAt: doc.createdAt });
+    await logActivity(client._id, "document_sent", { type: doc.type, title: doc.title }, authUser.id);
   } catch (e) {
     res.status(500).json({ error: e.message });
   }

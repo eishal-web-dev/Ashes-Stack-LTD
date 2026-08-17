@@ -1,6 +1,7 @@
 import { dbConnect } from "../../../lib/mongodb.js";
 import DocRecord from "../../../models/DocRecord.js";
 import { getUserFromReq } from "../../../lib/auth.js";
+import { logActivity } from "../../../lib/logActivity.js";
 
 export default async function handler(req, res) {
   const authUser = getUserFromReq(req);
@@ -17,6 +18,7 @@ export default async function handler(req, res) {
   if (doc.status === "sent" && authUser.role === "client") {
     doc.status = "downloaded";
     await doc.save();
+    await logActivity(doc.client, "document_downloaded", { type: doc.type, title: doc.title }, authUser.id);
   }
 
   const buffer = Buffer.from(doc.pdfBase64, "base64");

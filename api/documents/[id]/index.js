@@ -1,6 +1,7 @@
 import { dbConnect } from "../../../lib/mongodb.js";
 import DocRecord from "../../../models/DocRecord.js";
 import { getUserFromReq } from "../../../lib/auth.js";
+import { logActivity } from "../../../lib/logActivity.js";
 
 export default async function handler(req, res) {
   const authUser = getUserFromReq(req);
@@ -10,6 +11,7 @@ export default async function handler(req, res) {
   if (req.method === "DELETE") {
     const doc = await DocRecord.findByIdAndDelete(req.query.id);
     if (!doc) return res.status(404).json({ error: "Document not found" });
+    await logActivity(doc.client, "document_deleted", { type: doc.type, title: doc.title }, authUser.id);
     return res.status(200).json({ ok: true, id: doc._id });
   }
 

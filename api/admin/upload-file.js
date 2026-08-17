@@ -2,6 +2,7 @@ import { dbConnect } from "../../lib/mongodb.js";
 import User from "../../models/User.js";
 import DocRecord from "../../models/DocRecord.js";
 import { getUserFromReq } from "../../lib/auth.js";
+import { logActivity } from "../../lib/logActivity.js";
 
 // Vercel serverless functions cap request bodies around 4.5MB.
 // This is fine for PDFs/images but not for video — those need

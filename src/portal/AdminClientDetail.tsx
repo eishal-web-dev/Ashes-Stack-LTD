@@ -4,7 +4,25 @@ import { getMe, logout, Me } from './api';
 import { DOC_TYPES, FieldDef } from './docConfig';
 
 type ClientInfo = { _id: string; name: string; email: string; company?: string; googleEmail?: string; age?: number; gender?: string };
-type DocRow = { _id: string; title: string; status: string; createdAt: string };
+type DocRow = {
+  _id: string; title: string; type: string; status: string; createdAt: string;
+  meta?: { dueDate?: string; [k: string]: unknown };
+  paymentStatus?: 'unpaid' | 'paid';
+  signedAt?: string;
+  signedByName?: string;
+};
+type ActivityRow = { _id: string; action: string; meta?: Record<string, unknown>; actor?: { name: string; role: string }; createdAt: string };
+
+const ACTION_LABELS: Record<string, string> = {
+  account_created: 'Account created',
+  profile_updated: 'Profile updated',
+  document_sent: 'Document sent',
+  document_downloaded: 'Document downloaded',
+  document_deleted: 'Document deleted',
+  document_signed: 'Contract signed',
+  payment_marked_paid: 'Invoice marked paid',
+  payment_marked_unpaid: 'Invoice marked unpaid',
+};
 
 function buildMeta(fields: FieldDef[], values: Record<string, string>): Record<string, unknown> {
   const meta: Record<string, unknown> = {};
@@ -28,6 +46,7 @@ export default function AdminClientDetail() {
   const [user, setUser] = useState<Me | null>(null);
   const [client, setClient] = useState<ClientInfo | null>(null);
   const [docs, setDocs] = useState<DocRow[]>([]);
+  const [activity, setActivity] = useState<ActivityRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [message, setMessage] = useState('');
@@ -47,19 +66,25 @@ export default function AdminClientDetail() {
       if (!u) return navigate('/login');
       if (u.role !== 'admin') return navigate('/portal');
       setUser(u);
-      const [clients, d] = await Promise.all([
+      const [clients, d, a] = await Promise.all([
         fetch('/api/admin/clients').then((r) => r.json()),
         fetch(`/api/documents?clientId=${id}`).then((r) => r.json()),
+        fetch(`/api/admin/activity?clientId=${id}`).then((r) => r.json()),
       ]);
       setClient(clients.find((c: ClientInfo) => c._id === id) || null);
       setDocs(d);
+      setActivity(a);
       setLoading(false);
     });
   }, [id, navigate]);
 
   async function refreshDocs() {
-    const d = await fetch(`/api/documents?clientId=${id}`).then((r) => r.json());
+    const [d, a] = await Promise.all([
+      fetch(`/api/documents?clientId=${id}`).then((r) => r.json()),
+      fetch(`/api/admin/activity?clientId=${id}`).then((r) => r.json()),
+    ]);
     setDocs(d);
+    setActivity(a);
   }
 
   function openDocType(type: string) {
@@ -173,6 +198,20 @@ export default function AdminClientDetail() {
     }
     const data = await res.json();
     setMessage(`Deleted ${data.deletedCount} document(s). Starting fresh.`);
+    refreshDocs();
+  }
+
+  async function togglePayment(docId: string, currentlyPaid: boolean) {
+    const res = await fetch(`/api/documents/${docId}/payment`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ paid: !currentlyPaid }),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setMessage(`Error: ${data.error || 'Could not update payment status.'}`);
+      return;
+    }
     refreshDocs();
   }
 
@@ -356,21 +395,65 @@ export default function AdminClientDetail() {
             <div className="portal-empty">Nothing sent yet.</div>
           ) : (
             <table className="portal-table">
-              <thead><tr><th>Document</th><th>Sent</th><th>Status</th><th></th></tr></thead>
+              <thead><tr><th>Document</th><th>Sent</th><th>Status</th><th>Extra</th><th></th></tr></thead>
               <tbody>
-                {docs.map((d) => (
-                  <tr key={d._id}>
-                    <td>{d.title}</td>
-                    <td>{new Date(d.createdAt).toLocaleDateString('en-GB')}</td>
-                    <td><span className={`portal-badge ${d.status}`}>{d.status}</span></td>
-                    <td style={{ display: 'flex', gap: 8 }}>
-                      <a className="pill-btn tiny" href={`/api/documents/${d._id}/download`} target="_blank" rel="noreferrer">View</a>
-                      <button className="pill-btn tiny" style={{ color: '#ff8fa3', borderColor: 'rgba(255,73,108,.4)' }} onClick={() => deleteDoc(d._id, d.title)}>Delete</button>
-                    </td>
-                  </tr>
-                ))}
+                {docs.map((d) => {
+                  const isOverdue = d.type === 'invoice' && d.paymentStatus !== 'paid' && d.meta?.dueDate && new Date(d.meta.dueDate as string) < new Date();
+                  return (
+                    <tr key={d._id}>
+                      <td>{d.title}</td>
+                      <td>{new Date(d.createdAt).toLocaleDateString('en-GB')}</td>
+                      <td><span className={`portal-badge ${d.status}`}>{d.status}</span></td>
+                      <td>
+                        {d.type === 'invoice' && (
+                          <button
+                            className="pill-btn tiny"
+                            style={d.paymentStatus === 'paid'
+                              ? { color: '#d8ff62', borderColor: 'rgba(216,255,98,.4)' }
+                              : { color: isOverdue ? '#ff8fa3' : '#8c8982', borderColor: isOverdue ? 'rgba(255,73,108,.4)' : undefined }}
+                            onClick={() => togglePayment(d._id, d.paymentStatus === 'paid')}
+                          >
+                            {d.paymentStatus === 'paid' ? '✓ Paid' : isOverdue ? 'Overdue — mark paid' : 'Unpaid — mark paid'}
+                          </button>
+                        )}
+                        {d.type === 'contract' && (
+                          d.signedAt ? (
+                            <span style={{ color: '#d8ff62', fontSize: '.68rem' }}>✓ Signed by {d.signedByName} · {new Date(d.signedAt).toLocaleDateString('en-GB')}</span>
+                          ) : (
+                            <span style={{ color: '#8c8982', fontSize: '.68rem' }}>Not signed yet</span>
+                          )
+                        )}
+                      </td>
+                      <td style={{ display: 'flex', gap: 8 }}>
+                        <a className="pill-btn tiny" href={`/api/documents/${d._id}/download`} target="_blank" rel="noreferrer">View</a>
+                        <button className="pill-btn tiny" style={{ color: '#ff8fa3', borderColor: 'rgba(255,73,108,.4)' }} onClick={() => deleteDoc(d._id, d.title)}>Delete</button>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
+          )}
+        </div>
+
+        <div className="portal-card">
+          <h2 className="portal-h2">Activity</h2>
+          <p className="portal-sub" style={{ marginTop: -2 }}>What's happened on this client's account, most recent first.</p>
+          {activity.length === 0 ? (
+            <div className="portal-empty">No activity yet.</div>
+          ) : (
+            <div>
+              {activity.map((a) => (
+                <div key={a._id} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid rgba(214,209,198,.08)', fontSize: '.75rem' }}>
+                  <div>
+                    <span style={{ color: '#eceae4' }}>{ACTION_LABELS[a.action] || a.action}</span>
+                    {typeof a.meta?.title === 'string' && <span style={{ color: '#8c8982' }}> — {a.meta.title as string}</span>}
+                    {a.actor && <span style={{ color: '#8c8982' }}> · by {a.actor.name}</span>}
+                  </div>
+                  <div style={{ color: '#66625b' }}>{new Date(a.createdAt).toLocaleString('en-GB')}</div>
+                </div>
+              ))}
+            </div>
           )}
         </div>
       </div>

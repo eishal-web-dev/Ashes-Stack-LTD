@@ -8,4 +8,5 @@ import './performance.css';
 import './selected-work.css';
 import './philosophy.css';
 import './process-section.css';
+import './final-sections.css';
 createRoot(document.getElementById('root')!).render(<StrictMode><App/><ProcessScrollFlight/></StrictMode>);

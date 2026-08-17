@@ -107,6 +107,20 @@ export default function AdminClientDetail() {
     refreshDocs();
   }
 
+  async function deleteAllDocs() {
+    if (!docs.length) return;
+    if (!confirm(`Delete ALL ${docs.length} document(s) sent to ${client?.name}? This cannot be undone.`)) return;
+    const res = await fetch(`/api/documents?clientId=${id}`, { method: 'DELETE' });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setMessage(`Error: ${data.error || 'Could not delete documents.'}`);
+      return;
+    }
+    const data = await res.json();
+    setMessage(`Deleted ${data.deletedCount} document(s). Starting fresh.`);
+    refreshDocs();
+  }
+
   async function onLogout() {
     await logout();
     navigate('/login');
@@ -226,7 +240,18 @@ export default function AdminClientDetail() {
         </div>
 
         <div className="portal-card">
-          <h2 className="portal-h2">Documents sent to this client</h2>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+            <h2 className="portal-h2" style={{ margin: 0 }}>Documents sent to this client</h2>
+            {docs.length > 0 && (
+              <button
+                className="pill-btn tiny"
+                style={{ color: '#ff8fa3', borderColor: 'rgba(255,73,108,.4)' }}
+                onClick={deleteAllDocs}
+              >
+                Delete all ({docs.length})
+              </button>
+            )}
+          </div>
           {docs.length === 0 ? (
             <div className="portal-empty">Nothing sent yet.</div>
           ) : (

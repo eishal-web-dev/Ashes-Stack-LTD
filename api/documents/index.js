@@ -18,5 +18,13 @@ export default async function handler(req, res) {
     return res.status(200).json(docs);
   }
 
+  if (req.method === "DELETE") {
+    if (authUser.role !== "admin") return res.status(403).json({ error: "Admin only" });
+    const { clientId } = req.query;
+    if (!clientId) return res.status(400).json({ error: "clientId is required" });
+    const result = await DocRecord.deleteMany({ client: clientId });
+    return res.status(200).json({ ok: true, deletedCount: result.deletedCount });
+  }
+
   res.status(405).json({ error: "Method not allowed" });
 }

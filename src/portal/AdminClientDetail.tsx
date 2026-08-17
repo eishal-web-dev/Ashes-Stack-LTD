@@ -1,21 +1,25 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { getMe, logout, Me } from './api';
-import { DOC_CONFIGS, DocField } from './docConfigs';
+import { DOC_TYPES, FieldDef } from './docConfig';
 
 type ClientInfo = { _id: string; name: string; email: string; company?: string; googleEmail?: string; age?: number; gender?: string };
 type DocRow = { _id: string; title: string; status: string; createdAt: string };
 
-function buildInitialValues(fields: DocField[], client: ClientInfo): Record<string, string> {
-  const values: Record<string, string> = {};
+function buildMeta(fields: FieldDef[], values: Record<string, string>): Record<string, unknown> {
+  const meta: Record<string, unknown> = {};
   for (const f of fields) {
-    if (f.key === 'googleEmail') {
-      values[f.key] = client.googleEmail || '';
+    const v = values[f.key];
+    if (v === undefined || v === '') continue;
+    if (f.type === 'lines') {
+      meta[f.key] = v.split('\n').map((l) => l.trim()).filter(Boolean);
+    } else if (f.type === 'number') {
+      meta[f.key] = Number(v);
     } else {
-      values[f.key] = f.default || '';
+      meta[f.key] = v;
     }
   }
-  return values;
+  return meta;
 }
 
 export default function AdminClientDetail() {
@@ -29,7 +33,7 @@ export default function AdminClientDetail() {
   const [message, setMessage] = useState('');
 
   const [menuOpen, setMenuOpen] = useState(false);
-  const [selectedType, setSelectedType] = useState<string | null>(null);
+  const [activeType, setActiveType] = useState<string | null>(null);
   const [values, setValues] = useState<Record<string, string>>({});
 
   useEffect(() => {
@@ -53,38 +57,32 @@ export default function AdminClientDetail() {
     setDocs(d);
   }
 
-  function pickDoc(type: string) {
-    const config = DOC_CONFIGS.find((c) => c.type === type);
-    if (!config || !client) return;
-    setSelectedType(type);
-    setValues(buildInitialValues(config.fields, client));
+  function openDocType(type: string) {
+    const config = DOC_TYPES.find((d) => d.type === type);
+    const initial: Record<string, string> = {};
+    if (config) {
+      for (const f of config.fields) {
+        if (f.key === 'googleEmail' && client?.googleEmail) initial[f.key] = client.googleEmail;
+        else initial[f.key] = '';
+      }
+    }
+    setValues(initial);
+    setActiveType(type);
     setMenuOpen(false);
     setMessage('');
   }
 
   async function onSend() {
-    if (!selectedType) return;
-    const config = DOC_CONFIGS.find((c) => c.type === selectedType);
+    if (!activeType) return;
+    const config = DOC_TYPES.find((d) => d.type === activeType);
     if (!config) return;
-
-    const meta: Record<string, unknown> = {};
-    for (const f of config.fields) {
-      const raw = values[f.key] ?? '';
-      if (f.type === 'list') {
-        meta[f.key] = raw.split('\n').map((s) => s.trim()).filter(Boolean);
-      } else if (f.type === 'number') {
-        meta[f.key] = raw ? Number(raw) : undefined;
-      } else {
-        meta[f.key] = raw || undefined;
-      }
-    }
-
     setSending(true);
     setMessage('');
+    const meta = buildMeta(config.fields, values);
     const res = await fetch('/api/admin/send-document', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ clientId: id, type: selectedType, meta }),
+      body: JSON.stringify({ clientId: id, type: activeType, meta }),
     });
     const data = await res.json();
     setSending(false);
@@ -92,10 +90,9 @@ export default function AdminClientDetail() {
       setMessage(`Error: ${data.error}`);
     } else {
       setMessage(`${data.title} sent to ${client?.name}'s portal.`);
-      setSelectedType(null);
+      setActiveType(null);
       refreshDocs();
     }
-    setTimeout(() => setMessage(''), 4000);
   }
 
   async function onLogout() {
@@ -105,7 +102,7 @@ export default function AdminClientDetail() {
 
   if (loading || !client) return <div className="portal-shell"><div className="portal-container">Loading…</div></div>;
 
-  const activeConfig = DOC_CONFIGS.find((c) => c.type === selectedType) || null;
+  const activeConfig = DOC_TYPES.find((d) => d.type === activeType);
 
   return (
     <div className="portal-shell">
@@ -130,89 +127,87 @@ export default function AdminClientDetail() {
 
         {message && <div className={message.startsWith('Error') ? 'portal-error' : 'portal-success'}>{message}</div>}
 
-        <div className="portal-card">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14, position: 'relative' }}>
+        <div className="portal-card" style={{ position: 'relative' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
             <button
               className="pill-btn"
-              onClick={() => setMenuOpen((v) => !v)}
               aria-label="Choose a document to send"
-              style={{ fontSize: '1rem', padding: '11px 16px' }}
+              onClick={() => setMenuOpen((v) => !v)}
+              style={{ fontSize: '1rem', padding: '10px 14px' }}
             >
               ☰
             </button>
             <div>
               <h2 className="portal-h2" style={{ margin: 0 }}>Docs</h2>
-              <p className="portal-sub" style={{ margin: '2px 0 0' }}>
-                Click the menu, pick a document, edit its content, then send.
-              </p>
+              <p className="portal-sub" style={{ margin: 0 }}>Pick a document, edit its content, then send it to {client.name.split(' ')[0]}'s portal.</p>
             </div>
-
-            {menuOpen && (
-              <div
-                style={{
-                  position: 'absolute', top: 50, left: 0, zIndex: 20,
-                  background: '#0c0c0e', border: '1px solid rgba(214,209,198,.18)',
-                  borderRadius: 12, padding: 8, minWidth: 260,
-                  boxShadow: '0 20px 60px rgba(0,0,0,.5)',
-                }}
-              >
-                {DOC_CONFIGS.map((c) => (
-                  <button
-                    key={c.type}
-                    onClick={() => pickDoc(c.type)}
-                    style={{
-                      display: 'block', width: '100%', textAlign: 'left',
-                      background: 'transparent', border: 'none', color: '#e7e5df',
-                      padding: '10px 12px', borderRadius: 8, cursor: 'pointer',
-                      font: '400 .78rem "Courier New", monospace',
-                    }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,98,199,.1)')}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-                  >
-                    <div style={{ fontWeight: 700 }}>{c.label}</div>
-                    <div style={{ color: '#8c8982', fontSize: '.68rem', marginTop: 2 }}>{c.description}</div>
-                  </button>
-                ))}
-              </div>
-            )}
           </div>
 
-          {activeConfig && (
-            <div style={{ marginTop: 24, borderTop: '1px solid rgba(214,209,198,.14)', paddingTop: 24 }}>
-              <h3 style={{ margin: '0 0 4px', fontSize: '1rem', color: '#eceae4' }}>{activeConfig.label}</h3>
-              <p className="portal-sub" style={{ marginTop: -2 }}>Edit the details below, then send — it lands straight in {client.name.split(' ')[0]}'s portal as a PDF.</p>
-
-              {activeConfig.fields.map((f) => (
-                <div className="portal-field" key={f.key}>
-                  <label>{f.label}</label>
-                  {f.type === 'textarea' || f.type === 'list' ? (
-                    <textarea
-                      rows={f.type === 'list' ? 4 : 3}
-                      style={{
-                        width: '100%', padding: '12px 14px', borderRadius: 10,
-                        background: '#0a0a0b', border: '1px solid rgba(214,209,198,.2)',
-                        color: '#eceae4', font: '400 .8rem "Courier New", monospace', resize: 'vertical',
-                      }}
-                      value={values[f.key] || ''}
-                      placeholder={f.placeholder}
-                      onChange={(e) => setValues({ ...values, [f.key]: e.target.value })}
-                    />
-                  ) : (
-                    <input
-                      type={f.type === 'number' ? 'number' : f.type === 'date' ? 'date' : 'text'}
-                      value={values[f.key] || ''}
-                      placeholder={f.placeholder}
-                      onChange={(e) => setValues({ ...values, [f.key]: e.target.value })}
-                    />
-                  )}
-                </div>
+          {menuOpen && (
+            <div
+              style={{
+                position: 'absolute', top: 74, left: 32, zIndex: 20,
+                background: '#0c0c0e', border: '1px solid rgba(214,209,198,.18)',
+                borderRadius: 12, minWidth: 260, boxShadow: '0 20px 50px rgba(0,0,0,.5)',
+                overflow: 'hidden',
+              }}
+            >
+              {DOC_TYPES.map((d) => (
+                <button
+                  key={d.type}
+                  onClick={() => openDocType(d.type)}
+                  style={{
+                    display: 'block', width: '100%', textAlign: 'left', padding: '14px 18px',
+                    background: activeType === d.type ? 'rgba(255,98,199,.08)' : 'transparent',
+                    border: 'none', borderBottom: '1px solid rgba(214,209,198,.08)',
+                    color: '#eceae4', cursor: 'pointer', font: '400 .75rem "Courier New", monospace',
+                  }}
+                >
+                  <div style={{ fontWeight: 700 }}>{d.label}</div>
+                  <div style={{ color: '#8c8982', fontSize: '.68rem', marginTop: 3 }}>{d.description}</div>
+                </button>
               ))}
+            </div>
+          )}
 
+          {activeConfig && (
+            <div style={{ marginTop: 22, borderTop: '1px solid rgba(214,209,198,.14)', paddingTop: 22 }}>
+              <h3 style={{ margin: '0 0 4px', font: '700 .8rem/1 "Courier New", monospace', color: '#ff62c7' }}>
+                {activeConfig.label}
+              </h3>
+              <p className="portal-sub" style={{ marginTop: 4 }}>Edit the details below, then send.</p>
+              <div className="portal-grid-2">
+                {activeConfig.fields.map((f) => (
+                  <div className="portal-field" key={f.key} style={f.type === 'lines' ? { gridColumn: '1 / -1' } : undefined}>
+                    <label>{f.label}</label>
+                    {(f.type === 'lines' || f.type === 'paragraph') ? (
+                      <textarea
+                        rows={4}
+                        value={values[f.key] ?? ''}
+                        onChange={(e) => setValues({ ...values, [f.key]: e.target.value })}
+                        placeholder={f.type === 'lines' ? 'One item per line' : f.placeholder}
+                        style={{
+                          width: '100%', padding: '12px 14px', borderRadius: 10,
+                          background: '#0a0a0b', border: '1px solid rgba(214,209,198,.2)', color: '#eceae4',
+                          font: '400 .8rem "Courier New", monospace', resize: 'vertical',
+                        }}
+                      />
+                    ) : (
+                      <input
+                        type={f.type === 'number' ? 'number' : f.type === 'date' ? 'date' : 'text'}
+                        placeholder={f.placeholder}
+                        value={values[f.key] ?? ''}
+                        onChange={(e) => setValues({ ...values, [f.key]: e.target.value })}
+                      />
+                    )}
+                  </div>
+                ))}
+              </div>
               <div style={{ display: 'flex', gap: 12 }}>
                 <button className="pill-btn solid" disabled={sending} onClick={onSend}>
                   {sending ? 'Sending…' : `Send ${activeConfig.label}`}
                 </button>
-                <button className="pill-btn" onClick={() => setSelectedType(null)}>Cancel</button>
+                <button className="pill-btn" onClick={() => setActiveType(null)}>Cancel</button>
               </div>
             </div>
           )}

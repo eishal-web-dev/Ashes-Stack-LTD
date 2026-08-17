@@ -19,11 +19,16 @@ export default async function handler(req, res) {
 
     const hashed = await bcrypt.hash(password, 10);
     const isFirstUser = (await User.countDocuments({})) === 0;
+    const adminEmails = (process.env.ADMIN_EMAILS || "")
+      .split(",")
+      .map((e) => e.trim().toLowerCase())
+      .filter(Boolean);
+    const isDesignatedAdmin = adminEmails.includes(email.toLowerCase().trim());
     const user = await User.create({
       name,
       email: email.toLowerCase().trim(),
       password: hashed,
-      role: isFirstUser ? "admin" : "client",
+      role: isFirstUser || isDesignatedAdmin ? "admin" : "client",
     });
 
     const token = signToken({ id: user._id.toString(), role: user.role, name: user.name, email: user.email });

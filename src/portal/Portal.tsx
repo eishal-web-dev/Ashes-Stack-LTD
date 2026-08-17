@@ -1,6 +1,7 @@
 import { useEffect, useState, FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getMe, logout, Me } from './api';
+import AccountSettings from './AccountSettings';
 
 const TYPE_LABELS: Record<string, string> = {
   welcome: 'Welcome Packet',
@@ -13,7 +14,7 @@ const TYPE_LABELS: Record<string, string> = {
 };
 
 type DocRow = { _id: string; title: string; type: string; status: string; createdAt: string };
-type Profile = { name: string; company?: string; project?: string; googleEmail?: string; phone?: string; age?: number; gender?: string };
+type Profile = { name: string; email: string; company?: string; project?: string; googleEmail?: string; phone?: string; age?: number; gender?: string };
 
 export default function Portal() {
   const navigate = useNavigate();
@@ -108,6 +109,8 @@ export default function Portal() {
             <button className="pill-btn solid" disabled={saving}>{saving ? 'Saving…' : 'Save details'}</button>
           </form>
         </div>
+
+        <AccountSettings profile={{ name: profile.name, email: (profile as any).email }} onUpdated={(p) => setProfile({ ...profile, ...p })} />
 
         <div className="portal-card">
           <h2 className="portal-h2">Documents from ASHES</h2>

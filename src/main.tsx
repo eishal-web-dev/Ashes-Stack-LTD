@@ -9,4 +9,5 @@ import './selected-work.css';
 import './philosophy.css';
 import './process-section.css';
 import './final-sections.css';
+import './about-section.css';
 createRoot(document.getElementById('root')!).render(<StrictMode><App/><ProcessScrollFlight/></StrictMode>);

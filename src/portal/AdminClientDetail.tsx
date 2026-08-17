@@ -36,6 +36,11 @@ export default function AdminClientDetail() {
   const [activeType, setActiveType] = useState<string | null>(null);
   const [values, setValues] = useState<Record<string, string>>({});
 
+  const [uploadMode, setUploadMode] = useState(false);
+  const [uploadTitle, setUploadTitle] = useState('');
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+
   useEffect(() => {
     if (!id) return;
     getMe().then(async (u) => {
@@ -68,8 +73,58 @@ export default function AdminClientDetail() {
     }
     setValues(initial);
     setActiveType(type);
+    setUploadMode(false);
     setMenuOpen(false);
     setMessage('');
+  }
+
+  function openUpload() {
+    setActiveType(null);
+    setUploadMode(true);
+    setUploadTitle('');
+    setUploadFile(null);
+    setMenuOpen(false);
+    setMessage('');
+  }
+
+  async function onUploadSend() {
+    if (!uploadFile || !uploadTitle.trim()) {
+      setMessage('Error: Add a title and choose a file first.');
+      return;
+    }
+    const MAX_BYTES = 4.3 * 1024 * 1024;
+    if (uploadFile.size > MAX_BYTES) {
+      setMessage('Error: That file is too large (limit ~4MB). For videos or large files, share a Google Drive/WeTransfer link instead — ask me about adding proper cloud file storage for bigger files.');
+      return;
+    }
+    setUploading(true);
+    setMessage('');
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const dataUrl = reader.result as string;
+      const base64 = dataUrl.split(',')[1];
+      const res = await fetch('/api/admin/upload-file', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          clientId: id,
+          title: uploadTitle.trim(),
+          fileName: uploadFile.name,
+          mimeType: uploadFile.type || 'application/octet-stream',
+          fileBase64: base64,
+        }),
+      });
+      const data = await res.json();
+      setUploading(false);
+      if (!res.ok) {
+        setMessage(`Error: ${data.error}`);
+      } else {
+        setMessage(`"${uploadTitle}" sent to ${client?.name}'s portal.`);
+        setUploadMode(false);
+        refreshDocs();
+      }
+    };
+    reader.readAsDataURL(uploadFile);
   }
 
   async function onSend() {
@@ -178,6 +233,20 @@ export default function AdminClientDetail() {
                 overflow: 'hidden',
               }}
             >
+              <button
+                onClick={openUpload}
+                style={{
+                  display: 'block', width: '100%', textAlign: 'left', padding: '14px 18px',
+                  background: uploadMode ? 'rgba(255,98,199,.08)' : 'transparent',
+                  border: 'none', borderBottom: '1px solid rgba(214,209,198,.18)',
+                  color: '#d8ff62', cursor: 'pointer', font: '700 .75rem "Courier New", monospace',
+                }}
+              >
+                <div>↑ Upload a file (PDF / image)</div>
+                <div style={{ color: '#8c8982', fontSize: '.68rem', marginTop: 3, fontWeight: 400 }}>
+                  Send an existing file as-is instead of a generated template.
+                </div>
+              </button>
               {DOC_TYPES.map((d) => (
                 <button
                   key={d.type}
@@ -234,6 +303,37 @@ export default function AdminClientDetail() {
                   {sending ? 'Sending…' : `Send ${activeConfig.label}`}
                 </button>
                 <button className="pill-btn" onClick={() => setActiveType(null)}>Cancel</button>
+              </div>
+            </div>
+          )}
+
+          {uploadMode && (
+            <div style={{ marginTop: 22, borderTop: '1px solid rgba(214,209,198,.14)', paddingTop: 22 }}>
+              <h3 style={{ margin: '0 0 4px', font: '700 .8rem/1 "Courier New", monospace', color: '#d8ff62' }}>
+                Upload a file
+              </h3>
+              <p className="portal-sub" style={{ marginTop: 4 }}>
+                Send a PDF or image straight through as-is — up to about 4MB. For video or larger files, share a
+                Google Drive / WeTransfer link with the client instead, or ask about adding proper cloud file storage.
+              </p>
+              <div className="portal-field">
+                <label>Title (shown in his portal)</label>
+                <input value={uploadTitle} onChange={(e) => setUploadTitle(e.target.value)} placeholder="e.g. Final logo files" />
+              </div>
+              <div className="portal-field">
+                <label>File</label>
+                <input type="file" accept=".pdf,image/*" onChange={(e) => setUploadFile(e.target.files?.[0] || null)} />
+                {uploadFile && (
+                  <p style={{ fontSize: '.68rem', color: '#8c8982', marginTop: 6 }}>
+                    {uploadFile.name} — {(uploadFile.size / (1024 * 1024)).toFixed(2)}MB
+                  </p>
+                )}
+              </div>
+              <div style={{ display: 'flex', gap: 12 }}>
+                <button className="pill-btn solid" disabled={uploading} onClick={onUploadSend}>
+                  {uploading ? 'Sending…' : 'Send file'}
+                </button>
+                <button className="pill-btn" onClick={() => setUploadMode(false)}>Cancel</button>
               </div>
             </div>
           )}

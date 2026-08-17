@@ -20,7 +20,10 @@ export default async function handler(req, res) {
   }
 
   const buffer = Buffer.from(doc.pdfBase64, "base64");
-  res.setHeader("Content-Type", "application/pdf");
-  res.setHeader("Content-Disposition", `inline; filename="${doc.title.replace(/[^a-z0-9]/gi, "_")}.pdf"`);
+  const mimeType = doc.mimeType || "application/pdf";
+  const fallbackExt = mimeType === "application/pdf" ? ".pdf" : "";
+  const fileName = doc.fileName || `${doc.title.replace(/[^a-z0-9]/gi, "_")}${fallbackExt}`;
+  res.setHeader("Content-Type", mimeType);
+  res.setHeader("Content-Disposition", `inline; filename="${fileName}"`);
   res.status(200).send(buffer);
 }

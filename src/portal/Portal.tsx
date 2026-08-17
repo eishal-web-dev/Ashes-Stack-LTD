@@ -11,6 +11,7 @@ const TYPE_LABELS: Record<string, string> = {
   monthly_report: 'Monthly Progress Report',
   fulfillment: 'Fulfillment & Handover',
   feedback_request: 'Feedback Request',
+  custom_file: 'File from ASHES',
 };
 
 type DocRow = { _id: string; title: string; type: string; status: string; createdAt: string };

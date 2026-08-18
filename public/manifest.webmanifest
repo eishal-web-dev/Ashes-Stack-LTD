@@ -9,7 +9,7 @@
   "theme_color": "#ff6a3d",
   "orientation": "portrait-primary",
   "icons": [
-    { "src": "/ashes-logo-transparent.webp", "sizes": "512x512", "type": "image/webp", "purpose": "any maskable" }
+    { "src": "/ashes-app-icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
   ],
   "shortcuts": [
     { "name": "Client Portal", "url": "/portal" },

@@ -12,6 +12,7 @@ import AdminHome from './portal/AdminHome';
 import AdminClientDetail from './portal/AdminClientDetail';
 import AdminAccount from './portal/AdminAccount';
 import AdminDashboard from './portal/AdminDashboard';
+import RouteAshesLoader from './portal/RouteAshesLoader';
 import AboutPage from './pages/AboutPage';
 import WorkPage from './pages/WorkPage';
 import ExpertisePage from './pages/ExpertisePage';
@@ -38,6 +39,7 @@ const AdminPro = ({children}:{children:React.ReactNode}) => <div className="admi
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>
+      <RouteAshesLoader/>
       <Routes>
         <Route path="/" element={<Home/>} />
         <Route path="/about" element={<AboutPage/>} />

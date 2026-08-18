@@ -1,1 +1,65 @@
-.about{min-height:620px!important;padding:8vh 4vw!important;display:grid!important;grid-template-columns:1fr;align-items:center;border-top:1px solid rgba(255,255,255,.07)!important;background:radial-gradient(circle at 50% 45%,rgba(255,75,154,.10),transparent 25%),radial-gradient(circle at 20% 78%,rgba(85,217,255,.055),transparent 28%),#070809!important;overflow:hidden}.about:before{content:""!important;position:absolute;inset:0;z-index:0!important;background:linear-gradient(rgba(255,255,255,.018) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.018) 1px,transparent 1px)!important;background-size:62px 62px!important;mask-image:linear-gradient(to bottom,transparent,#000 12%,#000 90%,transparent)!important}.about:after{content:""!important;position:absolute;left:50%;top:50%;width:min(46vw,650px);aspect-ratio:1;transform:translate(-50%,-50%);background:url('/ashes-phoenix-hero.webp') center/contain no-repeat;filter:drop-shadow(0 0 42px rgba(255,84,163,.22));opacity:.12;z-index:1!important;pointer-events:none}.about>.reveal{display:none!important}.about ul{position:relative;z-index:4;width:min(820px,88vw);margin:0 auto!important;padding:0!important;list-style:none!important;border-top:1px solid rgba(255,255,255,.12);counter-reset:aboutItem}.about ul li{position:relative;display:flex!important;align-items:center;min-height:78px;padding:0 52px 0 4px!important;border-bottom:1px solid rgba(255,255,255,.09);font:500 clamp(1.05rem,1.45vw,1.45rem)/1.05 Manrope,sans-serif!important;letter-spacing:-.025em;color:#aaa59f!important;transition:padding .3s ease,color .3s ease,background .3s ease}.about ul li:before{content:"0" counter(aboutItem);counter-increment:aboutItem;position:absolute;left:4px;top:13px;font:700 8px/1 DM Mono,monospace;letter-spacing:.14em;color:#5e5b57;opacity:0;transition:.25s}.about ul li:after{content:"↗";position:absolute;right:8px;font:300 1.15rem Manrope,sans-serif;color:#55514e;transition:.25s transform,.25s color}.about ul li:hover{padding-left:34px!important;color:#f4f1eb!important;background:linear-gradient(90deg,rgba(255,104,183,.05),transparent 80%)}.about ul li:hover:before{opacity:1}.about ul li:hover:after{transform:translate(3px,-3px);color:#ff68b7}.about ul li:nth-child(1):hover{color:#70e7ff!important}.about ul li:nth-child(2):hover{color:#c29aff!important}.about ul li:nth-child(3):hover{color:#ff79c5!important}.about ul li:nth-child(4):hover{color:#d9ff64!important}.about ul li:nth-child(5):hover{color:#ffb766!important}.about ul:after{content:"ASHES · ISLAMABAD · BUILDING EVERYWHERE";display:block;margin-top:24px;text-align:center;font:700 8px/1 DM Mono,monospace;letter-spacing:.17em;color:#66625e}@media(max-width:900px){.about{min-height:560px!important;padding:8vh 20px!important}.about:after{width:75vw;opacity:.09}.about ul{width:min(680px,92vw)}.about ul li{min-height:72px;font-size:clamp(1rem,4vw,1.35rem)!important}}@media(max-width:520px){.about{min-height:520px!important;padding:7vh 16px!important}.about:after{width:100vw;opacity:.07}.about ul li{min-height:66px;padding-right:40px!important}.about ul:after{line-height:1.5}}
+.about{
+  min-height:560px!important;
+  padding:10vh 4vw!important;
+  display:grid!important;
+  grid-template-columns:1fr;
+  align-items:center;
+  border-top:1px solid rgba(255,255,255,.07)!important;
+  background:radial-gradient(circle at 50% 45%,rgba(255,75,154,.10),transparent 25%),radial-gradient(circle at 20% 78%,rgba(85,217,255,.055),transparent 28%),#070809!important;
+  overflow:hidden;
+}
+.about:before{
+  content:"";
+  position:absolute;inset:0;z-index:0;
+  background:linear-gradient(rgba(255,255,255,.018) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.018) 1px,transparent 1px);
+  background-size:62px 62px;
+  mask-image:linear-gradient(to bottom,transparent,#000 12%,#000 90%,transparent);
+}
+.about:after{
+  content:"";
+  position:absolute;left:50%;top:50%;
+  width:min(46vw,650px);aspect-ratio:1;
+  transform:translate(-50%,-50%);
+  background:url('/ashes-phoenix-hero.webp') center/contain no-repeat;
+  filter:drop-shadow(0 0 42px rgba(255,84,163,.22));
+  opacity:.10;z-index:0;pointer-events:none;
+}
+
+.about>.reveal{
+  position:relative;z-index:2;
+  max-width:900px;margin:0 auto;text-align:center;
+}
+.about-lede{
+  max-width:680px;margin:22px auto 0;
+  font:400 clamp(.98rem,1.35vw,1.12rem)/1.7 Manrope,sans-serif;
+  color:#a5a099;
+  text-wrap:balance;
+}
+.about-tags{
+  display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:10px;
+  max-width:640px;margin:30px auto 0;
+}
+.about-tags span{
+  padding:9px 16px;
+  border:1px solid rgba(255,255,255,.14);
+  border-radius:999px;
+  font:700 9px/1 DM Mono,monospace;
+  letter-spacing:.1em;text-transform:uppercase;
+  color:#d8d4cc;
+  background:rgba(255,255,255,.03);
+  transition:border-color .2s ease,color .2s ease,background .2s ease,transform .2s ease;
+}
+.about-tags span:hover{
+  border-color:#ff68b7;color:#ff68b7;background:rgba(255,104,183,.08);
+  transform:translateY(-2px);
+}
+
+@media(max-width:900px){
+  .about{min-height:auto!important;padding:9vh 20px!important}
+  .about:after{width:75vw;opacity:.08}
+}
+@media(max-width:520px){
+  .about{padding:8vh 16px!important}
+  .about:after{width:100vw;opacity:.06}
+  .about-tags span{font-size:8px;padding:8px 13px}
+}

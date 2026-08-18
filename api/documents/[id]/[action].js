@@ -2,6 +2,7 @@ import { dbConnect } from "../../../lib/mongodb.js";
 import DocRecord from "../../../models/DocRecord.js";
 import { getUserFromReq } from "../../../lib/auth.js";
 import { logActivity } from "../../../lib/logActivity.js";
+import { getDocumentBuffer } from "../../../lib/supabaseStorage.js";
 
 async function doDownload(req, res, doc, authUser) {
   if (authUser.role === "client" && doc.client.toString() !== authUser.id) {
@@ -12,12 +13,13 @@ async function doDownload(req, res, doc, authUser) {
     await doc.save();
     await logActivity(doc.client, "document_downloaded", { type: doc.type, title: doc.title }, authUser.id);
   }
-  const buffer = Buffer.from(doc.pdfBase64, "base64");
+  const buffer = await getDocumentBuffer(doc);
   const mimeType = doc.mimeType || "application/pdf";
   const fallbackExt = mimeType === "application/pdf" ? ".pdf" : "";
   const fileName = doc.fileName || `${doc.title.replace(/[^a-z0-9]/gi, "_")}${fallbackExt}`;
   res.setHeader("Content-Type", mimeType);
   res.setHeader("Content-Disposition", `inline; filename="${fileName}"`);
+  res.setHeader("Cache-Control", "private, no-store");
   res.status(200).send(buffer);
 }
 

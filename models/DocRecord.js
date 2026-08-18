@@ -4,11 +4,7 @@ import Notification from "./Notification.js";
 const DocRecordSchema = new mongoose.Schema(
   {
     client: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-    type: {
-      type: String,
-      enum: ["welcome","contract","invoice","access_request","monthly_report","fulfillment","feedback_request","custom_file","appointment_letter"],
-      required: true,
-    },
+    type: { type: String, enum: ["welcome","contract","invoice","access_request","monthly_report","fulfillment","feedback_request","custom_file","appointment_letter"], required: true },
     title: { type: String, required: true },
     meta: { type: mongoose.Schema.Types.Mixed, default: {} },
     pdfBase64: { type: String, required: true },
@@ -24,7 +20,13 @@ const DocRecordSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+DocRecordSchema.pre("save", function(next) {
+  this.$locals.wasNew = this.isNew;
+  next();
+});
+
 DocRecordSchema.post("save", async function(doc) {
+  if (!doc.$locals.wasNew) return;
   try {
     const isAppointment = doc.type === "appointment_letter";
     await Notification.create({

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Bell, Download, X } from 'lucide-react';
 import { getMe } from './portal/api';
 
@@ -6,6 +7,7 @@ type AppNotification={_id:string;title:string;message:string;href?:string;read:b
 type InstallEvent=Event&{prompt:()=>Promise<void>;userChoice:Promise<{outcome:'accepted'|'dismissed'}>};
 
 export default function PwaManager(){
+  const location=useLocation();
   const[installEvent,setInstallEvent]=useState<InstallEvent|null>(null);
   const[installed,setInstalled]=useState(false);
   const[notes,setNotes]=useState<AppNotification[]>([]);
@@ -23,7 +25,7 @@ export default function PwaManager(){
 
   useEffect(()=>{
     let alive=true;
-    getMe().then(u=>{if(alive)setAuthed(!!u)}).catch(()=>{});
+    getMe().then(u=>{if(alive)setAuthed(!!u)}).catch(()=>{if(alive)setAuthed(false)});
     return()=>{alive=false};
   },[location.pathname]);
 
@@ -38,20 +40,20 @@ export default function PwaManager(){
       const newest=unread[0];
       const seen=localStorage.getItem('ashes-last-browser-notification');
       if(seen!==newest._id){
-        const reg=await navigator.serviceWorker?.ready.catch(()=>null);
-        if(reg) reg.showNotification(newest.title,{body:newest.message,icon:'/ashes-logo-transparent.webp',badge:'/ashes-logo-transparent.webp',data:{href:newest.href||'/portal'}});
-        else new Notification(newest.title,{body:newest.message,icon:'/ashes-logo-transparent.webp'});
+        const reg='serviceWorker'in navigator?await navigator.serviceWorker.ready.catch(()=>null):null;
+        if(reg) await reg.showNotification(newest.title,{body:newest.message,icon:'/ashes-app-icon.svg',badge:'/ashes-app-icon.svg',data:{href:newest.href||'/portal'}});
+        else new Notification(newest.title,{body:newest.message,icon:'/ashes-app-icon.svg'});
         localStorage.setItem('ashes-last-browser-notification',newest._id);
       }
     }
   }
 
   useEffect(()=>{
-    if(!authed)return;
+    if(!authed){setNotes([]);return}
     loadNotifications();
     const id=window.setInterval(loadNotifications,20000);
     return()=>window.clearInterval(id);
-  },[authed]);
+  },[authed,location.pathname]);
 
   const unread=useMemo(()=>notes.filter(n=>!n.read).length,[notes]);
   async function install(){if(!installEvent)return;await installEvent.prompt();const choice=await installEvent.userChoice;if(choice.outcome==='accepted'){setInstalled(true);setInstallEvent(null)}}

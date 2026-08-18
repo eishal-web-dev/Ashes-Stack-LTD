@@ -2,6 +2,7 @@ import { useEffect, useState, FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { BriefcaseBusiness, Plus, Search, ShieldCheck, UsersRound } from 'lucide-react';
 import { getMe, logout, Me } from './api';
+import AshesLoader from './AshesLoader';
 
 type ClientRow={_id:string;name:string;email:string;company?:string;docCount:number};
 type TeamRow={_id:string;name:string;email:string;teamTitle?:string;department?:string;availability?:string};
@@ -15,7 +16,7 @@ export default function AdminHome(){
  useEffect(()=>{getMe().then(async u=>{if(!u)return navigate('/login');if(u.role!=='admin')return navigate(u.role==='team'?'/team':'/portal');setUser(u);await load();setLoading(false)})},[navigate]);
  async function onLogout(){await logout();navigate('/login')}
  async function onCreate(e:FormEvent){e.preventDefault();setError('');setSuccess('');setCreating(true);const isTeam=form.role==='team';const url=isTeam?'/api/admin/team-create':'/api/admin/create-user';const body=isTeam?{name:form.name,email:form.email,password:form.password,teamTitle:form.teamTitle,department:form.department}:{name:form.name,email:form.email,password:form.password,role:'client',company:form.company,source:form.source,dealValue:form.dealValue};const res=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const data=await res.json();setCreating(false);if(!res.ok)return setError(data.error||'Could not create account.');setSuccess(`${isTeam?'Team':'Client'} account created for ${data.email}.`);setForm({name:'',email:'',password:'',role:isTeam?'team':'client',company:'',source:'other',dealValue:'',teamTitle:'Team Member',department:'Delivery'});await load()}
- if(loading)return <div className="portal-shell"><div className="portal-container">Loading…</div></div>;
+ if(loading)return <AshesLoader label="Opening admin portal…"/>;
  const filteredClients=clients.filter(c=>`${c.name} ${c.email} ${c.company||''}`.toLowerCase().includes(search.toLowerCase()));
  const filteredTeam=team.filter(t=>`${t.name} ${t.email} ${t.teamTitle||''} ${t.department||''}`.toLowerCase().includes(search.toLowerCase()));
  return <div className="portal-shell admin-directory-shell">

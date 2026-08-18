@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CalendarDays, CheckCircle2, Clock3, FolderKanban, LogOut, MessageSquare, Sparkles, TimerReset, UserRound } from 'lucide-react';
 import { getMe, logout, Me } from './api';
+import AshesLoader from './AshesLoader';
 
 const tasks = [
   { title: 'Review assigned build notes', type: 'Delivery', status: 'Ready' },
@@ -15,7 +16,7 @@ export default function TeamPortal(){
   const [loading,setLoading]=useState(true);
   useEffect(()=>{getMe().then(u=>{if(!u)return navigate('/login');if(u.role==='admin')return navigate('/admin/dashboard');if(u.role==='client')return navigate('/portal');setUser(u);setLoading(false)})},[navigate]);
   async function onLogout(){await logout();navigate('/login')}
-  if(loading)return <div className="portal-shell team-pro-shell"><div className="portal-container">Loading…</div></div>;
+  if(loading)return <AshesLoader label="Opening team workspace…"/>;
   return <div className="portal-shell team-pro-shell">
     <aside className="team-sidebar">
       <div className="team-logo">ASHES <span>TEAM</span></div>

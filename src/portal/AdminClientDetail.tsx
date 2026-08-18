@@ -22,6 +22,7 @@ const ACTION_LABELS: Record<string, string> = {
   document_signed: 'Contract signed',
   payment_marked_paid: 'Invoice marked paid',
   payment_marked_unpaid: 'Invoice marked unpaid',
+  review_submitted: 'Left a review',
 };
 
 function buildMeta(fields: FieldDef[], values: Record<string, string>): Record<string, unknown> {

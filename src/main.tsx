@@ -11,6 +11,12 @@ import AdminHome from './portal/AdminHome';
 import AdminClientDetail from './portal/AdminClientDetail';
 import AdminAccount from './portal/AdminAccount';
 import AdminDashboard from './portal/AdminDashboard';
+import AboutPage from './pages/AboutPage';
+import WorkPage from './pages/WorkPage';
+import ExpertisePage from './pages/ExpertisePage';
+import ProcessPage from './pages/ProcessPage';
+import ContactPage from './pages/ContactPage';
+import ReviewsPage from './pages/ReviewsPage';
 import './index.css';
 import './card-image-size.css';
 import './performance.css';
@@ -19,6 +25,7 @@ import './philosophy.css';
 import './process-section.css';
 import './final-sections.css';
 import './about-section.css';
+import './standalone-pages.css';
 import './portal/portal.css';
 
 function Home() {
@@ -30,6 +37,12 @@ createRoot(document.getElementById('root')!).render(
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Home/>} />
+        <Route path="/about" element={<AboutPage/>} />
+        <Route path="/work" element={<WorkPage/>} />
+        <Route path="/expertise" element={<ExpertisePage/>} />
+        <Route path="/process" element={<ProcessPage/>} />
+        <Route path="/contact" element={<ContactPage/>} />
+        <Route path="/reviews" element={<ReviewsPage/>} />
         <Route path="/login" element={<Login/>} />
         <Route path="/signup" element={<Signup/>} />
         <Route path="/portal" element={<Portal/>} />

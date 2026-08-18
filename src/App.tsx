@@ -1,6 +1,7 @@
 import { ArrowDownRight, ArrowUpRight, Box, Braces, BrainCircuit, Camera, Scale, Smartphone } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import Nav from './components/Nav';
+import Footer from './components/Footer';
 
 const powers=[
   {number:'01',title:'AI\nSYSTEMS',copy:'Intelligent systems that learn, reason and adapt.',icon:BrainCircuit,accent:'#55d9ff',mode:'ai'},
@@ -53,5 +54,5 @@ export default function App(){const [power,setPower]=useState(0);return <>
     <section id="studio" className="about"><Reveal><p className="kicker">ABOUT ASHES</p><h2>ASHES IS A DESIGN-LED<br/>SOFTWARE HOUSE FOR<br/>BRANDS THAT REFUSE<br/>TO BE BORING.</h2><p className="about-lede">Ashes is a design-led software house based in Islamabad, Pakistan, building websites, web applications, and AI-powered products for startups and growing brands. We specialize in custom web design, full-stack development, product engineering, and AI integration — turning ambitious ideas into fast, polished, production-ready software.</p><div className="about-tags"><span>Web Design</span><span>Full-Stack Development</span><span>Product Engineering</span><span>AI Integration</span><span>Islamabad, Pakistan</span></div></Reveal></section>
 
     <section className="cta"><div className="cta-energy" aria-hidden="true"/><div><p className="kicker">START SOMETHING UNIGNORABLE.</p><h2>GOT A WILD IDEA?<br/>GOOD. WE LIKE THOSE.</h2><a href="mailto:hello@ashes.studio">LET'S BUILD IT <ArrowUpRight/></a></div></section>
-  </main><footer><div className="footer-brand"><span>ASHES</span><p>Software that refuses<br/>to be forgettable.</p></div><div className="footer-contact"><span>START SOMETHING</span><a href="mailto:hello@ashes.studio">hello@ashes.studio ↗</a></div><nav><a href="#">INSTAGRAM</a><a href="#">LINKEDIN</a><a href="#">GITHUB</a><a href="#top">BACK TO TOP ↑</a></nav><small>© 2026 ASHES · ISLAMABAD / EVERYWHERE</small></footer>
+  </main><Footer/>
   </>}

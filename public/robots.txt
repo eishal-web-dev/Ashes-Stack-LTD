@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /portal
+Disallow: /login
+Disallow: /signup
+Disallow: /api
+
+Sitemap: https://ashes-stack.vercel.app/sitemap.xml

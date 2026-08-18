@@ -27,6 +27,12 @@ export default function Portal() {
   const [user, setUser] = useState<Me | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [docs, setDocs] = useState<DocRow[]>([]);
+  const [myReview, setMyReview] = useState<{ rating: number; comment: string } | null>(null);
+  const [reviewRating, setReviewRating] = useState(0);
+  const [reviewComment, setReviewComment] = useState('');
+  const [hoverStar, setHoverStar] = useState(0);
+  const [submittingReview, setSubmittingReview] = useState(false);
+  const [reviewSaved, setReviewSaved] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -60,15 +66,38 @@ export default function Portal() {
       if (!u) return navigate('/login');
       if (u.role === 'admin') return navigate('/admin');
       setUser(u);
-      const [p, d] = await Promise.all([
+      const [p, d, allReviews] = await Promise.all([
         fetch('/api/client/profile').then((r) => r.json()),
         fetch('/api/documents').then((r) => r.json()),
+        fetch('/api/reviews').then((r) => r.json()),
       ]);
       setProfile(p);
       setDocs(d);
+      const mine = Array.isArray(allReviews) ? allReviews.find((r: any) => r.client === u.id) : null;
+      if (mine) {
+        setMyReview({ rating: mine.rating, comment: mine.comment });
+        setReviewRating(mine.rating);
+        setReviewComment(mine.comment || '');
+      }
       setLoading(false);
     });
   }, [navigate]);
+
+  async function submitReview() {
+    if (!reviewRating) return;
+    setSubmittingReview(true);
+    const res = await fetch('/api/reviews', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rating: reviewRating, comment: reviewComment, clientName: user?.name, company: profile?.company }),
+    });
+    setSubmittingReview(false);
+    if (res.ok) {
+      setMyReview({ rating: reviewRating, comment: reviewComment });
+      setReviewSaved(true);
+      setTimeout(() => setReviewSaved(false), 3000);
+    }
+  }
 
   async function saveProfile(e: FormEvent) {
     e.preventDefault();
@@ -207,6 +236,51 @@ export default function Portal() {
               </tbody>
             </table>
           )}
+        </div>
+
+        <div className="portal-card">
+          <h2 className="portal-h2">{myReview ? 'Your review' : 'Rate your experience'}</h2>
+          <p className="portal-sub" style={{ marginTop: -2 }}>
+            {myReview ? 'You can update this anytime — it stays visible on our public Reviews page.' : "Tell us how it's going — this shows up on our public Reviews page."}
+          </p>
+          {reviewSaved && <div className="portal-success">Thanks — your review is live.</div>}
+          <div style={{ display: 'flex', gap: 6, marginBottom: 18 }}>
+            {[1, 2, 3, 4, 5].map((n) => (
+              <button
+                key={n}
+                type="button"
+                onClick={() => setReviewRating(n)}
+                onMouseEnter={() => setHoverStar(n)}
+                onMouseLeave={() => setHoverStar(0)}
+                style={{
+                  background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+                  fontSize: '1.8rem', lineHeight: 1,
+                  color: n <= (hoverStar || reviewRating) ? '#d8ff62' : 'rgba(255,255,255,.18)',
+                  transition: 'color .15s',
+                }}
+                aria-label={`${n} star${n > 1 ? 's' : ''}`}
+              >
+                ★
+              </button>
+            ))}
+          </div>
+          <div className="portal-field">
+            <label>Comment (optional)</label>
+            <textarea
+              rows={3}
+              value={reviewComment}
+              onChange={(e) => setReviewComment(e.target.value)}
+              placeholder="What was it like working with ASHES?"
+              style={{
+                width: '100%', padding: '12px 14px', borderRadius: 10,
+                background: '#0a0a0b', border: '1px solid rgba(214,209,198,.2)', color: '#eceae4',
+                font: '400 .85rem "Courier New", monospace', resize: 'vertical',
+              }}
+            />
+          </div>
+          <button className="pill-btn solid" disabled={!reviewRating || submittingReview} onClick={submitReview}>
+            {submittingReview ? 'Saving…' : myReview ? 'Update review' : 'Submit review'}
+          </button>
         </div>
       </div>
     </div>

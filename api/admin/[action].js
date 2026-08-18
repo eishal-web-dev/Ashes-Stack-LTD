@@ -53,7 +53,7 @@ async function doSendDocument(req, res, authUser) {
 
 async function doCreateUser(req, res, authUser) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
-  const { name, email, password, role, company, project } = req.body;
+  const { name, email, password, role, company, project, source, dealValue } = req.body;
   if (!name || !email || !password) {
     return res.status(400).json({ error: "Name, email and password are required." });
   }
@@ -72,10 +72,122 @@ async function doCreateUser(req, res, authUser) {
     role: role === "admin" ? "admin" : "client",
     company: company || undefined,
     project: project || undefined,
+    source: source || "other",
+    dealValue: dealValue || undefined,
   });
 
   res.status(201).json({ id: user._id, name: user.name, email: user.email, role: user.role });
   await logActivity(user._id, "account_created", { via: "admin_panel", role: user.role }, authUser.id);
+}
+
+async function doUpdateClient(req, res, authUser) {
+  if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+  const { clientId, stage, source, dealValue } = req.body;
+  if (!clientId) return res.status(400).json({ error: "clientId is required" });
+
+  const client = await User.findById(clientId);
+  if (!client) return res.status(404).json({ error: "Client not found" });
+
+  const prevStage = client.stage;
+  if (stage !== undefined) client.stage = stage;
+  if (source !== undefined) client.source = source;
+  if (dealValue !== undefined) client.dealValue = dealValue;
+  await client.save();
+
+  if (stage !== undefined && stage !== prevStage) {
+    await logActivity(client._id, "stage_changed", { from: prevStage, to: stage }, authUser.id);
+  }
+
+  res.status(200).json({ id: client._id, stage: client.stage, source: client.source, dealValue: client.dealValue });
+}
+
+const PIPELINE_STAGES = ["lead", "contacted", "demo", "proposal", "won", "in_progress", "delivered", "paid", "review", "repeat_client", "lost"];
+const OPEN_STAGES = ["lead", "contacted", "demo", "proposal", "won", "in_progress"];
+const CONVERTED_STAGES = ["won", "in_progress", "delivered", "paid", "review", "repeat_client"];
+
+async function doDashboard(req, res) {
+  const clients = await User.find({ role: "client" });
+  const invoices = await DocRecord.find({ type: "invoice" }).select("-pdfBase64");
+
+  // Revenue, computed only from real invoice data (amount lives in meta.amount).
+  let totalRevenue = 0, outstandingPayments = 0, invoiceCount = 0, invoiceValueSum = 0;
+  const monthlyMap = {}; // "2026-08" -> amount
+  for (const inv of invoices) {
+    const amount = Number(inv.meta?.amount) || 0;
+    invoiceCount++;
+    invoiceValueSum += amount;
+    if (inv.paymentStatus === "paid") {
+      totalRevenue += amount;
+      const d = inv.paidAt ? new Date(inv.paidAt) : new Date(inv.createdAt);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      monthlyMap[key] = (monthlyMap[key] || 0) + amount;
+    } else {
+      outstandingPayments += amount;
+    }
+  }
+  const avgProjectValue = invoiceCount ? Math.round(invoiceValueSum / invoiceCount) : 0;
+
+  // Last 6 months of earnings, oldest first, zero-filled.
+  const months = [];
+  const now = new Date();
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    months.push({ key, label: d.toLocaleString("en-GB", { month: "short" }), amount: monthlyMap[key] || 0 });
+  }
+
+  // Pipeline: real stage counts + value of deals still open.
+  const stageCounts = Object.fromEntries(PIPELINE_STAGES.map((s) => [s, 0]));
+  let pipelineValue = 0;
+  const sourceCounts = {};
+  for (const c of clients) {
+    const stage = PIPELINE_STAGES.includes(c.stage) ? c.stage : "lead";
+    stageCounts[stage]++;
+    if (OPEN_STAGES.includes(stage)) pipelineValue += Number(c.dealValue) || 0;
+    const src = c.source || "other";
+    sourceCounts[src] = (sourceCounts[src] || 0) + 1;
+  }
+
+  const totalClients = clients.length;
+  const convertedCount = clients.filter((c) => CONVERTED_STAGES.includes(c.stage)).length;
+  const conversionRate = totalClients ? Math.round((convertedCount / totalClients) * 1000) / 10 : 0;
+  const repeatClients = stageCounts.repeat_client;
+
+  // Avg days lead->paid, only for clients with at least one paid invoice.
+  const closeDurations = [];
+  for (const c of clients) {
+    const paidInvoicesForClient = invoices.filter((inv) => inv.client.toString() === c._id.toString() && inv.paymentStatus === "paid" && inv.paidAt);
+    if (paidInvoicesForClient.length) {
+      const earliestPaid = paidInvoicesForClient.reduce((a, b) => (new Date(a.paidAt) < new Date(b.paidAt) ? a : b));
+      const days = Math.round((new Date(earliestPaid.paidAt) - new Date(c.createdAt)) / 86400000);
+      if (days >= 0) closeDurations.push(days);
+    }
+  }
+  const avgDaysToClose = closeDurations.length ? Math.round(closeDurations.reduce((a, b) => a + b, 0) / closeDurations.length) : null;
+
+  // "Today" panel — clients whose stage hasn't moved in 7+ days and aren't done/lost.
+  const staleClients = clients.filter((c) => {
+    if (!OPEN_STAGES.includes(c.stage)) return false;
+    const daysSinceUpdate = (Date.now() - new Date(c.updatedAt)) / 86400000;
+    return daysSinceUpdate >= 7;
+  }).length;
+  const outstandingInvoiceCount = invoices.filter((inv) => inv.paymentStatus !== "paid").length;
+
+  res.status(200).json({
+    totalRevenue,
+    outstandingPayments,
+    outstandingInvoiceCount,
+    avgProjectValue,
+    monthlyEarnings: months,
+    stageCounts,
+    pipelineValue,
+    sourceCounts,
+    totalClients,
+    conversionRate,
+    repeatClients,
+    avgDaysToClose,
+    staleClients,
+  });
 }
 
 async function doActivity(req, res) {
@@ -125,6 +237,8 @@ export default async function handler(req, res) {
     if (action === "create-user") return await doCreateUser(req, res, authUser);
     if (action === "activity") return await doActivity(req, res);
     if (action === "upload-file") return await doUploadFile(req, res, authUser);
+    if (action === "dashboard") return await doDashboard(req, res);
+    if (action === "update-client") return await doUpdateClient(req, res, authUser);
     return res.status(404).json({ error: "Unknown admin action" });
   } catch (e) {
     res.status(500).json({ error: e.message });

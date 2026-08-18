@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { getMe, logout, Me } from './api';
 import { DOC_TYPES, FieldDef } from './docConfig';
 
-type ClientInfo = { _id: string; name: string; email: string; company?: string; googleEmail?: string; age?: number; gender?: string };
+type ClientInfo = { _id: string; name: string; email: string; company?: string; googleEmail?: string; age?: number; gender?: string; stage?: string; source?: string; dealValue?: number };
 type DocRow = {
   _id: string; title: string; type: string; status: string; createdAt: string;
   meta?: { dueDate?: string; [k: string]: unknown };
@@ -215,6 +215,17 @@ export default function AdminClientDetail() {
     refreshDocs();
   }
 
+  async function updatePipeline(fields: Partial<Pick<ClientInfo, 'stage' | 'source' | 'dealValue'>>) {
+    const res = await fetch('/api/admin/update-client', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ clientId: id, ...fields }),
+    });
+    if (res.ok) {
+      setClient((c) => (c ? { ...c, ...fields } : c));
+    }
+  }
+
   async function onLogout() {
     await logout();
     navigate('/login');
@@ -246,6 +257,49 @@ export default function AdminClientDetail() {
         </p>
 
         {message && <div className={message.startsWith('Error') ? 'portal-error' : 'portal-success'}>{message}</div>}
+
+        <div className="portal-card">
+          <h2 className="portal-h2">Pipeline</h2>
+          <p className="portal-sub" style={{ marginTop: -2 }}>Move this client through the funnel — powers the business dashboard.</p>
+          <div className="portal-grid-2">
+            <div className="portal-field">
+              <label>Stage</label>
+              <select value={client.stage || 'lead'} onChange={(e) => updatePipeline({ stage: e.target.value })}>
+                <option value="lead">Lead</option>
+                <option value="contacted">Contacted</option>
+                <option value="demo">Demo</option>
+                <option value="proposal">Proposal</option>
+                <option value="won">Won</option>
+                <option value="in_progress">In Progress</option>
+                <option value="delivered">Delivered</option>
+                <option value="paid">Paid</option>
+                <option value="review">Review</option>
+                <option value="repeat_client">Repeat Client</option>
+                <option value="lost">Lost</option>
+              </select>
+            </div>
+            <div className="portal-field">
+              <label>Source</label>
+              <select value={client.source || 'other'} onChange={(e) => updatePipeline({ source: e.target.value })}>
+                <option value="whatsapp">WhatsApp</option>
+                <option value="linkedin">LinkedIn</option>
+                <option value="instagram">Instagram</option>
+                <option value="fiverr">Fiverr</option>
+                <option value="referral">Referral</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            <div className="portal-field">
+              <label>Estimated deal value (PKR)</label>
+              <input
+                type="number"
+                defaultValue={client.dealValue || ''}
+                onBlur={(e) => updatePipeline({ dealValue: Number(e.target.value) || 0 })}
+                placeholder="e.g. 5000"
+              />
+            </div>
+          </div>
+        </div>
 
         <div className="portal-card" style={{ position: 'relative' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>

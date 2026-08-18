@@ -10,6 +10,7 @@ import Portal from './portal/Portal';
 import AdminHome from './portal/AdminHome';
 import AdminClientDetail from './portal/AdminClientDetail';
 import AdminAccount from './portal/AdminAccount';
+import AdminDashboard from './portal/AdminDashboard';
 import './index.css';
 import './card-image-size.css';
 import './performance.css';
@@ -33,6 +34,7 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/signup" element={<Signup/>} />
         <Route path="/portal" element={<Portal/>} />
         <Route path="/admin" element={<AdminHome/>} />
+        <Route path="/admin/dashboard" element={<AdminDashboard/>} />
         <Route path="/admin/account" element={<AdminAccount/>} />
         <Route path="/admin/client/:id" element={<AdminClientDetail/>} />
       </Routes>

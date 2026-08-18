@@ -15,6 +15,19 @@ const UserSchema = new mongoose.Schema(
     project: { type: String, default: "Landing Page Service Agreement" },
     company: { type: String, default: "Life Time Car Wash" },
     notes: { type: String },
+
+    // Sales pipeline / mini-CRM
+    stage: {
+      type: String,
+      enum: ["lead", "contacted", "demo", "proposal", "won", "in_progress", "delivered", "paid", "review", "repeat_client", "lost"],
+      default: "lead",
+    },
+    source: {
+      type: String,
+      enum: ["whatsapp", "linkedin", "instagram", "fiverr", "referral", "other"],
+      default: "other",
+    },
+    dealValue: { type: Number }, // estimated/agreed value of this client's deal, for pipeline value calc
   },
   { timestamps: true }
 );

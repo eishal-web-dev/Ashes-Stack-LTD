@@ -11,7 +11,7 @@ export default function AdminHome() {
   const [loading, setLoading] = useState(true);
 
   const [showAdd, setShowAdd] = useState(false);
-  const [form, setForm] = useState({ name: '', email: '', password: '', role: 'client', company: 'Life Time Car Wash' });
+  const [form, setForm] = useState({ name: '', email: '', password: '', role: 'client', company: 'Life Time Car Wash', source: 'other', dealValue: '' });
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -51,7 +51,7 @@ export default function AdminHome() {
     setCreating(false);
     if (!res.ok) return setError(data.error || 'Could not create account.');
     setSuccess(`Account created for ${data.email} (${data.role}). Share these login details with them directly.`);
-    setForm({ name: '', email: '', password: '', role: 'client', company: 'Life Time Car Wash' });
+    setForm({ name: '', email: '', password: '', role: 'client', company: 'Life Time Car Wash', source: 'other', dealValue: '' });
     await loadClients();
   }
 
@@ -62,6 +62,7 @@ export default function AdminHome() {
       <div className="portal-topbar">
         <div className="portal-brand">ASHES <span>· Admin</span></div>
         <div className="portal-nav-actions">
+          <Link className="pill-btn tiny solid" to="/admin/dashboard">Dashboard</Link>
           <Link className="pill-btn tiny" to="/admin/account">Account</Link>
           <span className="portal-user">{user?.name}</span>
           <button className="pill-btn tiny" onClick={onLogout}>Log out</button>
@@ -108,6 +109,21 @@ export default function AdminHome() {
                 <div className="portal-field" style={{ gridColumn: '1 / -1' }}>
                   <label>Company (for clients)</label>
                   <input value={form.company} onChange={(e) => setForm({ ...form, company: e.target.value })} />
+                </div>
+                <div className="portal-field">
+                  <label>Lead source</label>
+                  <select value={form.source} onChange={(e) => setForm({ ...form, source: e.target.value })}>
+                    <option value="whatsapp">WhatsApp</option>
+                    <option value="linkedin">LinkedIn</option>
+                    <option value="instagram">Instagram</option>
+                    <option value="fiverr">Fiverr</option>
+                    <option value="referral">Referral</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+                <div className="portal-field">
+                  <label>Estimated deal value (PKR)</label>
+                  <input type="number" placeholder="e.g. 5000" value={form.dealValue} onChange={(e) => setForm({ ...form, dealValue: e.target.value })} />
                 </div>
               </div>
               <button className="pill-btn solid" disabled={creating}>{creating ? 'Creating…' : 'Create account'}</button>

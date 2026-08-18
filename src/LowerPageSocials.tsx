@@ -7,7 +7,7 @@ const whatsappIcon=`<svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 5a1
 
 export default function LowerPageSocials(){
   useEffect(()=>{
-    const wrapTarget=document.querySelector<HTMLElement>('.philosophy-phoenix-wrap');
+    const wrapTarget=document.querySelector<HTMLElement>('.philosophy-core');
     if(!wrapTarget)return;
     wrapTarget.querySelector('.final-socials')?.remove();
     const wrap=document.createElement('div');

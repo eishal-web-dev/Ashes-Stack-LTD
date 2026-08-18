@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import App from './App';
 import ProcessScrollFlight from './ProcessScrollFlight';
 import LowerPageSocials from './LowerPageSocials';
+import PwaManager from './PwaManager';
 import Login from './portal/Login';
 import Signup from './portal/Signup';
 import Portal from './portal/Portal';
@@ -34,7 +35,9 @@ import './portal/client-portal.css';
 import './portal/ashes-loader.css';
 import './portal/owner-dashboard.css';
 import './portal/appointment-letter.css';
+import './pwa-notifications.css';
+import './mobile-responsive.css';
 
-function Home() { return <><App/><ProcessScrollFlight/><LowerPageSocials/></>; }
-const AdminPro = ({children}:{children:React.ReactNode}) => <div className="admin-pro">{children}</div>;
-createRoot(document.getElementById('root')!).render(<StrictMode><BrowserRouter><RouteAshesLoader/><Routes><Route path="/" element={<Home/>}/><Route path="/about" element={<AboutPage/>}/><Route path="/work" element={<WorkPage/>}/><Route path="/expertise" element={<ExpertisePage/>}/><Route path="/process" element={<ProcessPage/>}/><Route path="/contact" element={<ContactPage/>}/><Route path="/reviews" element={<ReviewsPage/>}/><Route path="/login" element={<Login/>}/><Route path="/signup" element={<Signup/>}/><Route path="/portal" element={<Portal/>}/><Route path="/team" element={<TeamPortal/>}/><Route path="/admin" element={<AdminPro><AdminHome/></AdminPro>}/><Route path="/admin/dashboard" element={<AdminPro><AdminDashboard/></AdminPro>}/><Route path="/admin/account" element={<AdminPro><AdminAccount/></AdminPro>}/><Route path="/admin/client/:id" element={<AdminPro><AdminClientDetail/></AdminPro>}/></Routes></BrowserRouter></StrictMode>);
+function Home(){return <><App/><ProcessScrollFlight/><LowerPageSocials/></>}
+const AdminPro=({children}:{children:React.ReactNode})=><div className="admin-pro">{children}</div>;
+createRoot(document.getElementById('root')!).render(<StrictMode><BrowserRouter><RouteAshesLoader/><PwaManager/><Routes><Route path="/" element={<Home/>}/><Route path="/about" element={<AboutPage/>}/><Route path="/work" element={<WorkPage/>}/><Route path="/expertise" element={<ExpertisePage/>}/><Route path="/process" element={<ProcessPage/>}/><Route path="/contact" element={<ContactPage/>}/><Route path="/reviews" element={<ReviewsPage/>}/><Route path="/login" element={<Login/>}/><Route path="/signup" element={<Signup/>}/><Route path="/portal" element={<Portal/>}/><Route path="/team" element={<TeamPortal/>}/><Route path="/admin" element={<AdminPro><AdminHome/></AdminPro>}/><Route path="/admin/dashboard" element={<AdminPro><AdminDashboard/></AdminPro>}/><Route path="/admin/account" element={<AdminPro><AdminAccount/></AdminPro>}/><Route path="/admin/client/:id" element={<AdminPro><AdminClientDetail/></AdminPro>}/></Routes></BrowserRouter></StrictMode>);

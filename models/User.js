@@ -5,18 +5,23 @@ const UserSchema = new mongoose.Schema(
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     password: { type: String, required: true },
-    role: { type: String, enum: ["client", "admin"], default: "client" },
+    role: { type: String, enum: ["client", "admin", "team"], default: "client" },
 
-    // Basic client profile data
+    // Shared profile data
     age: { type: Number },
     gender: { type: String },
-    googleEmail: { type: String }, // used for Google Meet invites
+    googleEmail: { type: String },
     phone: { type: String },
     project: { type: String, default: "Landing Page Service Agreement" },
     company: { type: String, default: "Life Time Car Wash" },
     notes: { type: String },
 
-    // Sales pipeline / mini-CRM
+    // Team-only profile data. Team accounts never receive CRM/finance permissions.
+    teamTitle: { type: String, default: "Team Member" },
+    department: { type: String, default: "Delivery" },
+    availability: { type: String, default: "Available" },
+
+    // Sales pipeline / mini-CRM. Used for client accounts only.
     stage: {
       type: String,
       enum: ["lead", "contacted", "demo", "proposal", "won", "in_progress", "delivered", "paid", "review", "repeat_client", "lost"],
@@ -27,7 +32,7 @@ const UserSchema = new mongoose.Schema(
       enum: ["whatsapp", "linkedin", "instagram", "fiverr", "referral", "other"],
       default: "other",
     },
-    dealValue: { type: Number }, // estimated/agreed value of this client's deal, for pipeline value calc
+    dealValue: { type: Number },
   },
   { timestamps: true }
 );

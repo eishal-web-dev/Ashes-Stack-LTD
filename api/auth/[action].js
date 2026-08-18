@@ -14,21 +14,21 @@ async function doSignup(req, res) {
   if (password.length < 6) {
     return res.status(400).json({ error: "Password must be at least 6 characters." });
   }
-  const existing = await User.findOne({ email: email.toLowerCase().trim() });
+  const cleanEmail = email.toLowerCase().trim();
+  const existing = await User.findOne({ email: cleanEmail });
   if (existing) return res.status(409).json({ error: "An account with this email already exists." });
 
   const hashed = await bcrypt.hash(password, 10);
-  const isFirstUser = (await User.countDocuments({})) === 0;
-  const adminEmails = (process.env.ADMIN_EMAILS || "")
+  const adminEmails = (process.env.ADMIN_EMAILS || "admin@gmail.com")
     .split(",")
     .map((e) => e.trim().toLowerCase())
     .filter(Boolean);
-  const isDesignatedAdmin = adminEmails.includes(email.toLowerCase().trim());
+  const isDesignatedAdmin = adminEmails.includes(cleanEmail);
   const user = await User.create({
     name,
-    email: email.toLowerCase().trim(),
+    email: cleanEmail,
     password: hashed,
-    role: isFirstUser || isDesignatedAdmin ? "admin" : "client",
+    role: isDesignatedAdmin ? "admin" : "client",
   });
 
   const token = signToken({ id: user._id.toString(), role: user.role, name: user.name, email: user.email });
@@ -46,9 +46,14 @@ async function doLogin(req, res) {
   const match = await bcrypt.compare(password, user.password);
   if (!match) return res.status(401).json({ error: "Invalid email or password." });
 
-  const token = signToken({ id: user._id.toString(), role: user.role, name: user.name, email: user.email });
+  const adminEmails = (process.env.ADMIN_EMAILS || "admin@gmail.com")
+    .split(",")
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean);
+  const safeRole = user.role === "admin" && !adminEmails.includes(user.email.toLowerCase()) ? "client" : user.role;
+  const token = signToken({ id: user._id.toString(), role: safeRole, name: user.name, email: user.email });
   setAuthCookie(res, token);
-  res.status(200).json({ id: user._id, role: user.role, name: user.name, email: user.email });
+  res.status(200).json({ id: user._id, role: safeRole, name: user.name, email: user.email });
 }
 
 function doLogout(req, res) {

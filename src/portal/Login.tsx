@@ -19,36 +19,26 @@ export default function Login() {
     const data = await res.json();
     setLoading(false);
     if (!res.ok) return setError(data.error || 'Login failed');
-    navigate(data.role === 'admin' ? '/admin' : '/portal');
+    if (data.role === 'admin') return navigate('/admin/dashboard');
+    if (data.role === 'team') return navigate('/team');
+    navigate('/portal');
   }
 
   return (
     <div className="portal-shell">
       <div className="portal-narrow">
         <div className="portal-card">
-          <div className="portal-eyebrow">ASHES CLIENT PORTAL</div>
+          <div className="portal-eyebrow">ASHES ACCESS</div>
           <h1 className="portal-h1">Sign in</h1>
-          <p className="portal-sub">Access your project, documents and invoices.</p>
+          <p className="portal-sub">Client, team and admin accounts use one secure entrance.</p>
           {error && <div className="portal-error">{error}</div>}
           <form onSubmit={onSubmit}>
-            <div className="portal-field">
-              <label>Email</label>
-              <input type="email" required value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
-            </div>
-            <div className="portal-field">
-              <label>Password</label>
-              <input type="password" required value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
-            </div>
-            <button className="pill-btn solid" disabled={loading} style={{ width: '100%', justifyContent: 'center' }}>
-              {loading ? 'Signing in…' : 'Sign in'}
-            </button>
+            <div className="portal-field"><label>Email</label><input type="email" required value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
+            <div className="portal-field"><label>Password</label><input type="password" required value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} /></div>
+            <button className="pill-btn solid" disabled={loading} style={{ width: '100%', justifyContent: 'center' }}>{loading ? 'Signing in…' : 'Sign in'}</button>
           </form>
-          <p style={{ fontSize: '.68rem', marginTop: 20, color: '#8c8982' }}>
-            Don't have an account? <Link className="portal-link" to="/signup">Create one</Link>
-          </p>
-          <p style={{ fontSize: '.68rem', marginTop: 8 }}>
-            <Link className="portal-link" to="/">← Back to ashes.studio</Link>
-          </p>
+          <p style={{ fontSize: '.68rem', marginTop: 20, color: '#8c8982' }}>New client? <Link className="portal-link" to="/signup">Create a client account</Link></p>
+          <p style={{ fontSize: '.68rem', marginTop: 8 }}><Link className="portal-link" to="/">← Back to Ashes</Link></p>
         </div>
       </div>
     </div>

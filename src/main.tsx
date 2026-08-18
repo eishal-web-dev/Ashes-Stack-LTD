@@ -29,6 +29,7 @@ import './about-section.css';
 import './standalone-pages.css';
 import './portal/portal.css';
 import './portal/professional-portals.css';
+import './portal/ashes-loader.css';
 
 function Home() { return <><App/><ProcessScrollFlight/><LowerPageSocials/></>; }
 const AdminPro = ({children}:{children:React.ReactNode}) => <div className="admin-pro">{children}</div>;

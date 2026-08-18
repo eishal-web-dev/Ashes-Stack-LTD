@@ -1,5 +1,15 @@
 import mongoose from "mongoose";
 
+const TeamTaskSchema = new mongoose.Schema(
+  {
+    title: { type: String, required: true },
+    description: { type: String },
+    status: { type: String, enum: ["todo", "in_progress", "done"], default: "todo" },
+    dueDate: { type: Date },
+  },
+  { _id: true, timestamps: true }
+);
+
 const UserSchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
@@ -16,10 +26,18 @@ const UserSchema = new mongoose.Schema(
     company: { type: String, default: "Life Time Car Wash" },
     notes: { type: String },
 
-    // Team-only profile data. Team accounts never receive CRM/finance permissions.
+    // Team-only HR data. Team accounts never receive CRM/finance permissions.
     teamTitle: { type: String, default: "Team Member" },
     department: { type: String, default: "Delivery" },
     availability: { type: String, default: "Available" },
+    employmentStatus: { type: String, default: "Active" },
+    startedAt: { type: Date },
+    salaryAmount: { type: Number },
+    salaryCurrency: { type: String, default: "PKR" },
+    salaryFrequency: { type: String, enum: ["monthly", "weekly", "hourly", "project"], default: "monthly" },
+    appointmentLetterTitle: { type: String, default: "Appointment Letter" },
+    appointmentLetterUrl: { type: String },
+    teamTasks: { type: [TeamTaskSchema], default: [] },
 
     // Sales pipeline / mini-CRM. Used for client accounts only.
     stage: {

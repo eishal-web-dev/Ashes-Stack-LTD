@@ -14,12 +14,13 @@ const DocRecordSchema = new mongoose.Schema(
         "fulfillment",
         "feedback_request",
         "custom_file",
+        "appointment_letter",
       ],
       required: true,
     },
     title: { type: String, required: true },
-    meta: { type: mongoose.Schema.Types.Mixed, default: {} }, // e.g. invoice items/amount
-    pdfBase64: { type: String, required: true }, // holds base64 content for any file type, not just PDFs
+    meta: { type: mongoose.Schema.Types.Mixed, default: {} },
+    pdfBase64: { type: String, required: true },
     mimeType: { type: String, default: "application/pdf" },
     fileName: { type: String },
     status: { type: String, enum: ["sent", "downloaded"], default: "sent" },

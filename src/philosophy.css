@@ -18,7 +18,7 @@
 .philosophy-core-badge small{display:block;margin-top:6px;font-size:8px;color:#8e8a86;letter-spacing:.2em}
 
 .philosophy-core .phoenix-socials{position:relative}
-.philosophy-core .phoenix-socials .social-cluster{display:flex;flex-direction:row;flex-wrap:nowrap;gap:10px}
+.philosophy-core .phoenix-socials .social-cluster{display:grid;grid-template-columns:repeat(2,48px);grid-template-rows:repeat(2,48px);gap:9px}
 .philosophy-core .phoenix-socials .social-slot,.philosophy-core .phoenix-socials .social-shape{width:48px!important;height:48px!important}
 .philosophy-core .phoenix-socials .social-shape svg{width:18px!important;height:18px!important}
 
@@ -54,6 +54,7 @@
   .philosophy-phoenix-wrap{height:280px}
   .philosophy-core{gap:18px}
   .philosophy-core-badge{padding:13px 20px;font-size:11px}
+  .philosophy-core .phoenix-socials .social-cluster{grid-template-columns:repeat(2,46px);grid-template-rows:repeat(2,46px)}
   .philosophy-core .phoenix-socials .social-slot,.philosophy-core .phoenix-socials .social-shape{width:46px!important;height:46px!important}
   .philosophy-core .phoenix-socials .social-shape svg{width:17px!important;height:17px!important}
   .philosophy-core .phoenix-socials .social-comment{display:none}

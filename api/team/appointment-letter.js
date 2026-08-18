@@ -1,6 +1,7 @@
 import { dbConnect } from '../../lib/mongodb.js';
 import DocRecord from '../../models/DocRecord.js';
 import { getUserFromReq } from '../../lib/auth.js';
+import { getDocumentBuffer } from '../../lib/supabaseStorage.js';
 
 export default async function handler(req, res) {
   const authUser = getUserFromReq(req);
@@ -16,8 +17,8 @@ export default async function handler(req, res) {
     await doc.save();
   }
 
-  const bytes = Buffer.from(doc.pdfBase64, 'base64');
-  res.setHeader('Content-Type', 'application/pdf');
+  const bytes = await getDocumentBuffer(doc);
+  res.setHeader('Content-Type', doc.mimeType || 'application/pdf');
   res.setHeader('Content-Disposition', `inline; filename="${doc.fileName || 'ASHES-Appointment-Letter.pdf'}"`);
   res.setHeader('Cache-Control', 'private, no-store');
   res.status(200).send(bytes);

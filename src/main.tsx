@@ -7,6 +7,7 @@ import LowerPageSocials from './LowerPageSocials';
 import Login from './portal/Login';
 import Signup from './portal/Signup';
 import Portal from './portal/Portal';
+import TeamPortal from './portal/TeamPortal';
 import AdminHome from './portal/AdminHome';
 import AdminClientDetail from './portal/AdminClientDetail';
 import AdminAccount from './portal/AdminAccount';
@@ -27,10 +28,10 @@ import './final-sections.css';
 import './about-section.css';
 import './standalone-pages.css';
 import './portal/portal.css';
+import './portal/professional-portals.css';
 
-function Home() {
-  return <><App/><ProcessScrollFlight/><LowerPageSocials/></>;
-}
+function Home() { return <><App/><ProcessScrollFlight/><LowerPageSocials/></>; }
+const AdminPro = ({children}:{children:React.ReactNode}) => <div className="admin-pro">{children}</div>;
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -46,10 +47,11 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/login" element={<Login/>} />
         <Route path="/signup" element={<Signup/>} />
         <Route path="/portal" element={<Portal/>} />
-        <Route path="/admin" element={<AdminHome/>} />
-        <Route path="/admin/dashboard" element={<AdminDashboard/>} />
-        <Route path="/admin/account" element={<AdminAccount/>} />
-        <Route path="/admin/client/:id" element={<AdminClientDetail/>} />
+        <Route path="/team" element={<TeamPortal/>} />
+        <Route path="/admin" element={<AdminPro><AdminHome/></AdminPro>} />
+        <Route path="/admin/dashboard" element={<AdminPro><AdminDashboard/></AdminPro>} />
+        <Route path="/admin/account" element={<AdminPro><AdminAccount/></AdminPro>} />
+        <Route path="/admin/client/:id" element={<AdminPro><AdminClientDetail/></AdminPro>} />
       </Routes>
     </BrowserRouter>
   </StrictMode>

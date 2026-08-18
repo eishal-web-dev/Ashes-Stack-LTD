@@ -2,6 +2,8 @@ import { dbConnect } from "../../lib/mongodb.js";
 import User from "../../models/User.js";
 import DocRecord from "../../models/DocRecord.js";
 import ActivityLog from "../../models/ActivityLog.js";
+import Ledger from "../../models/Ledger.js";
+import Settings from "../../models/Settings.js";
 import bcrypt from "bcryptjs";
 import { getUserFromReq } from "../../lib/auth.js";
 import { generateDocPdf } from "../../lib/pdfTemplates.js";
@@ -101,19 +103,89 @@ async function doUpdateClient(req, res, authUser) {
   res.status(200).json({ id: client._id, stage: client.stage, source: client.source, dealValue: client.dealValue });
 }
 
+async function doLedgerList(req, res) {
+  const entries = await Ledger.find({}).sort({ date: -1 }).limit(200);
+  res.status(200).json(entries);
+}
+
+async function doLedgerAdd(req, res, authUser) {
+  if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+  const { category, amount, note, date, paid } = req.body;
+  if (!["expense", "marketing", "payable"].includes(category)) return res.status(400).json({ error: "Invalid category" });
+  const amt = Number(amount);
+  if (!amt || amt <= 0) return res.status(400).json({ error: "Amount must be a positive number" });
+
+  const entry = await Ledger.create({
+    category,
+    amount: amt,
+    note: note || undefined,
+    date: date ? new Date(date) : new Date(),
+    paid: category === "payable" ? !!paid : true,
+    createdBy: authUser.id,
+  });
+  res.status(201).json(entry);
+}
+
+async function doLedgerDelete(req, res) {
+  const { id } = req.query;
+  if (!id) return res.status(400).json({ error: "id is required" });
+  await Ledger.findByIdAndDelete(id);
+  res.status(200).json({ ok: true });
+}
+
+async function doLedgerTogglePaid(req, res) {
+  if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+  const { id, paid } = req.body;
+  const entry = await Ledger.findById(id);
+  if (!entry) return res.status(404).json({ error: "Entry not found" });
+  entry.paid = !!paid;
+  await entry.save();
+  res.status(200).json(entry);
+}
+
+async function doGetSettings(req, res) {
+  let settings = await Settings.findOne({ key: "main" });
+  if (!settings) settings = await Settings.create({ key: "main", cashOnHand: 0 });
+  res.status(200).json(settings);
+}
+
+async function doUpdateSettings(req, res) {
+  if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+  const { cashOnHand } = req.body;
+  const settings = await Settings.findOneAndUpdate(
+    { key: "main" },
+    { cashOnHand: Number(cashOnHand) || 0 },
+    { upsert: true, new: true }
+  );
+  res.status(200).json(settings);
+}
+
 const PIPELINE_STAGES = ["lead", "contacted", "demo", "proposal", "won", "in_progress", "delivered", "paid", "review", "repeat_client", "lost"];
 const OPEN_STAGES = ["lead", "contacted", "demo", "proposal", "won", "in_progress"];
 const CONVERTED_STAGES = ["won", "in_progress", "delivered", "paid", "review", "repeat_client"];
 
+const STAGE_WIN_PROBABILITY = {
+  lead: 0.1, contacted: 0.2, demo: 0.35, proposal: 0.55,
+  won: 0.85, in_progress: 0.9, delivered: 0.95, paid: 1, review: 1,
+};
+
 async function doDashboard(req, res) {
   const clients = await User.find({ role: "client" });
   const invoices = await DocRecord.find({ type: "invoice" }).select("-pdfBase64");
+  const ledger = await Ledger.find({});
+  const activityLogs = await ActivityLog.find({ action: "stage_changed" });
+  let settings = await Settings.findOne({ key: "main" });
+  if (!settings) settings = await Settings.create({ key: "main", cashOnHand: 0 });
 
-  // Revenue, computed only from real invoice data (amount lives in meta.amount).
+  // ---- Revenue, computed only from real invoice data (amount lives in meta.amount) ----
   let totalRevenue = 0, outstandingPayments = 0, invoiceCount = 0, invoiceValueSum = 0;
-  const monthlyMap = {}; // "2026-08" -> amount
+  let totalProjectCosts = 0, costedInvoiceCount = 0, totalProfitOnCostedInvoices = 0;
+  const monthlyMap = {};
+  const revenueByService = {};
+  const revenueByClient = {};
   for (const inv of invoices) {
     const amount = Number(inv.meta?.amount) || 0;
+    const cost = inv.meta?.cost !== undefined && inv.meta?.cost !== "" ? Number(inv.meta.cost) : null;
     invoiceCount++;
     invoiceValueSum += amount;
     if (inv.paymentStatus === "paid") {
@@ -121,13 +193,24 @@ async function doDashboard(req, res) {
       const d = inv.paidAt ? new Date(inv.paidAt) : new Date(inv.createdAt);
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
       monthlyMap[key] = (monthlyMap[key] || 0) + amount;
+      const service = inv.meta?.service || "Uncategorized";
+      revenueByService[service] = (revenueByService[service] || 0) + amount;
+      const cid = inv.client.toString();
+      revenueByClient[cid] = (revenueByClient[cid] || 0) + amount;
+      if (cost !== null) {
+        totalProjectCosts += cost;
+        costedInvoiceCount++;
+        totalProfitOnCostedInvoices += amount - cost;
+      }
     } else {
       outstandingPayments += amount;
     }
   }
   const avgProjectValue = invoiceCount ? Math.round(invoiceValueSum / invoiceCount) : 0;
+  const costPerProject = costedInvoiceCount ? Math.round(totalProjectCosts / costedInvoiceCount) : null;
+  const profitPerProject = costedInvoiceCount ? Math.round(totalProfitOnCostedInvoices / costedInvoiceCount) : null;
+  const grossMarginPct = totalRevenue > 0 && costedInvoiceCount ? Math.round(((totalRevenue - totalProjectCosts) / totalRevenue) * 1000) / 10 : null;
 
-  // Last 6 months of earnings, oldest first, zero-filled.
   const months = [];
   const now = new Date();
   for (let i = 5; i >= 0; i--) {
@@ -136,14 +219,40 @@ async function doDashboard(req, res) {
     months.push({ key, label: d.toLocaleString("en-GB", { month: "short" }), amount: monthlyMap[key] || 0 });
   }
 
-  // Pipeline: real stage counts + value of deals still open.
+  // ---- Ledger: expenses, marketing spend, payables ----
+  let totalExpenses = 0, totalMarketing = 0, accountsPayable = 0;
+  const last3MonthsCutoff = new Date(now.getFullYear(), now.getMonth() - 2, 1);
+  let recentCashOut = 0;
+  for (const e of ledger) {
+    if (e.category === "expense") {
+      totalExpenses += e.amount;
+      if (new Date(e.date) >= last3MonthsCutoff) recentCashOut += e.amount;
+    } else if (e.category === "marketing") {
+      totalMarketing += e.amount;
+      if (new Date(e.date) >= last3MonthsCutoff) recentCashOut += e.amount;
+    } else if (e.category === "payable") {
+      if (!e.paid) accountsPayable += e.amount;
+      else if (new Date(e.date) >= last3MonthsCutoff) recentCashOut += e.amount;
+    }
+  }
+  const netProfit = totalRevenue - totalExpenses - totalMarketing;
+  const netMarginPct = totalRevenue > 0 ? Math.round((netProfit / totalRevenue) * 1000) / 10 : null;
+  const burnRate = Math.round(recentCashOut / 3); // avg monthly cash out, last 3 months
+  const runwayMonths = burnRate > 0 ? Math.round((settings.cashOnHand / burnRate) * 10) / 10 : null;
+  const cashFlow = totalRevenue - (totalExpenses + totalMarketing);
+
+  // ---- Pipeline: real stage counts + value of deals still open ----
   const stageCounts = Object.fromEntries(PIPELINE_STAGES.map((s) => [s, 0]));
-  let pipelineValue = 0;
+  let pipelineValue = 0, weightedPipelineValue = 0;
   const sourceCounts = {};
   for (const c of clients) {
     const stage = PIPELINE_STAGES.includes(c.stage) ? c.stage : "lead";
     stageCounts[stage]++;
-    if (OPEN_STAGES.includes(stage)) pipelineValue += Number(c.dealValue) || 0;
+    const dealVal = Number(c.dealValue) || 0;
+    if (OPEN_STAGES.includes(stage)) {
+      pipelineValue += dealVal;
+      weightedPipelineValue += dealVal * (STAGE_WIN_PROBABILITY[stage] || 0);
+    }
     const src = c.source || "other";
     sourceCounts[src] = (sourceCounts[src] || 0) + 1;
   }
@@ -152,8 +261,41 @@ async function doDashboard(req, res) {
   const convertedCount = clients.filter((c) => CONVERTED_STAGES.includes(c.stage)).length;
   const conversionRate = totalClients ? Math.round((convertedCount / totalClients) * 1000) / 10 : 0;
   const repeatClients = stageCounts.repeat_client;
+  const lostClients = stageCounts.lost;
+  const decidedDeals = convertedCount + lostClients;
+  const winRate = decidedDeals ? Math.round((convertedCount / decidedDeals) * 1000) / 10 : null;
+  const lossRate = decidedDeals ? Math.round((lostClients / decidedDeals) * 1000) / 10 : null;
+  const churnRate = totalClients ? Math.round((lostClients / totalClients) * 1000) / 10 : null;
 
-  // Avg days lead->paid, only for clients with at least one paid invoice.
+  // ---- Customer economics ----
+  const payingClientIds = Object.keys(revenueByClient);
+  const payingClientCount = payingClientIds.length;
+  const arpu = totalClients ? Math.round(totalRevenue / totalClients) : 0; // all-time avg revenue per client (lead)
+  const revenuePerLead = arpu;
+  const revenuePerPayingClient = payingClientCount ? Math.round(totalRevenue / payingClientCount) : 0;
+  const ltv = revenuePerPayingClient; // proxy: revenue generated per paying client to date, not a lifetime projection
+  const totalMarketingAllTime = totalMarketing;
+  const cac = totalClients && totalMarketingAllTime > 0 ? Math.round(totalMarketingAllTime / totalClients) : null;
+  const ltvCacRatio = cac && cac > 0 ? Math.round((ltv / cac) * 10) / 10 : null;
+
+  // Repeat purchase / retention: clients with 2+ paid invoices vs clients with 1+ paid invoice
+  const paidInvoiceCountByClient = {};
+  for (const inv of invoices) {
+    if (inv.paymentStatus === "paid") {
+      const cid = inv.client.toString();
+      paidInvoiceCountByClient[cid] = (paidInvoiceCountByClient[cid] || 0) + 1;
+    }
+  }
+  const repeatPayingClients = Object.values(paidInvoiceCountByClient).filter((n) => n >= 2).length;
+  const repeatPurchaseRate = payingClientCount ? Math.round((repeatPayingClients / payingClientCount) * 1000) / 10 : null;
+  const retentionRate = totalClients ? Math.round(((totalClients - lostClients) / totalClients) * 1000) / 10 : null;
+
+  // Client concentration risk: biggest single client's share of total revenue
+  let biggestClientRevenue = 0;
+  for (const cid of payingClientIds) biggestClientRevenue = Math.max(biggestClientRevenue, revenueByClient[cid]);
+  const clientConcentrationRisk = totalRevenue > 0 ? Math.round((biggestClientRevenue / totalRevenue) * 1000) / 10 : null;
+
+  // ---- Sales cycle timing ----
   const closeDurations = [];
   for (const c of clients) {
     const paidInvoicesForClient = invoices.filter((inv) => inv.client.toString() === c._id.toString() && inv.paymentStatus === "paid" && inv.paidAt);
@@ -165,7 +307,25 @@ async function doDashboard(req, res) {
   }
   const avgDaysToClose = closeDurations.length ? Math.round(closeDurations.reduce((a, b) => a + b, 0) / closeDurations.length) : null;
 
-  // "Today" panel — clients whose stage hasn't moved in 7+ days and aren't done/lost.
+  // Lead response time: signup -> first stage_changed activity log entry, per client
+  const responseTimes = [];
+  const firstStageChangeByClient = {};
+  for (const log of activityLogs) {
+    const cid = log.client.toString();
+    if (!firstStageChangeByClient[cid] || new Date(log.createdAt) < new Date(firstStageChangeByClient[cid])) {
+      firstStageChangeByClient[cid] = log.createdAt;
+    }
+  }
+  for (const c of clients) {
+    const first = firstStageChangeByClient[c._id.toString()];
+    if (first) {
+      const hours = Math.round(((new Date(first) - new Date(c.createdAt)) / 3600000) * 10) / 10;
+      if (hours >= 0) responseTimes.push(hours);
+    }
+  }
+  const avgLeadResponseHours = responseTimes.length ? Math.round((responseTimes.reduce((a, b) => a + b, 0) / responseTimes.length) * 10) / 10 : null;
+
+  // ---- "Today" panel ----
   const staleClients = clients.filter((c) => {
     if (!OPEN_STAGES.includes(c.stage)) return false;
     const daysSinceUpdate = (Date.now() - new Date(c.updatedAt)) / 86400000;
@@ -174,18 +334,22 @@ async function doDashboard(req, res) {
   const outstandingInvoiceCount = invoices.filter((inv) => inv.paymentStatus !== "paid").length;
 
   res.status(200).json({
-    totalRevenue,
-    outstandingPayments,
-    outstandingInvoiceCount,
-    avgProjectValue,
-    monthlyEarnings: months,
-    stageCounts,
-    pipelineValue,
-    sourceCounts,
-    totalClients,
-    conversionRate,
-    repeatClients,
-    avgDaysToClose,
+    // Revenue & profitability
+    totalRevenue, outstandingPayments, outstandingInvoiceCount, avgProjectValue,
+    grossMarginPct, netProfit, netMarginPct, costPerProject, profitPerProject,
+    monthlyEarnings: months, revenueByService,
+    accountsReceivable: outstandingPayments,
+    accountsPayable,
+    // Cash & runway
+    cashOnHand: settings.cashOnHand, burnRate, runwayMonths, cashFlow, totalExpenses, totalMarketing,
+    // Customer economics
+    arpu, revenuePerLead, revenuePerPayingClient, ltv, cac, ltvCacRatio,
+    repeatPurchaseRate, retentionRate, churnRate, clientConcentrationRisk,
+    // Pipeline & sales
+    stageCounts, pipelineValue, weightedPipelineValue, sourceCounts, totalClients, payingClientCount,
+    conversionRate, repeatClients, winRate, lossRate,
+    avgDaysToClose, avgLeadResponseHours,
+    // Today
     staleClients,
   });
 }
@@ -239,6 +403,12 @@ export default async function handler(req, res) {
     if (action === "upload-file") return await doUploadFile(req, res, authUser);
     if (action === "dashboard") return await doDashboard(req, res);
     if (action === "update-client") return await doUpdateClient(req, res, authUser);
+    if (action === "ledger-list") return await doLedgerList(req, res);
+    if (action === "ledger-add") return await doLedgerAdd(req, res, authUser);
+    if (action === "ledger-delete") return await doLedgerDelete(req, res);
+    if (action === "ledger-toggle-paid") return await doLedgerTogglePaid(req, res);
+    if (action === "get-settings") return await doGetSettings(req, res);
+    if (action === "update-settings") return await doUpdateSettings(req, res);
     return res.status(404).json({ error: "Unknown admin action" });
   } catch (e) {
     res.status(500).json({ error: e.message });

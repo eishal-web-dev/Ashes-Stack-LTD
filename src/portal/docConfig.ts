@@ -44,6 +44,8 @@ export const DOC_TYPES: DocTypeConfig[] = [
       { key: 'amount', label: 'Amount (PKR)', type: 'number', placeholder: '5000' },
       { key: 'project', label: 'Project / description', type: 'text', placeholder: 'Landing Page Service Agreement' },
       { key: 'dueDate', label: 'Due date', type: 'date' },
+      { key: 'service', label: 'Service category (for revenue-by-service reporting)', type: 'text', placeholder: 'Video Ads / Landing Page / 3D / Web App' },
+      { key: 'cost', label: 'Project cost, optional (for margin/profit reporting)', type: 'number', placeholder: 'e.g. 1500' },
     ],
   },
   {

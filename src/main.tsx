@@ -30,34 +30,11 @@ import './about-section.css';
 import './standalone-pages.css';
 import './portal/portal.css';
 import './portal/professional-portals.css';
+import './portal/client-portal.css';
 import './portal/ashes-loader.css';
 import './portal/owner-dashboard.css';
 import './portal/appointment-letter.css';
 
 function Home() { return <><App/><ProcessScrollFlight/><LowerPageSocials/></>; }
 const AdminPro = ({children}:{children:React.ReactNode}) => <div className="admin-pro">{children}</div>;
-
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <BrowserRouter>
-      <RouteAshesLoader/>
-      <Routes>
-        <Route path="/" element={<Home/>} />
-        <Route path="/about" element={<AboutPage/>} />
-        <Route path="/work" element={<WorkPage/>} />
-        <Route path="/expertise" element={<ExpertisePage/>} />
-        <Route path="/process" element={<ProcessPage/>} />
-        <Route path="/contact" element={<ContactPage/>} />
-        <Route path="/reviews" element={<ReviewsPage/>} />
-        <Route path="/login" element={<Login/>} />
-        <Route path="/signup" element={<Signup/>} />
-        <Route path="/portal" element={<Portal/>} />
-        <Route path="/team" element={<TeamPortal/>} />
-        <Route path="/admin" element={<AdminPro><AdminHome/></AdminPro>} />
-        <Route path="/admin/dashboard" element={<AdminPro><AdminDashboard/></AdminPro>} />
-        <Route path="/admin/account" element={<AdminPro><AdminAccount/></AdminPro>} />
-        <Route path="/admin/client/:id" element={<AdminPro><AdminClientDetail/></AdminPro>} />
-      </Routes>
-    </BrowserRouter>
-  </StrictMode>
-);
+createRoot(document.getElementById('root')!).render(<StrictMode><BrowserRouter><RouteAshesLoader/><Routes><Route path="/" element={<Home/>}/><Route path="/about" element={<AboutPage/>}/><Route path="/work" element={<WorkPage/>}/><Route path="/expertise" element={<ExpertisePage/>}/><Route path="/process" element={<ProcessPage/>}/><Route path="/contact" element={<ContactPage/>}/><Route path="/reviews" element={<ReviewsPage/>}/><Route path="/login" element={<Login/>}/><Route path="/signup" element={<Signup/>}/><Route path="/portal" element={<Portal/>}/><Route path="/team" element={<TeamPortal/>}/><Route path="/admin" element={<AdminPro><AdminHome/></AdminPro>}/><Route path="/admin/dashboard" element={<AdminPro><AdminDashboard/></AdminPro>}/><Route path="/admin/account" element={<AdminPro><AdminAccount/></AdminPro>}/><Route path="/admin/client/:id" element={<AdminPro><AdminClientDetail/></AdminPro>}/></Routes></BrowserRouter></StrictMode>);

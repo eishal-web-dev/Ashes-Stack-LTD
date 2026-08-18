@@ -16,9 +16,9 @@
 .philosophy-core{position:relative;z-index:4;display:flex;flex-direction:column;align-items:center;gap:30px}
 
 .philosophy-core .phoenix-socials{position:relative}
-.philosophy-core .phoenix-socials .social-cluster{display:grid;grid-template-columns:repeat(2,62px);grid-template-rows:repeat(2,62px);gap:11px}
-.philosophy-core .phoenix-socials .social-slot,.philosophy-core .phoenix-socials .social-shape{width:62px!important;height:62px!important}
-.philosophy-core .phoenix-socials .social-shape svg{width:23px!important;height:23px!important}
+.philosophy-core .phoenix-socials .social-cluster{display:grid;grid-template-columns:repeat(2,82px);grid-template-rows:repeat(2,82px);gap:13px}
+.philosophy-core .phoenix-socials .social-slot,.philosophy-core .phoenix-socials .social-shape{width:82px!important;height:82px!important}
+.philosophy-core .phoenix-socials .social-shape svg{width:30px!important;height:30px!important}
 
 .principle-grid{display:grid;gap:13px}
 .principle-card{--principle:#fff;position:relative;min-height:170px;padding:23px 24px 20px 82px;border:1px solid rgba(255,255,255,.11);border-radius:22px;background:linear-gradient(145deg,rgba(21,22,25,.94),rgba(9,10,12,.96));overflow:hidden;transition:.35s transform,.35s border-color,.35s box-shadow}
@@ -52,8 +52,8 @@
   .philosophy-phoenix-wrap{height:280px}
   .philosophy-core{gap:18px}
   .philosophy-core-badge{padding:13px 20px;font-size:11px}
-  .philosophy-core .phoenix-socials .social-cluster{grid-template-columns:repeat(2,54px);grid-template-rows:repeat(2,54px)}
-  .philosophy-core .phoenix-socials .social-slot,.philosophy-core .phoenix-socials .social-shape{width:54px!important;height:54px!important}
+  .philosophy-core .phoenix-socials .social-cluster{grid-template-columns:repeat(2,68px);grid-template-rows:repeat(2,68px)}
+  .philosophy-core .phoenix-socials .social-slot,.philosophy-core .phoenix-socials .social-shape{width:68px!important;height:68px!important}
   .philosophy-core .phoenix-socials .social-shape svg{width:17px!important;height:17px!important}
   .philosophy-core .phoenix-socials .social-comment{display:none}
   .principle-card{min-height:0;padding:20px 18px 20px 70px;border-radius:18px}

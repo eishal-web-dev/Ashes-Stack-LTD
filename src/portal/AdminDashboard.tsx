@@ -1,385 +1,76 @@
-import { useEffect, useState, FormEvent } from 'react';
+import { useEffect, useMemo, useState, FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { BarChart3, BriefcaseBusiness, CircleDollarSign, FileClock, Gauge, LineChart, LogOut, ReceiptText, Settings2, TrendingUp, UserRoundCheck, UsersRound, WalletCards } from 'lucide-react';
 import { getMe, logout, Me } from './api';
+import AshesLoader from './AshesLoader';
 
 type DashboardData = {
-  totalRevenue: number; outstandingPayments: number; outstandingInvoiceCount: number; avgProjectValue: number;
-  grossMarginPct: number | null; netProfit: number; netMarginPct: number | null;
-  costPerProject: number | null; profitPerProject: number | null;
-  monthlyEarnings: { key: string; label: string; amount: number }[];
-  revenueByService: Record<string, number>;
-  accountsReceivable: number; accountsPayable: number;
-  cashOnHand: number; burnRate: number; runwayMonths: number | null; cashFlow: number;
-  totalExpenses: number; totalMarketing: number;
-  arpu: number; revenuePerLead: number; revenuePerPayingClient: number; ltv: number;
-  cac: number | null; ltvCacRatio: number | null;
-  repeatPurchaseRate: number | null; retentionRate: number | null; churnRate: number | null;
-  clientConcentrationRisk: number | null;
-  stageCounts: Record<string, number>; pipelineValue: number; weightedPipelineValue: number;
-  sourceCounts: Record<string, number>; totalClients: number; payingClientCount: number;
-  conversionRate: number; repeatClients: number; winRate: number | null; lossRate: number | null;
-  avgDaysToClose: number | null; avgLeadResponseHours: number | null;
-  staleClients: number;
+  totalRevenue:number; outstandingPayments:number; outstandingInvoiceCount:number; avgProjectValue:number;
+  grossMarginPct:number|null; netProfit:number; netMarginPct:number|null; costPerProject:number|null; profitPerProject:number|null;
+  monthlyEarnings:{key:string;label:string;amount:number}[]; revenueByService:Record<string,number>;
+  accountsReceivable:number; accountsPayable:number; cashOnHand:number; burnRate:number; runwayMonths:number|null; cashFlow:number;
+  totalExpenses:number; totalMarketing:number; arpu:number; revenuePerLead:number; revenuePerPayingClient:number; ltv:number;
+  cac:number|null; ltvCacRatio:number|null; repeatPurchaseRate:number|null; retentionRate:number|null; churnRate:number|null;
+  clientConcentrationRisk:number|null; stageCounts:Record<string,number>; pipelineValue:number; weightedPipelineValue:number;
+  sourceCounts:Record<string,number>; totalClients:number; payingClientCount:number; conversionRate:number; repeatClients:number;
+  winRate:number|null; lossRate:number|null; avgDaysToClose:number|null; avgLeadResponseHours:number|null; staleClients:number;
 };
+type LedgerEntry={_id:string;category:string;amount:number;note?:string;date:string;paid:boolean};
+type ClientRow={_id:string;name:string;company?:string;stage?:string;dealValue?:number;source?:string};
 
-type LedgerEntry = { _id: string; category: string; amount: number; note?: string; date: string; paid: boolean };
+const PIPELINE=['lead','contacted','demo','proposal','won','in_progress','delivered','paid','review','repeat_client'];
+const STAGE_LABELS:Record<string,string>={lead:'Lead',contacted:'Contacted',demo:'Demo',proposal:'Proposal',won:'Won',in_progress:'In progress',delivered:'Delivered',paid:'Paid',review:'Review',repeat_client:'Repeat'};
+const SOURCE_LABELS:Record<string,string>={whatsapp:'WhatsApp',linkedin:'LinkedIn',instagram:'Instagram',fiverr:'Fiverr',referral:'Referral',other:'Other'};
+const SOURCE_COLORS=['#ff6a3d','#66e2ff','#b58cff','#ff6db4','#d8ff62','#ffbf48'];
+const pkr=(n:number)=>`PKR ${Math.round(n||0).toLocaleString()}`;
+const pct=(n:number|null)=>n===null?'—':`${n}%`;
 
-const STAGE_LABELS: Record<string, string> = {
-  lead: 'Lead', contacted: 'Contacted', demo: 'Demo', proposal: 'Proposal',
-  won: 'Won', in_progress: 'In Progress', delivered: 'Delivered', paid: 'Paid',
-  review: 'Review', repeat_client: 'Repeat Client', lost: 'Lost',
-};
-const PIPELINE_ORDER = ['lead', 'contacted', 'demo', 'proposal', 'won', 'in_progress', 'delivered', 'paid', 'review', 'repeat_client'];
-const SOURCE_LABELS: Record<string, string> = { whatsapp: 'WhatsApp', linkedin: 'LinkedIn', instagram: 'Instagram', fiverr: 'Fiverr', referral: 'Referral', other: 'Other' };
+export default function AdminDashboard(){
+  const navigate=useNavigate();
+  const [user,setUser]=useState<Me|null>(null),[data,setData]=useState<DashboardData|null>(null),[ledger,setLedger]=useState<LedgerEntry[]>([]),[clients,setClients]=useState<ClientRow[]>([]),[loading,setLoading]=useState(true),[showFinance,setShowFinance]=useState(false),[cashOnHand,setCashOnHand]=useState(''),[savingLedger,setSavingLedger]=useState(false);
+  const [ledgerForm,setLedgerForm]=useState({category:'expense',amount:'',note:'',date:new Date().toISOString().slice(0,10)});
+  async function loadAll(){const[d,l,s,c]=await Promise.all([fetch('/api/admin/dashboard').then(r=>r.json()),fetch('/api/admin/ledger-list').then(r=>r.json()),fetch('/api/admin/get-settings').then(r=>r.json()),fetch('/api/admin/clients').then(r=>r.json())]);setData(d);setLedger(Array.isArray(l)?l:[]);setCashOnHand(String(s.cashOnHand??0));setClients(Array.isArray(c)?c:[])}
+  useEffect(()=>{getMe().then(async u=>{if(!u)return navigate('/login');if(u.role!=='admin')return navigate(u.role==='team'?'/team':'/portal');setUser(u);await loadAll();setLoading(false)})},[navigate]);
+  async function onLogout(){await logout();navigate('/login')}
+  async function saveCash(){await fetch('/api/admin/update-settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cashOnHand:Number(cashOnHand)||0})});loadAll()}
+  async function addLedger(e:FormEvent){e.preventDefault();if(!ledgerForm.amount)return;setSavingLedger(true);await fetch('/api/admin/ledger-add',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...ledgerForm,amount:Number(ledgerForm.amount),paid:ledgerForm.category!=='payable'})});setSavingLedger(false);setLedgerForm({category:'expense',amount:'',note:'',date:new Date().toISOString().slice(0,10)});loadAll()}
+  async function removeLedger(id:string){if(!confirm('Delete this finance entry?'))return;await fetch(`/api/admin/ledger-delete?id=${id}`,{method:'DELETE'});loadAll()}
+  if(loading||!data)return <AshesLoader label="Opening owner command center…"/>;
 
-function pkr(n: number) { return `PKR ${Math.round(n).toLocaleString()}`; }
-function pct(n: number | null) { return n === null ? '—' : `${n}%`; }
+  const maxMonthly=Math.max(1,...data.monthlyEarnings.map(m=>m.amount));
+  const sourceEntries=Object.entries(data.sourceCounts).filter(([,v])=>v>0);
+  const sourceTotal=sourceEntries.reduce((a,[,v])=>a+v,0)||1;
+  let angle=0;const sourceGradient=sourceEntries.map(([,v],i)=>{const start=angle;angle+=v/sourceTotal*360;return `${SOURCE_COLORS[i%SOURCE_COLORS.length]} ${start}deg ${angle}deg`}).join(',')||'#202229 0deg 360deg';
+  const services=Object.entries(data.revenueByService).sort((a,b)=>b[1]-a[1]).slice(0,5);const maxService=Math.max(1,...services.map(([,v])=>v));
+  const attention=[{label:'Follow-ups',value:data.staleClients,sub:'clients need attention',icon:<UserRoundCheck/>},{label:'Payments pending',value:pkr(data.outstandingPayments),sub:`${data.outstandingInvoiceCount} unpaid invoice(s)`,icon:<ReceiptText/>},{label:'Pipeline value',value:pkr(data.pipelineValue),sub:'open opportunities',icon:<BriefcaseBusiness/>},{label:'Cash on hand',value:pkr(data.cashOnHand),sub:`${data.runwayMonths??'—'} mo runway`,icon:<WalletCards/>}];
+  const kpis=[['Revenue',pkr(data.totalRevenue),'Paid invoices'],['Net profit',pkr(data.netProfit),`Margin ${pct(data.netMarginPct)}`],['ROI / margin',pct(data.grossMarginPct),'Gross project margin'],['CAC',data.cac===null?'—':pkr(data.cac),'Marketing ÷ clients'],['LTV',pkr(data.ltv),'Revenue / paying client'],['Conversion',`${data.conversionRate}%`,'Won or later'],['Pipeline',pkr(data.pipelineValue),'Open deals'],['Outstanding',pkr(data.outstandingPayments),`${data.outstandingInvoiceCount} invoice(s)`]];
+  const recentClients=clients.slice(0,6);
 
-export default function AdminDashboard() {
-  const navigate = useNavigate();
-  const [user, setUser] = useState<Me | null>(null);
-  const [data, setData] = useState<DashboardData | null>(null);
-  const [ledger, setLedger] = useState<LedgerEntry[]>([]);
-  const [cashOnHand, setCashOnHand] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [showFinance, setShowFinance] = useState(false);
-  const [ledgerForm, setLedgerForm] = useState({ category: 'expense', amount: '', note: '', date: new Date().toISOString().slice(0, 10) });
-  const [savingLedger, setSavingLedger] = useState(false);
+  return <div className="owner-dashboard">
+    <aside className="owner-sidebar">
+      <div className="owner-mark"><img src="/ashes-logo-transparent.webp" alt="ASHES"/><span>OWNER PORTAL</span></div>
+      <nav><Link className="active" to="/admin/dashboard"><Gauge/>Dashboard</Link><Link to="/admin"><UsersRound/>Clients & team</Link><a href="#pipeline"><TrendingUp/>Pipeline</a><a href="#finance"><CircleDollarSign/>Finance</a><a href="#analytics"><BarChart3/>Analytics</a><Link to="/admin/account"><Settings2/>Settings</Link></nav>
+      <div className="owner-side-foot"><small>PRIVATE OWNER ACCESS</small><strong>{user?.name}</strong><span>{user?.email}</span><button onClick={onLogout}><LogOut/>Log out</button></div>
+    </aside>
 
-  async function loadAll() {
-    const [d, l, s] = await Promise.all([
-      fetch('/api/admin/dashboard').then((r) => r.json()),
-      fetch('/api/admin/ledger-list').then((r) => r.json()),
-      fetch('/api/admin/get-settings').then((r) => r.json()),
-    ]);
-    setData(d);
-    setLedger(l);
-    setCashOnHand(String(s.cashOnHand ?? 0));
-  }
+    <main className="owner-main">
+      <header className="owner-header"><div><span>ASHES / OWNER COMMAND CENTER</span><h1>Business overview.</h1><p>Clients, revenue, profitability and growth — in one private workspace.</p></div><div className="owner-header-actions"><Link to="/admin" className="owner-btn">Manage people</Link><button className="owner-btn accent" onClick={()=>setShowFinance(v=>!v)}>Finance tools</button></div></header>
 
-  useEffect(() => {
-    getMe().then(async (u) => {
-      if (!u) return navigate('/login');
-      if (u.role !== 'admin') return navigate('/portal');
-      setUser(u);
-      await loadAll();
-      setLoading(false);
-    });
-  }, [navigate]);
+      <section className="owner-kpi-strip">{kpis.map(([label,value,sub],i)=><article key={label}><div className="owner-kpi-icon">{[<CircleDollarSign/>,<TrendingUp/>,<Gauge/>,<UsersRound/>,<UserRoundCheck/>,<LineChart/>,<BriefcaseBusiness/>,<FileClock/>][i]}</div><span>{label}</span><strong>{value}</strong><small>{sub}</small></article>)}</section>
 
-  async function onLogout() {
-    await logout();
-    navigate('/login');
-  }
+      <section id="pipeline" className="owner-panel owner-pipeline"><div className="owner-panel-head"><div><span>SALES PIPELINE</span><h2>From lead to repeat client.</h2></div><small>Real CRM stages</small></div><div className="owner-pipeline-track">{PIPELINE.map((stage,i)=><div className="owner-stage" key={stage}><div className="owner-stage-node">{i+1}</div><span>{STAGE_LABELS[stage]}</span><strong>{data.stageCounts[stage]||0}</strong></div>)}</div></section>
 
-  async function saveCashOnHand() {
-    await fetch('/api/admin/update-settings', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ cashOnHand: Number(cashOnHand) || 0 }),
-    });
-    loadAll();
-  }
+      <section id="analytics" className="owner-dashboard-grid">
+        <div className="owner-panel owner-earnings"><div className="owner-panel-head"><div><span>REVENUE</span><h2>Monthly earnings</h2></div><small>Last 6 months</small></div><div className="owner-bars">{data.monthlyEarnings.map(m=><div className="owner-bar-col" key={m.key}><span>{m.amount?pkr(m.amount):''}</span><div className="owner-bar" style={{height:`${Math.max(8,m.amount/maxMonthly*175)}px`}}/><small>{m.label}</small></div>)}</div></div>
+        <div className="owner-panel"><div className="owner-panel-head"><div><span>ACQUISITION</span><h2>Client source</h2></div><small>{data.totalClients} total</small></div><div className="owner-source-wrap"><div className="owner-donut" style={{background:`conic-gradient(${sourceGradient})`}}><div><strong>{data.totalClients}</strong><span>clients</span></div></div><div className="owner-source-list">{sourceEntries.map(([key,v],i)=><div key={key}><i style={{background:SOURCE_COLORS[i%SOURCE_COLORS.length]}}/><span>{SOURCE_LABELS[key]||key}</span><strong>{Math.round(v/sourceTotal*100)}%</strong></div>)}</div></div></div>
+        <div className="owner-panel owner-today"><div className="owner-panel-head"><div><span>TODAY</span><h2>Needs attention</h2></div></div>{attention.map(a=><article key={a.label}>{a.icon}<div><span>{a.label}</span><strong>{a.value}</strong><small>{a.sub}</small></div></article>)}</div>
+        <div className="owner-panel owner-clients"><div className="owner-panel-head"><div><span>CRM</span><h2>Active clients</h2></div><Link to="/admin">View all</Link></div><div className="owner-client-table"><div className="head"><span>Client</span><span>Stage</span><span>Value</span></div>{recentClients.length?recentClients.map(c=><Link to={`/admin/client/${c._id}`} key={c._id}><div><strong>{c.name}</strong><small>{c.company||'No company'}</small></div><span className="owner-stage-pill">{STAGE_LABELS[c.stage||'lead']||c.stage}</span><b>{c.dealValue?pkr(c.dealValue):'—'}</b></Link>):<p>No clients yet.</p>}</div></div>
+        <div className="owner-panel owner-services"><div className="owner-panel-head"><div><span>PROFITABILITY</span><h2>Revenue by service</h2></div></div>{services.length?services.map(([name,value])=><div className="owner-service-row" key={name}><span>{name}</span><div><i style={{width:`${value/maxService*100}%`}}/></div><strong>{pkr(value)}</strong></div>):<p className="owner-empty">Add a service category to paid invoices to populate this view.</p>}</div>
+      </section>
 
-  async function addLedgerEntry(e: FormEvent) {
-    e.preventDefault();
-    if (!ledgerForm.amount) return;
-    setSavingLedger(true);
-    await fetch('/api/admin/ledger-add', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...ledgerForm, amount: Number(ledgerForm.amount), paid: ledgerForm.category !== 'payable' }),
-    });
-    setSavingLedger(false);
-    setLedgerForm({ category: 'expense', amount: '', note: '', date: new Date().toISOString().slice(0, 10) });
-    loadAll();
-  }
+      <section className="owner-secondary-kpis"><article><span>Cash flow</span><strong>{pkr(data.cashFlow)}</strong></article><article><span>Burn rate</span><strong>{pkr(data.burnRate)}</strong></article><article><span>Win rate</span><strong>{pct(data.winRate)}</strong></article><article><span>Retention</span><strong>{pct(data.retentionRate)}</strong></article><article><span>LTV : CAC</span><strong>{data.ltvCacRatio===null?'—':`${data.ltvCacRatio}:1`}</strong></article><article><span>Avg project</span><strong>{pkr(data.avgProjectValue)}</strong></article></section>
 
-  async function deleteLedgerEntry(id: string) {
-    if (!confirm('Delete this entry?')) return;
-    await fetch(`/api/admin/ledger-delete?id=${id}`, { method: 'DELETE' });
-    loadAll();
-  }
-
-  async function togglePayablePaid(id: string, paid: boolean) {
-    await fetch('/api/admin/ledger-toggle-paid', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id, paid: !paid }),
-    });
-    loadAll();
-  }
-
-  if (loading || !data) return <div className="portal-shell"><div className="portal-container">Loading…</div></div>;
-
-  const maxMonthly = Math.max(1, ...data.monthlyEarnings.map((m) => m.amount));
-  const maxStage = Math.max(1, ...PIPELINE_ORDER.map((s) => data.stageCounts[s] || 0));
-  const totalSourceClients = Object.values(data.sourceCounts).reduce((a, b) => a + b, 0) || 1;
-  const serviceEntries = Object.entries(data.revenueByService).sort((a, b) => b[1] - a[1]);
-  const maxService = Math.max(1, ...serviceEntries.map(([, v]) => v));
-
-  return (
-    <div className="portal-shell">
-      <div className="portal-topbar">
-        <div className="portal-brand">ASHES <span>· Admin</span></div>
-        <div className="portal-nav-actions">
-          <Link className="pill-btn tiny" to="/admin">Clients</Link>
-          <Link className="pill-btn tiny" to="/admin/account">Account</Link>
-          <span className="portal-user">{user?.name}</span>
-          <button className="pill-btn tiny" onClick={onLogout}>Log out</button>
-        </div>
-      </div>
-
-      <div className="portal-container">
-        <div className="portal-eyebrow">BUSINESS DASHBOARD</div>
-        <h1 className="portal-h1">Command center</h1>
-        <p className="portal-sub">
-          Every number is computed from real data — invoices, client stages, and what you log below.
-          Two things are deliberately absent: <b>MRR/ARR</b> (your invoices are one-off projects, not recurring
-          billing — doesn't apply until you run retainers) and <b>Utilization / billable hours</b> (needs real
-          time-tracking, which doesn't exist yet). Everything else here is real.
-        </p>
-
-        {(data.staleClients > 0 || data.outstandingInvoiceCount > 0) && (
-          <div className="portal-card" style={{ borderColor: 'rgba(255,98,199,.35)' }}>
-            <h2 className="portal-h2" style={{ color: '#ff62c7' }}>Needs attention today</h2>
-            <div className="portal-btn-grid">
-              {data.outstandingInvoiceCount > 0 && (
-                <div className="portal-card" style={{ margin: 0, padding: 16 }}>
-                  <div style={{ fontSize: '1.4rem', fontWeight: 700, color: '#ff8fa3' }}>{data.outstandingInvoiceCount}</div>
-                  <div style={{ fontSize: '.7rem', color: '#8c8982' }}>invoice(s) unpaid — {pkr(data.outstandingPayments)} total</div>
-                </div>
-              )}
-              {data.staleClients > 0 && (
-                <div className="portal-card" style={{ margin: 0, padding: 16 }}>
-                  <div style={{ fontSize: '1.4rem', fontWeight: 700, color: '#ffb766' }}>{data.staleClients}</div>
-                  <div style={{ fontSize: '.7rem', color: '#8c8982' }}>client(s) stuck in the same stage 7+ days</div>
-                </div>
-              )}
-              {data.accountsPayable > 0 && (
-                <div className="portal-card" style={{ margin: 0, padding: 16 }}>
-                  <div style={{ fontSize: '1.4rem', fontWeight: 700, color: '#ffb766' }}>{pkr(data.accountsPayable)}</div>
-                  <div style={{ fontSize: '.7rem', color: '#8c8982' }}>unpaid bills (accounts payable)</div>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        <SectionLabel>Revenue &amp; Profitability</SectionLabel>
-        <div className="portal-btn-grid" style={{ marginBottom: 20 }}>
-          <KpiCard label="Gross Revenue" value={pkr(data.totalRevenue)} sub="From paid invoices" />
-          <KpiCard label="Net Profit" value={pkr(data.netProfit)} sub="Revenue − expenses − marketing" />
-          <KpiCard label="Gross Margin %" value={pct(data.grossMarginPct)} sub={data.grossMarginPct === null ? 'Log project cost on invoices to enable' : 'Profit before overhead'} />
-          <KpiCard label="Net Margin %" value={pct(data.netMarginPct)} sub="Final profit as % of revenue" />
-          <KpiCard label="Avg Project Value (AOV)" value={pkr(data.avgProjectValue)} sub="Across all invoices sent" />
-          <KpiCard label="Cost per Project" value={data.costPerProject === null ? '—' : pkr(data.costPerProject)} sub={data.costPerProject === null ? 'No costs logged yet' : 'Avg, where cost was logged'} />
-          <KpiCard label="Profit per Project" value={data.profitPerProject === null ? '—' : pkr(data.profitPerProject)} sub="Avg, where cost was logged" />
-          <KpiCard label="Accounts Receivable" value={pkr(data.accountsReceivable)} sub="Money clients owe you" />
-          <KpiCard label="Accounts Payable" value={pkr(data.accountsPayable)} sub="Money you owe others" />
-        </div>
-
-        <SectionLabel>Cash &amp; Runway</SectionLabel>
-        <div className="portal-btn-grid" style={{ marginBottom: 20 }}>
-          <KpiCard label="Cash Flow" value={pkr(data.cashFlow)} sub="Revenue − cash out, all-time" />
-          <KpiCard label="Burn Rate" value={pkr(data.burnRate)} sub="Avg monthly cash out, last 3mo" />
-          <KpiCard label="Runway" value={data.runwayMonths === null ? '—' : `${data.runwayMonths} mo`} sub="Cash on hand ÷ burn rate" />
-          <KpiCard label="Cash on Hand" value={pkr(data.cashOnHand)} sub="Set below" />
-        </div>
-
-        <SectionLabel>Customer Economics</SectionLabel>
-        <div className="portal-btn-grid" style={{ marginBottom: 20 }}>
-          <KpiCard label="CAC" value={data.cac === null ? '—' : pkr(data.cac)} sub={data.cac === null ? 'Log marketing spend to enable' : 'Marketing spend ÷ all clients'} />
-          <KpiCard label="LTV (to date)" value={pkr(data.ltv)} sub="Revenue per paying client — not a projection" />
-          <KpiCard label="LTV : CAC" value={data.ltvCacRatio === null ? '—' : `${data.ltvCacRatio}:1`} sub="Above 3:1 is generally healthy" />
-          <KpiCard label="ARPU" value={pkr(data.arpu)} sub="Total revenue ÷ all clients" />
-          <KpiCard label="Revenue per Lead" value={pkr(data.revenuePerLead)} sub="Same population as ARPU currently" />
-          <KpiCard label="Revenue per Paying Client" value={pkr(data.revenuePerPayingClient)} sub="Only clients who've paid" />
-          <KpiCard label="Repeat Purchase Rate" value={pct(data.repeatPurchaseRate)} sub="Paying clients with 2+ invoices" />
-          <KpiCard label="Retention Rate" value={pct(data.retentionRate)} sub="Clients not marked Lost" />
-          <KpiCard label="Churn Rate" value={pct(data.churnRate)} sub="Clients marked Lost" />
-          <KpiCard label="Client Concentration Risk" value={pct(data.clientConcentrationRisk)} sub="Biggest client's share of revenue" />
-        </div>
-
-        <SectionLabel>Pipeline &amp; Sales</SectionLabel>
-        <div className="portal-btn-grid" style={{ marginBottom: 20 }}>
-          <KpiCard label="Pipeline Value" value={pkr(data.pipelineValue)} sub="Open deals, by deal value" />
-          <KpiCard label="Weighted Pipeline" value={pkr(data.weightedPipelineValue)} sub="Value × stage win probability" />
-          <KpiCard label="Conversion Rate" value={`${data.conversionRate}%`} sub="Reached Won or later" />
-          <KpiCard label="Win Rate" value={pct(data.winRate)} sub="Of decided deals (won vs lost)" />
-          <KpiCard label="Loss Rate" value={pct(data.lossRate)} sub="Of decided deals" />
-          <KpiCard label="Sales Cycle Length" value={data.avgDaysToClose === null ? '—' : `${data.avgDaysToClose}d`} sub="Signup → first paid invoice" />
-          <KpiCard label="Lead Response Time" value={data.avgLeadResponseHours === null ? '—' : `${data.avgLeadResponseHours}h`} sub="Signup → first stage change" />
-          <KpiCard label="Repeat Clients" value={String(data.repeatClients)} sub="Marked Repeat Client stage" />
-          <KpiCard label="Total Clients" value={String(data.totalClients)} sub={`${data.payingClientCount} have paid at least once`} />
-        </div>
-
-        <div className="portal-card">
-          <h2 className="portal-h2">Monthly earnings</h2>
-          <p className="portal-sub" style={{ marginTop: -2 }}>Paid invoices, last 6 months.</p>
-          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 14, height: 140, marginTop: 20 }}>
-            {data.monthlyEarnings.map((m) => (
-              <div key={m.key} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
-                <div style={{ fontSize: '.62rem', color: '#8c8982' }}>{m.amount > 0 ? pkr(m.amount) : ''}</div>
-                <div style={{
-                  width: '100%', maxWidth: 46,
-                  height: `${Math.max(4, (m.amount / maxMonthly) * 100)}px`,
-                  background: m.amount > 0 ? 'linear-gradient(180deg, #ff62c7, #ad77ff)' : 'rgba(255,255,255,.06)',
-                  borderRadius: '6px 6px 2px 2px',
-                }} />
-                <div style={{ fontSize: '.68rem', color: '#8c8982', fontWeight: 700 }}>{m.label}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {serviceEntries.length > 0 && (
-          <div className="portal-card">
-            <h2 className="portal-h2">Profitability by service</h2>
-            <p className="portal-sub" style={{ marginTop: -2 }}>Revenue by the "Service category" tag on your invoices.</p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 12 }}>
-              {serviceEntries.map(([service, amount]) => (
-                <div key={service} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <div style={{ width: 140, fontSize: '.7rem', color: '#d8d5ce' }}>{service}</div>
-                  <div style={{ flex: 1, background: 'rgba(255,255,255,.05)', borderRadius: 6, overflow: 'hidden', height: 18 }}>
-                    <div style={{ width: `${(amount / maxService) * 100}%`, height: '100%', background: 'linear-gradient(90deg, #d8ff62, #66ebf2)' }} />
-                  </div>
-                  <div style={{ width: 90, fontSize: '.7rem', color: '#eceae4', fontWeight: 700, textAlign: 'right' }}>{pkr(amount)}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        <div className="portal-card">
-          <h2 className="portal-h2">Sales pipeline</h2>
-          <p className="portal-sub" style={{ marginTop: -2 }}>Real client counts per stage — update from a client's file.</p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 12 }}>
-            {PIPELINE_ORDER.map((stage) => {
-              const count = data.stageCounts[stage] || 0;
-              return (
-                <div key={stage} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <div style={{ width: 110, fontSize: '.68rem', color: '#d8d5ce', textAlign: 'right' }}>{STAGE_LABELS[stage]}</div>
-                  <div style={{ flex: 1, background: 'rgba(255,255,255,.05)', borderRadius: 6, overflow: 'hidden', height: 20 }}>
-                    <div style={{
-                      width: `${(count / maxStage) * 100}%`, minWidth: count > 0 ? '4px' : 0, height: '100%',
-                      background: stage === 'repeat_client' ? '#d8ff62' : 'linear-gradient(90deg, #ff62c7, #ad77ff)',
-                    }} />
-                  </div>
-                  <div style={{ width: 24, fontSize: '.72rem', fontWeight: 700, color: '#eceae4' }}>{count}</div>
-                </div>
-              );
-            })}
-            {data.stageCounts.lost > 0 && (
-              <div style={{ fontSize: '.68rem', color: '#66625b', marginTop: 4 }}>+ {data.stageCounts.lost} marked Lost (not shown above)</div>
-            )}
-          </div>
-        </div>
-
-        <div className="portal-card">
-          <h2 className="portal-h2">Client source</h2>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 12 }}>
-            {Object.entries(data.sourceCounts).sort((a, b) => b[1] - a[1]).map(([src, count]) => (
-              <div key={src} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <div style={{ width: 90, fontSize: '.7rem', color: '#d8d5ce' }}>{SOURCE_LABELS[src] || src}</div>
-                <div style={{ flex: 1, background: 'rgba(255,255,255,.05)', borderRadius: 6, overflow: 'hidden', height: 16 }}>
-                  <div style={{ width: `${(count / totalSourceClients) * 100}%`, height: '100%', background: '#66ebf2' }} />
-                </div>
-                <div style={{ width: 30, fontSize: '.7rem', color: '#8c8982' }}>{Math.round((count / totalSourceClients) * 100)}%</div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="portal-card">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: showFinance ? 20 : 0 }}>
-            <div>
-              <h2 className="portal-h2" style={{ margin: 0 }}>Finance — expenses, marketing spend &amp; bills</h2>
-              <p className="portal-sub" style={{ margin: '4px 0 0' }}>This is what powers Burn Rate, Runway, CAC, Net Profit and Accounts Payable above.</p>
-            </div>
-            <button className="pill-btn" onClick={() => setShowFinance((v) => !v)}>{showFinance ? 'Hide' : 'Manage'}</button>
-          </div>
-
-          {showFinance && (
-            <>
-              <div className="portal-grid-2" style={{ marginBottom: 10 }}>
-                <div className="portal-field">
-                  <label>Cash on hand (PKR)</label>
-                  <input type="number" value={cashOnHand} onChange={(e) => setCashOnHand(e.target.value)} onBlur={saveCashOnHand} placeholder="e.g. 50000" />
-                </div>
-              </div>
-
-              <form onSubmit={addLedgerEntry} style={{ marginTop: 10, marginBottom: 20, paddingTop: 20, borderTop: '1px solid rgba(214,209,198,.14)' }}>
-                <div className="portal-grid-2">
-                  <div className="portal-field">
-                    <label>Type</label>
-                    <select value={ledgerForm.category} onChange={(e) => setLedgerForm({ ...ledgerForm, category: e.target.value })}>
-                      <option value="expense">Operating expense</option>
-                      <option value="marketing">Marketing / ad spend</option>
-                      <option value="payable">Bill owed (payable)</option>
-                    </select>
-                  </div>
-                  <div className="portal-field">
-                    <label>Amount (PKR)</label>
-                    <input type="number" required value={ledgerForm.amount} onChange={(e) => setLedgerForm({ ...ledgerForm, amount: e.target.value })} />
-                  </div>
-                  <div className="portal-field">
-                    <label>Note</label>
-                    <input value={ledgerForm.note} onChange={(e) => setLedgerForm({ ...ledgerForm, note: e.target.value })} placeholder="e.g. Vercel hosting" />
-                  </div>
-                  <div className="portal-field">
-                    <label>Date</label>
-                    <input type="date" value={ledgerForm.date} onChange={(e) => setLedgerForm({ ...ledgerForm, date: e.target.value })} />
-                  </div>
-                </div>
-                <button className="pill-btn solid" disabled={savingLedger}>{savingLedger ? 'Adding…' : 'Add entry'}</button>
-              </form>
-
-              {ledger.length === 0 ? (
-                <div className="portal-empty">No entries logged yet.</div>
-              ) : (
-                <table className="portal-table">
-                  <thead><tr><th>Type</th><th>Note</th><th>Date</th><th>Amount</th><th>Status</th><th></th></tr></thead>
-                  <tbody>
-                    {ledger.map((e) => (
-                      <tr key={e._id}>
-                        <td style={{ textTransform: 'capitalize' }}>{e.category}</td>
-                        <td>{e.note || '—'}</td>
-                        <td>{new Date(e.date).toLocaleDateString('en-GB')}</td>
-                        <td>{pkr(e.amount)}</td>
-                        <td>
-                          {e.category === 'payable' ? (
-                            <button className="pill-btn tiny" onClick={() => togglePayablePaid(e._id, e.paid)}>
-                              {e.paid ? '✓ Paid' : 'Unpaid — mark paid'}
-                            </button>
-                          ) : '—'}
-                        </td>
-                        <td>
-                          <button className="pill-btn tiny" style={{ color: '#ff8fa3', borderColor: 'rgba(255,73,108,.4)' }} onClick={() => deleteLedgerEntry(e._id)}>Delete</button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function SectionLabel({ children }: { children: string }) {
-  return <div style={{ fontSize: '.68rem', fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: '#66625b', margin: '28px 0 12px' }}>{children}</div>;
-}
-
-function KpiCard({ label, value, sub }: { label: string; value: string; sub: string }) {
-  return (
-    <div className="portal-card" style={{ margin: 0 }}>
-      <div style={{ fontSize: '.6rem', fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', color: '#8c8982', marginBottom: 8 }}>{label}</div>
-      <div style={{ fontSize: '1.4rem', fontWeight: 700, color: '#eceae4' }}>{value}</div>
-      <div style={{ fontSize: '.64rem', color: '#66625b', marginTop: 6 }}>{sub}</div>
-    </div>
-  );
+      {showFinance&&<section id="finance" className="owner-panel owner-finance"><div className="owner-panel-head"><div><span>OWNER FINANCE TOOLS</span><h2>Cash & ledger</h2></div><button className="owner-close" onClick={()=>setShowFinance(false)}>Close</button></div><div className="owner-finance-grid"><div><label>Cash on hand</label><div className="owner-inline"><input type="number" value={cashOnHand} onChange={e=>setCashOnHand(e.target.value)}/><button onClick={saveCash}>Save</button></div></div><form onSubmit={addLedger}><label>Add finance entry</label><div className="owner-ledger-form"><select value={ledgerForm.category} onChange={e=>setLedgerForm({...ledgerForm,category:e.target.value})}><option value="expense">Expense</option><option value="marketing">Marketing</option><option value="payable">Payable</option></select><input type="number" placeholder="Amount" value={ledgerForm.amount} onChange={e=>setLedgerForm({...ledgerForm,amount:e.target.value})}/><input placeholder="Note" value={ledgerForm.note} onChange={e=>setLedgerForm({...ledgerForm,note:e.target.value})}/><input type="date" value={ledgerForm.date} onChange={e=>setLedgerForm({...ledgerForm,date:e.target.value})}/><button disabled={savingLedger}>{savingLedger?'Saving…':'Add entry'}</button></div></form></div><div className="owner-ledger-list">{ledger.slice(0,8).map(e=><div key={e._id}><span>{e.category}</span><strong>{pkr(e.amount)}</strong><small>{e.note||new Date(e.date).toLocaleDateString()}</small><button onClick={()=>removeLedger(e._id)}>×</button></div>)}</div></section>}
+    </main>
+  </div>
 }

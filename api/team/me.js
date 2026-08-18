@@ -1,5 +1,6 @@
 import { dbConnect } from '../../lib/mongodb.js';
 import User from '../../models/User.js';
+import DocRecord from '../../models/DocRecord.js';
 import { getUserFromReq } from '../../lib/auth.js';
 
 export default async function handler(req, res) {
@@ -12,5 +13,18 @@ export default async function handler(req, res) {
     'name email phone teamTitle department availability employmentStatus startedAt salaryAmount salaryCurrency salaryFrequency appointmentLetterTitle appointmentLetterUrl teamTasks createdAt'
   );
   if (!user) return res.status(404).json({ error: 'Team member not found' });
-  res.status(200).json(user);
+
+  const latestLetter = await DocRecord.findOne({ client: user._id, type: 'appointment_letter' })
+    .select('title status createdAt fileName')
+    .sort({ createdAt: -1 });
+
+  const data = user.toObject();
+  if (latestLetter) {
+    data.appointmentLetterTitle = latestLetter.title;
+    data.appointmentLetterUrl = '/api/team/appointment-letter';
+    data.appointmentLetterStatus = latestLetter.status;
+    data.appointmentLetterSentAt = latestLetter.createdAt;
+    data.appointmentLetterFileName = latestLetter.fileName;
+  }
+  res.status(200).json(data);
 }

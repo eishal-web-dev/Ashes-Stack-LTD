@@ -33,10 +33,10 @@ main>section:nth-of-type(n+6) a:hover{transform:translateY(-2px)}
 .social-slot{position:relative;width:70px;height:70px}
 .social-shape{position:absolute;inset:0;display:grid!important;place-items:center!important;margin:0!important;padding:0!important;width:70px!important;height:70px!important;border:1px solid rgba(255,255,255,.12)!important;background:#f1efe9!important;color:#111216!important;box-shadow:0 10px 26px rgba(0,0,0,.25)!important;outline:none;cursor:pointer;transition:transform .2s ease,background .2s ease,color .2s ease,box-shadow .2s ease,border-color .2s ease!important;text-decoration:none!important;overflow:hidden}
 .social-shape svg{width:24px!important;height:24px!important;fill:currentColor!important;transition:transform .2s ease}
-.shape-1{border-radius:70px 8px 8px 8px!important}
-.shape-2{border-radius:8px 70px 8px 8px!important}
-.shape-3{border-radius:8px 8px 8px 70px!important}
-.shape-4{border-radius:8px 8px 70px 8px!important}
+.shape-1{border-radius:140px 8px 8px 8px!important}
+.shape-2{border-radius:8px 140px 8px 8px!important}
+.shape-3{border-radius:8px 8px 8px 140px!important}
+.shape-4{border-radius:8px 8px 140px 8px!important}
 .shape-5{border-radius:35px!important}
 .social-slot:hover .social-shape,.social-slot:focus-within .social-shape{transform:scale(1.07)!important;z-index:3}
 .social-slot:hover .social-shape svg,.social-slot:focus-within .social-shape svg{transform:scale(1.06)}

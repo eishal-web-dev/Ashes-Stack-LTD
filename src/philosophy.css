@@ -23,9 +23,9 @@
 .philosophy-core-badge small{display:block;margin-top:6px;font-size:8px;color:#8e8a86;letter-spacing:.2em}
 
 .philosophy-core .phoenix-socials{position:relative}
-.philosophy-core .phoenix-socials .social-cluster{display:flex;flex-direction:row;gap:12px}
-.philosophy-core .phoenix-socials .social-slot,.philosophy-core .phoenix-socials .social-shape{width:56px!important;height:56px!important}
-.philosophy-core .phoenix-socials .social-shape svg{width:20px!important;height:20px!important}
+.philosophy-core .phoenix-socials .social-cluster{display:flex;flex-direction:row;flex-wrap:nowrap;gap:10px}
+.philosophy-core .phoenix-socials .social-slot,.philosophy-core .phoenix-socials .social-shape{width:48px!important;height:48px!important}
+.philosophy-core .phoenix-socials .social-shape svg{width:18px!important;height:18px!important}
 
 .principle-grid{display:grid;gap:13px}
 .principle-card{--principle:#fff;position:relative;min-height:170px;padding:23px 24px 20px 82px;border:1px solid rgba(255,255,255,.11);border-radius:22px;background:linear-gradient(145deg,rgba(21,22,25,.94),rgba(9,10,12,.96));overflow:hidden;transition:.35s transform,.35s border-color,.35s box-shadow}

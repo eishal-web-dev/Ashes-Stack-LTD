@@ -1,0 +1,74 @@
+import { useEffect, useMemo, useState } from 'react';
+import { Bell, Download, X } from 'lucide-react';
+import { getMe } from './portal/api';
+
+type AppNotification={_id:string;title:string;message:string;href?:string;read:boolean;createdAt:string};
+type InstallEvent=Event&{prompt:()=>Promise<void>;userChoice:Promise<{outcome:'accepted'|'dismissed'}>};
+
+export default function PwaManager(){
+  const[installEvent,setInstallEvent]=useState<InstallEvent|null>(null);
+  const[installed,setInstalled]=useState(false);
+  const[notes,setNotes]=useState<AppNotification[]>([]);
+  const[open,setOpen]=useState(false);
+  const[authed,setAuthed]=useState(false);
+
+  useEffect(()=>{
+    const standalone=window.matchMedia('(display-mode: standalone)').matches||(navigator as any).standalone===true;
+    setInstalled(standalone);
+    const before=(e:Event)=>{e.preventDefault();setInstallEvent(e as InstallEvent)};
+    window.addEventListener('beforeinstallprompt',before);
+    if('serviceWorker'in navigator) navigator.serviceWorker.register('/sw.js').catch(()=>{});
+    return()=>window.removeEventListener('beforeinstallprompt',before);
+  },[]);
+
+  useEffect(()=>{
+    let alive=true;
+    getMe().then(u=>{if(alive)setAuthed(!!u)}).catch(()=>{});
+    return()=>{alive=false};
+  },[location.pathname]);
+
+  async function loadNotifications(){
+    if(!authed)return;
+    const res=await fetch('/api/notifications');
+    if(!res.ok)return;
+    const rows:AppNotification[]=await res.json();
+    setNotes(rows);
+    const unread=rows.filter(n=>!n.read);
+    if(unread.length&&'Notification'in window&&Notification.permission==='granted'){
+      const newest=unread[0];
+      const seen=localStorage.getItem('ashes-last-browser-notification');
+      if(seen!==newest._id){
+        const reg=await navigator.serviceWorker?.ready.catch(()=>null);
+        if(reg) reg.showNotification(newest.title,{body:newest.message,icon:'/ashes-logo-transparent.webp',badge:'/ashes-logo-transparent.webp',data:{href:newest.href||'/portal'}});
+        else new Notification(newest.title,{body:newest.message,icon:'/ashes-logo-transparent.webp'});
+        localStorage.setItem('ashes-last-browser-notification',newest._id);
+      }
+    }
+  }
+
+  useEffect(()=>{
+    if(!authed)return;
+    loadNotifications();
+    const id=window.setInterval(loadNotifications,20000);
+    return()=>window.clearInterval(id);
+  },[authed]);
+
+  const unread=useMemo(()=>notes.filter(n=>!n.read).length,[notes]);
+  async function install(){if(!installEvent)return;await installEvent.prompt();const choice=await installEvent.userChoice;if(choice.outcome==='accepted'){setInstalled(true);setInstallEvent(null)}}
+  async function enableNotifications(){if(!('Notification'in window))return;const result=await Notification.requestPermission();if(result==='granted')loadNotifications()}
+  async function openNotification(n:AppNotification){if(!n.read){await fetch('/api/notifications',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:n._id})});setNotes(v=>v.map(x=>x._id===n._id?{...x,read:true}:x))}if(n.href)window.location.href=n.href}
+  async function markAll(){await fetch('/api/notifications',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({markAll:true})});setNotes(v=>v.map(n=>({...n,read:true})))}
+
+  return <>
+    <div className="ashes-app-actions">
+      {!installed&&installEvent&&<button className="ashes-install-btn" onClick={install}><Download size={15}/><span>Install Ashes</span></button>}
+      {authed&&<button className="ashes-bell-btn" onClick={()=>setOpen(v=>!v)} aria-label="Notifications"><Bell size={17}/>{unread>0&&<b>{unread>9?'9+':unread}</b>}</button>}
+    </div>
+    {open&&<aside className="ashes-notification-drawer">
+      <div className="ashes-notification-head"><div><span>ASHES</span><strong>Notifications</strong></div><button onClick={()=>setOpen(false)}><X size={17}/></button></div>
+      {'Notification'in window&&Notification.permission!=='granted'&&<button className="ashes-enable-notifications" onClick={enableNotifications}>Enable device notifications</button>}
+      <div className="ashes-notification-list">{notes.length?notes.map(n=><button key={n._id} className={n.read?'read':''} onClick={()=>openNotification(n)}><i/><div><strong>{n.title}</strong><p>{n.message}</p><small>{new Date(n.createdAt).toLocaleString()}</small></div></button>):<div className="ashes-notification-empty">No notifications yet.</div>}</div>
+      {unread>0&&<button className="ashes-mark-all" onClick={markAll}>Mark all as read</button>}
+    </aside>}
+  </>
+}

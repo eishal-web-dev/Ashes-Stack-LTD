@@ -3,6 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { Bell } from 'lucide-react';
 
 type NotificationRow = { _id: string; type: string; title: string; message?: string; read: boolean; link?: string; createdAt: string };
+type DeviceAlertState = 'unsupported' | 'default' | 'enabled' | 'off' | 'blocked';
+
+const DEVICE_ALERT_PREF = 'ashes-device-notifications';
 
 function playRing() {
   try {
@@ -24,33 +27,79 @@ function playRing() {
   }
 }
 
+function readDeviceAlertState(): DeviceAlertState {
+  if (!('Notification' in window)) return 'unsupported';
+  if (Notification.permission === 'denied') return 'blocked';
+  if (Notification.permission === 'granted') {
+    return localStorage.getItem(DEVICE_ALERT_PREF) === 'off' ? 'off' : 'enabled';
+  }
+  return 'default';
+}
+
+async function showDeviceNotification(notification: NotificationRow) {
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
+  if (localStorage.getItem(DEVICE_ALERT_PREF) === 'off') return;
+
+  const options: NotificationOptions = {
+    body: notification.message || 'You have a new ASHES update.',
+    icon: '/pwa-icon-192.svg',
+    badge: '/pwa-icon-192.svg',
+    tag: `ashes-${notification._id}`,
+    data: { url: notification.link || window.location.pathname || '/portal' },
+  };
+
+  try {
+    if ('serviceWorker' in navigator) {
+      const registration = await navigator.serviceWorker.getRegistration('/');
+      if (registration) {
+        await registration.showNotification(notification.title || 'ASHES', options);
+        return;
+      }
+    }
+    new Notification(notification.title || 'ASHES', options);
+  } catch {
+    // The in-app notification remains available even if the OS notification is blocked.
+  }
+}
+
 export default function NotificationBell() {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<NotificationRow[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [ringing, setRinging] = useState(false);
-  const prevUnread = useRef<number | null>(null);
+  const [deviceAlerts, setDeviceAlerts] = useState<DeviceAlertState>(() => readDeviceAlertState());
+  const knownIds = useRef<Set<string>>(new Set());
+  const hasLoaded = useRef(false);
   const wrapRef = useRef<HTMLDivElement>(null);
 
   async function load(isPoll = false) {
-    const res = await fetch('/api/notifications');
+    const res = await fetch('/api/notifications', { cache: 'no-store' });
     if (!res.ok) return;
     const data = await res.json();
-    setItems(data.notifications);
-    setUnreadCount(data.unreadCount);
-    if (isPoll && prevUnread.current !== null && data.unreadCount > prevUnread.current) {
-      playRing();
-      setRinging(true);
-      setTimeout(() => setRinging(false), 700);
+    const nextItems: NotificationRow[] = Array.isArray(data.notifications) ? data.notifications : [];
+    const nextUnread = Number(data.unreadCount || 0);
+
+    if (hasLoaded.current && isPoll) {
+      const newUnread = nextItems.filter((item) => !knownIds.current.has(item._id) && !item.read);
+      if (newUnread.length > 0) {
+        playRing();
+        setRinging(true);
+        window.setTimeout(() => setRinging(false), 700);
+        await showDeviceNotification(newUnread[0]);
+      }
     }
-    prevUnread.current = data.unreadCount;
+
+    knownIds.current = new Set(nextItems.map((item) => item._id));
+    hasLoaded.current = true;
+    setItems(nextItems);
+    setUnreadCount(nextUnread);
   }
 
   useEffect(() => {
     load();
-    const interval = setInterval(() => load(true), 20000);
-    return () => clearInterval(interval);
+    const interval = window.setInterval(() => load(true), 20000);
+    return () => window.clearInterval(interval);
   }, []);
 
   useEffect(() => {
@@ -60,6 +109,38 @@ export default function NotificationBell() {
     document.addEventListener('mousedown', onClickOutside);
     return () => document.removeEventListener('mousedown', onClickOutside);
   }, []);
+
+  async function enableDeviceAlerts() {
+    if (!('Notification' in window)) {
+      setDeviceAlerts('unsupported');
+      return;
+    }
+
+    const permission = Notification.permission === 'default'
+      ? await Notification.requestPermission()
+      : Notification.permission;
+
+    if (permission === 'granted') {
+      localStorage.setItem(DEVICE_ALERT_PREF, 'on');
+      setDeviceAlerts('enabled');
+      await showDeviceNotification({
+        _id: 'enabled',
+        type: 'system',
+        title: 'ASHES notifications are on',
+        message: 'New portal updates can now appear on this device.',
+        read: false,
+        link: window.location.pathname,
+        createdAt: new Date().toISOString(),
+      });
+    } else if (permission === 'denied') {
+      setDeviceAlerts('blocked');
+    }
+  }
+
+  function disableDeviceAlerts() {
+    localStorage.setItem(DEVICE_ALERT_PREF, 'off');
+    setDeviceAlerts('off');
+  }
 
   async function onItemClick(n: NotificationRow) {
     if (!n.read) {
@@ -83,10 +164,20 @@ export default function NotificationBell() {
     load();
   }
 
+  const deviceCopy = deviceAlerts === 'enabled'
+    ? ['Device alerts on', 'New portal updates can appear as notifications.']
+    : deviceAlerts === 'blocked'
+      ? ['Device alerts blocked', 'Allow notifications in your browser/site settings.']
+      : deviceAlerts === 'unsupported'
+        ? ['Device alerts unavailable', 'This browser does not expose notification permission.']
+        : deviceAlerts === 'off'
+          ? ['Device alerts off', 'Turn them back on whenever you want.']
+          : ['Enable device alerts', 'Allow ASHES to show new client updates on this device.'];
+
   return (
     <div ref={wrapRef} style={{ position: 'relative' }}>
       <button
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => { setOpen((v) => !v); setDeviceAlerts(readDeviceAlertState()); }}
         aria-label="Notifications"
         style={{
           position: 'relative', background: 'transparent', border: '1px solid rgba(255,255,255,.14)',
@@ -108,7 +199,7 @@ export default function NotificationBell() {
 
       {open && (
         <div style={{
-          position: 'absolute', top: 42, right: 0, width: 320, maxHeight: 420, overflowY: 'auto',
+          position: 'absolute', top: 42, right: 0, width: 'min(320px, calc(100vw - 28px))', maxHeight: 440, overflowY: 'auto',
           background: '#0c0c0e', border: '1px solid rgba(214,209,198,.18)', borderRadius: 14,
           boxShadow: '0 20px 50px rgba(0,0,0,.5)', zIndex: 50,
         }}>
@@ -120,6 +211,21 @@ export default function NotificationBell() {
               </button>
             )}
           </div>
+
+          <div className="notification-device-row">
+            <div className="notification-device-copy">
+              <b>{deviceCopy[0]}</b>
+              <small>{deviceCopy[1]}</small>
+            </div>
+            {deviceAlerts === 'enabled' ? (
+              <button className="notification-device-action on" type="button" onClick={disableDeviceAlerts}>ON</button>
+            ) : deviceAlerts === 'blocked' || deviceAlerts === 'unsupported' ? (
+              <button className="notification-device-action" type="button" disabled>{deviceAlerts === 'blocked' ? 'BLOCKED' : 'N/A'}</button>
+            ) : (
+              <button className="notification-device-action" type="button" onClick={enableDeviceAlerts}>TURN ON</button>
+            )}
+          </div>
+
           {items.length === 0 ? (
             <div style={{ padding: '24px 16px', textAlign: 'center', color: '#66625b', fontSize: '.7rem' }}>Nothing yet.</div>
           ) : (

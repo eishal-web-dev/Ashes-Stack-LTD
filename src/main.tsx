@@ -35,6 +35,7 @@ import './final-sections.css';
 import './about-section.css';
 import './standalone-pages.css';
 import './portal/portal.css';
+import './portal/portal-responsive.css';
 import './pwa.css';
 
 setupAshesPwa();

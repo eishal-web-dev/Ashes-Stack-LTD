@@ -5,9 +5,8 @@ import AdminLayout from './AdminLayout';
 
 type LedgerEntry = { _id: string; category: string; amount: number; note?: string; date: string; paid: boolean };
 type DashboardSlice = {
-  totalRevenue: number; totalExpenses: number; totalMarketing: number; paidPayables: number;
+  totalRevenue: number; totalExpenses: number; totalMarketing: number;
   totalCashOut: number; netProfit: number; accountsPayable: number; cashOnHand: number;
-  monthlyEarnings: { key: string; label: string; amount: number }[];
 };
 
 function pkr(n: number) { return `PKR ${Math.round(n).toLocaleString()}`; }
@@ -21,7 +20,6 @@ export default function AdminFinance() {
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState({ category: 'expense', amount: '', note: '', date: new Date().toISOString().slice(0, 10), paid: true });
   const [saving, setSaving] = useState(false);
-  const [filter, setFilter] = useState<'all' | 'expense' | 'marketing' | 'payable'>('all');
 
   async function loadAll() {
     const [d, l, s] = await Promise.all([
@@ -60,7 +58,7 @@ export default function AdminFinance() {
     await fetch('/api/admin/ledger-add', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...form, amount: Number(form.amount), paid: form.category === 'payable' ? form.paid : true }),
+      body: JSON.stringify(form),
     });
     setSaving(false);
     setForm({ category: 'expense', amount: '', note: '', date: new Date().toISOString().slice(0, 10), paid: true });
@@ -84,125 +82,116 @@ export default function AdminFinance() {
 
   if (loading || !data) return <AdminLayout user={user}><div>Loading…</div></AdminLayout>;
 
-  const filtered = filter === 'all' ? ledger : ledger.filter((e) => e.category === filter);
+  const moneyIn = data.totalRevenue;
+  const moneyOut = data.totalCashOut;
   const isProfit = data.netProfit >= 0;
+  const paidEntries = ledger.filter((e) => e.paid);
+  const unpaidEntries = ledger.filter((e) => !e.paid);
 
   return (
     <AdminLayout user={user}>
       <div className="portal-page-head">
         <div className="portal-eyebrow">FINANCE</div>
         <h1 className="portal-h1">Money in, money out</h1>
-        <p className="portal-sub">Everything here is real — revenue from paid invoices, and whatever you log below.</p>
+        <p className="portal-sub">
+          Simple rule: revenue comes from paid invoices automatically. Below, log anything you spend —
+          it only counts against your profit once you mark it <b>Paid</b>. Still owe it? Leave it unpaid; it'll
+          show under "Owed" instead, and you flip it to paid the moment you actually pay it.
+        </p>
       </div>
 
-      {/* The one number that matters, up top, plain and simple */}
-      <div className="portal-card" style={{ borderColor: isProfit ? 'rgba(216,255,98,.35)' : 'rgba(255,73,108,.35)' }}>
-        <h2 className="portal-h2" style={{ margin: 0 }}>All-time net {isProfit ? 'profit' : 'loss'}</h2>
-        <div style={{ fontSize: '2.4rem', fontWeight: 800, color: isProfit ? '#d8ff62' : '#ff8fa3', margin: '10px 0' }}>
-          {isProfit ? '' : '−'}{pkr(Math.abs(data.netProfit))}
+      {/* Two plain numbers, side by side, then the answer */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+        <div className="portal-card" style={{ margin: 0, borderColor: 'rgba(216,255,98,.3)' }}>
+          <div style={{ fontSize: '.62rem', fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', color: '#8c8982' }}>Money in</div>
+          <div style={{ fontSize: '1.9rem', fontWeight: 800, color: '#d8ff62', marginTop: 6 }}>{pkr(moneyIn)}</div>
+          <div style={{ fontSize: '.66rem', color: '#66625b', marginTop: 4 }}>From paid invoices</div>
         </div>
-        <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', fontSize: '.78rem', color: '#8c8982', marginTop: 8 }}>
-          <span>Revenue in: <b style={{ color: '#d8ff62' }}>{pkr(data.totalRevenue)}</b></span>
-          <span>Expenses: <b style={{ color: '#ff8fa3' }}>−{pkr(data.totalExpenses)}</b></span>
-          <span>Marketing: <b style={{ color: '#ff8fa3' }}>−{pkr(data.totalMarketing)}</b></span>
-          <span>Bills paid: <b style={{ color: '#ff8fa3' }}>−{pkr(data.paidPayables)}</b></span>
+        <div className="portal-card" style={{ margin: 0, borderColor: 'rgba(255,73,108,.3)' }}>
+          <div style={{ fontSize: '.62rem', fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', color: '#8c8982' }}>Money out</div>
+          <div style={{ fontSize: '1.9rem', fontWeight: 800, color: '#ff8fa3', marginTop: 6 }}>{pkr(moneyOut)}</div>
+          <div style={{ fontSize: '.66rem', color: '#66625b', marginTop: 4 }}>Everything marked Paid below</div>
+        </div>
+      </div>
+
+      <div className="portal-card" style={{ borderColor: isProfit ? 'rgba(216,255,98,.35)' : 'rgba(255,73,108,.35)', textAlign: 'center' }}>
+        <div style={{ fontSize: '.64rem', fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: '#8c8982' }}>
+          Money in − money out = your real {isProfit ? 'profit' : 'loss'}
+        </div>
+        <div style={{ fontSize: '2.6rem', fontWeight: 800, color: isProfit ? '#d8ff62' : '#ff8fa3', margin: '10px 0 0' }}>
+          {isProfit ? '' : '−'}{pkr(Math.abs(data.netProfit))}
         </div>
         {data.accountsPayable > 0 && (
           <p style={{ fontSize: '.72rem', color: '#ffb766', marginTop: 12, marginBottom: 0 }}>
-            + {pkr(data.accountsPayable)} in unpaid bills still owed (not counted above until marked paid)
+            Plus {pkr(data.accountsPayable)} still owed (not counted until you mark it Paid)
           </p>
         )}
       </div>
 
-      <div className="portal-grid-2" style={{ marginBottom: 20 }}>
-        <div className="portal-card" style={{ margin: 0 }}>
-          <div style={{ fontSize: '.6rem', fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', color: '#8c8982', marginBottom: 8 }}>Cash on hand</div>
-          <input
-            type="number" value={cashOnHand} onChange={(e) => setCashOnHand(e.target.value)} onBlur={saveCashOnHand}
-            placeholder="e.g. 50000"
-            style={{ width: '100%', padding: '10px 12px', borderRadius: 8, background: '#0a0a0b', border: '1px solid rgba(214,209,198,.2)', color: '#eceae4', font: '700 1.1rem "Courier New", monospace' }}
-          />
-          <div style={{ fontSize: '.64rem', color: '#66625b', marginTop: 8 }}>Update this whenever your actual bank/cash balance changes — powers Runway on the dashboard.</div>
-        </div>
-        <div className="portal-card" style={{ margin: 0 }}>
-          <div style={{ fontSize: '.6rem', fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', color: '#8c8982', marginBottom: 8 }}>Unpaid bills owed</div>
-          <div style={{ fontSize: '1.4rem', fontWeight: 700, color: data.accountsPayable > 0 ? '#ffb766' : '#eceae4' }}>{pkr(data.accountsPayable)}</div>
-          <div style={{ fontSize: '.64rem', color: '#66625b', marginTop: 8 }}>Mark a bill "paid" below once you actually pay it — it'll count against profit then, not before.</div>
-        </div>
+      <div className="portal-card">
+        <div style={{ fontSize: '.6rem', fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', color: '#8c8982', marginBottom: 8 }}>Cash on hand right now</div>
+        <input
+          type="number" value={cashOnHand} onChange={(e) => setCashOnHand(e.target.value)} onBlur={saveCashOnHand}
+          placeholder="e.g. 50000"
+          style={{ width: 220, padding: '10px 12px', borderRadius: 8, background: '#0a0a0b', border: '1px solid rgba(214,209,198,.2)', color: '#eceae4', font: '700 1.1rem "Courier New", monospace' }}
+        />
+        <div style={{ fontSize: '.64rem', color: '#66625b', marginTop: 8 }}>Your actual bank/cash balance today — just type the number, it saves automatically. Powers Runway on the dashboard.</div>
       </div>
 
       <div className="portal-card">
-        <h2 className="portal-h2">Log something</h2>
-        <p className="portal-sub" style={{ marginTop: -2 }}>
-          A subscription payment (like an AI tool), ad spend, a domain renewal, or any other bill — log it here the moment it happens so your numbers stay real.
-        </p>
+        <h2 className="portal-h2">Log a cost</h2>
         <form onSubmit={addEntry}>
           <div className="portal-grid-2">
             <div className="portal-field">
-              <label>What kind of cost is this?</label>
-              <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
-                <option value="expense">Operating expense (tools, subscriptions, hosting, domain...)</option>
-                <option value="marketing">Marketing / ad spend</option>
-                <option value="payable">Bill I owe (may not be paid yet)</option>
-              </select>
+              <label>What was it for?</label>
+              <input required value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} placeholder="e.g. Claude subscription, domain renewal" />
             </div>
             <div className="portal-field">
               <label>Amount (PKR)</label>
               <input type="number" required value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} placeholder="e.g. 5700" />
             </div>
             <div className="portal-field">
-              <label>What was it?</label>
-              <input value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} placeholder="e.g. Claude subscription" />
+              <label>Type</label>
+              <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
+                <option value="expense">General expense (tools, hosting, domain, subscriptions)</option>
+                <option value="marketing">Marketing / ad spend</option>
+              </select>
             </div>
             <div className="portal-field">
               <label>Date</label>
               <input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
             </div>
-            {form.category === 'payable' && (
-              <div className="portal-field" style={{ gridColumn: '1 / -1' }}>
-                <label>Already paid this?</label>
-                <select value={form.paid ? 'yes' : 'no'} onChange={(e) => setForm({ ...form, paid: e.target.value === 'yes' })}>
-                  <option value="no">Not yet — still owed</option>
-                  <option value="yes">Yes, already paid</option>
-                </select>
-              </div>
-            )}
+          </div>
+          <div style={{ display: 'flex', gap: 10, margin: '4px 0 18px' }}>
+            <button type="button" onClick={() => setForm({ ...form, paid: true })}
+              className="pill-btn" style={form.paid ? { background: '#d8ff62', color: '#0a0a0b', borderColor: '#d8ff62' } : undefined}>
+              ✓ Already paid
+            </button>
+            <button type="button" onClick={() => setForm({ ...form, paid: false })}
+              className="pill-btn" style={!form.paid ? { background: '#ffb766', color: '#0a0a0b', borderColor: '#ffb766' } : undefined}>
+              Still owed
+            </button>
           </div>
           <button className="pill-btn solid" disabled={saving}>{saving ? 'Adding…' : 'Add'}</button>
         </form>
       </div>
 
       <div className="portal-card">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-          <h2 className="portal-h2" style={{ margin: 0 }}>All entries</h2>
-          <div style={{ display: 'flex', gap: 6 }}>
-            {(['all', 'expense', 'marketing', 'payable'] as const).map((f) => (
-              <button key={f} className="pill-btn tiny" style={filter === f ? { background: '#ff62c7', color: '#0a0a0b', borderColor: '#ff62c7' } : undefined} onClick={() => setFilter(f)}>
-                {f === 'all' ? 'All' : f.charAt(0).toUpperCase() + f.slice(1)}
-              </button>
-            ))}
-          </div>
-        </div>
-        {filtered.length === 0 ? (
-          <div className="portal-empty">Nothing logged yet — add your first entry above.</div>
+        <h2 className="portal-h2">Paid — counts against your profit</h2>
+        {paidEntries.length === 0 ? (
+          <div className="portal-empty">Nothing logged yet.</div>
         ) : (
           <table className="portal-table">
-            <thead><tr><th>Type</th><th>What</th><th>Date</th><th>Amount</th><th>Status</th><th></th></tr></thead>
+            <thead><tr><th>What</th><th>Type</th><th>Date</th><th>Amount</th><th></th></tr></thead>
             <tbody>
-              {filtered.map((e) => (
+              {paidEntries.map((e) => (
                 <tr key={e._id}>
-                  <td style={{ textTransform: 'capitalize' }}>{e.category}</td>
                   <td>{e.note || '—'}</td>
+                  <td style={{ textTransform: 'capitalize' }}>{e.category}</td>
                   <td>{new Date(e.date).toLocaleDateString('en-GB')}</td>
                   <td>{pkr(e.amount)}</td>
-                  <td>
-                    {e.category === 'payable' ? (
-                      <button className="pill-btn tiny" onClick={() => togglePaid(e._id, e.paid)}>
-                        {e.paid ? '✓ Paid' : 'Unpaid — mark paid'}
-                      </button>
-                    ) : '—'}
-                  </td>
-                  <td>
+                  <td style={{ display: 'flex', gap: 8 }}>
+                    <button className="pill-btn tiny" onClick={() => togglePaid(e._id, e.paid)}>Mark unpaid</button>
                     <button className="pill-btn tiny" style={{ color: '#ff8fa3', borderColor: 'rgba(255,73,108,.4)' }} onClick={() => deleteEntry(e._id)}>Delete</button>
                   </td>
                 </tr>
@@ -211,6 +200,29 @@ export default function AdminFinance() {
           </table>
         )}
       </div>
+
+      {unpaidEntries.length > 0 && (
+        <div className="portal-card" style={{ borderColor: 'rgba(255,183,102,.3)' }}>
+          <h2 className="portal-h2" style={{ color: '#ffb766' }}>Still owed — not counted yet</h2>
+          <table className="portal-table">
+            <thead><tr><th>What</th><th>Type</th><th>Date</th><th>Amount</th><th></th></tr></thead>
+            <tbody>
+              {unpaidEntries.map((e) => (
+                <tr key={e._id}>
+                  <td>{e.note || '—'}</td>
+                  <td style={{ textTransform: 'capitalize' }}>{e.category}</td>
+                  <td>{new Date(e.date).toLocaleDateString('en-GB')}</td>
+                  <td>{pkr(e.amount)}</td>
+                  <td style={{ display: 'flex', gap: 8 }}>
+                    <button className="pill-btn tiny solid" onClick={() => togglePaid(e._id, e.paid)}>✓ Mark paid</button>
+                    <button className="pill-btn tiny" style={{ color: '#ff8fa3', borderColor: 'rgba(255,73,108,.4)' }} onClick={() => deleteEntry(e._id)}>Delete</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </AdminLayout>
   );
 }

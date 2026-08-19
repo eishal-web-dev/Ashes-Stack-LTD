@@ -44,7 +44,7 @@ export default function AdminDashboard() {
   const [cashOnHand, setCashOnHand] = useState('');
   const [loading, setLoading] = useState(true);
   const [showFinance, setShowFinance] = useState(false);
-  const [ledgerForm, setLedgerForm] = useState({ category: 'expense', amount: '', note: '', date: new Date().toISOString().slice(0, 10) });
+  const [ledgerForm, setLedgerForm] = useState({ category: 'expense', amount: '', note: '', date: new Date().toISOString().slice(0, 10), paid: true });
   const [savingLedger, setSavingLedger] = useState(false);
 
   async function loadAll() {
@@ -84,10 +84,10 @@ export default function AdminDashboard() {
     await fetch('/api/admin/ledger-add', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...ledgerForm, amount: Number(ledgerForm.amount), paid: ledgerForm.category !== 'payable' }),
+      body: JSON.stringify({ ...ledgerForm, amount: Number(ledgerForm.amount) }),
     });
     setSavingLedger(false);
-    setLedgerForm({ category: 'expense', amount: '', note: '', date: new Date().toISOString().slice(0, 10) });
+    setLedgerForm({ category: 'expense', amount: '', note: '', date: new Date().toISOString().slice(0, 10), paid: true });
     loadAll();
   }
 
@@ -301,9 +301,8 @@ export default function AdminDashboard() {
                   <div className="portal-field">
                     <label>Type</label>
                     <select value={ledgerForm.category} onChange={(e) => setLedgerForm({ ...ledgerForm, category: e.target.value })}>
-                      <option value="expense">Operating expense</option>
+                      <option value="expense">General expense (tools, hosting, subscriptions)</option>
                       <option value="marketing">Marketing / ad spend</option>
-                      <option value="payable">Bill owed (payable)</option>
                     </select>
                   </div>
                   <div className="portal-field">
@@ -311,7 +310,7 @@ export default function AdminDashboard() {
                     <input type="number" required value={ledgerForm.amount} onChange={(e) => setLedgerForm({ ...ledgerForm, amount: e.target.value })} />
                   </div>
                   <div className="portal-field">
-                    <label>Note</label>
+                    <label>What was it?</label>
                     <input value={ledgerForm.note} onChange={(e) => setLedgerForm({ ...ledgerForm, note: e.target.value })} placeholder="e.g. Vercel hosting" />
                   </div>
                   <div className="portal-field">
@@ -319,8 +318,22 @@ export default function AdminDashboard() {
                     <input type="date" value={ledgerForm.date} onChange={(e) => setLedgerForm({ ...ledgerForm, date: e.target.value })} />
                   </div>
                 </div>
+                <div style={{ display: 'flex', gap: 10, margin: '4px 0 18px' }}>
+                  <button type="button" onClick={() => setLedgerForm({ ...ledgerForm, paid: true })}
+                    className="pill-btn" style={ledgerForm.paid ? { background: '#d8ff62', color: '#0a0a0b', borderColor: '#d8ff62' } : undefined}>
+                    ✓ Already paid
+                  </button>
+                  <button type="button" onClick={() => setLedgerForm({ ...ledgerForm, paid: false })}
+                    className="pill-btn" style={!ledgerForm.paid ? { background: '#ffb766', color: '#0a0a0b', borderColor: '#ffb766' } : undefined}>
+                    Still owed
+                  </button>
+                </div>
                 <button className="pill-btn solid" disabled={savingLedger}>{savingLedger ? 'Adding…' : 'Add entry'}</button>
               </form>
+
+              <p style={{ fontSize: '.68rem', color: '#8c8982', marginBottom: 16 }}>
+                For the simpler, dedicated view of this, see <a href="/admin/finance" style={{ color: '#ff62c7' }}>Finance</a> in the sidebar.
+              </p>
 
               {ledger.length === 0 ? (
                 <div className="portal-empty">No entries logged yet.</div>
@@ -335,11 +348,9 @@ export default function AdminDashboard() {
                         <td>{new Date(e.date).toLocaleDateString('en-GB')}</td>
                         <td>{pkr(e.amount)}</td>
                         <td>
-                          {e.category === 'payable' ? (
-                            <button className="pill-btn tiny" onClick={() => togglePayablePaid(e._id, e.paid)}>
-                              {e.paid ? '✓ Paid' : 'Unpaid — mark paid'}
-                            </button>
-                          ) : '—'}
+                          <button className="pill-btn tiny" style={e.paid ? { background: '#d8ff62', color: '#0a0a0b', borderColor: '#d8ff62' } : { color: '#ffb766', borderColor: 'rgba(255,183,102,.4)' }} onClick={() => togglePayablePaid(e._id, e.paid)}>
+                            {e.paid ? '✓ Paid' : 'Owed — mark paid'}
+                          </button>
                         </td>
                         <td>
                           <button className="pill-btn tiny" style={{ color: '#ff8fa3', borderColor: 'rgba(255,73,108,.4)' }} onClick={() => deleteLedgerEntry(e._id)}>Delete</button>

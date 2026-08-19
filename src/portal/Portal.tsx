@@ -126,7 +126,7 @@ export default function Portal() {
   return (
     <div className="portal-shell">
       <div className="portal-topbar">
-        <div className="portal-brand">ASHES <span>· Client Portal</span></div>
+        <div className="portal-brand"><img src="/ashes-logo-transparent.webp" alt="ASHES" /><span>· Client Portal</span></div>
         <div className="portal-nav-actions">
           <NotificationBell />
           <span className="portal-user">{user?.name}</span>

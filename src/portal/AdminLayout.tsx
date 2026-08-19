@@ -23,7 +23,7 @@ export default function AdminLayout({ user, children }: { user: Me | null; child
   return (
     <div className="admin-shell">
       <aside className="admin-sidebar">
-        <div className="admin-sidebar-brand">ASH<span>ES</span></div>
+        <div className="admin-sidebar-brand"><img src="/ashes-logo-transparent.webp" alt="ASHES" /></div>
         <nav className="admin-sidebar-nav">
           {NAV_ITEMS.map((item) => (
             <NavLink

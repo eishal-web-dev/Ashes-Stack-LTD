@@ -145,7 +145,7 @@ async function doLedgerAdd(req, res, authUser) {
     amount: amt,
     note: note || undefined,
     date: date ? new Date(date) : new Date(),
-    paid: category === "payable" ? !!paid : true,
+    paid: paid === undefined ? true : !!paid, // default: assume already paid, since that's the common case
     createdBy: authUser.id,
   });
   res.status(201).json(entry);
@@ -263,27 +263,21 @@ async function doDashboard(req, res) {
     months.push({ key, label: d.toLocaleString("en-GB", { month: "short" }), amount: monthlyMap[key] || 0 });
   }
 
-  // ---- Ledger: expenses, marketing spend, payables ----
-  let totalExpenses = 0, totalMarketing = 0, accountsPayable = 0, paidPayables = 0;
+  // ---- Ledger: every entry, of any category, is either paid (real cash out
+  // now) or unpaid (still owed). No special-cased category behaves differently. ----
+  let totalExpenses = 0, totalMarketing = 0, accountsPayable = 0;
   const last3MonthsCutoff = new Date(now.getFullYear(), now.getMonth() - 2, 1);
   let recentCashOut = 0;
   for (const e of ledger) {
-    if (e.category === "expense") {
-      totalExpenses += e.amount;
+    if (e.paid) {
+      if (e.category === "marketing") totalMarketing += e.amount;
+      else totalExpenses += e.amount; // expense, or legacy "payable" once paid
       if (new Date(e.date) >= last3MonthsCutoff) recentCashOut += e.amount;
-    } else if (e.category === "marketing") {
-      totalMarketing += e.amount;
-      if (new Date(e.date) >= last3MonthsCutoff) recentCashOut += e.amount;
-    } else if (e.category === "payable") {
-      if (!e.paid) {
-        accountsPayable += e.amount;
-      } else {
-        paidPayables += e.amount; // a paid bill is real money out — must count toward profit, same as an expense
-        if (new Date(e.date) >= last3MonthsCutoff) recentCashOut += e.amount;
-      }
+    } else {
+      accountsPayable += e.amount; // still owed, not yet real cash out
     }
   }
-  const totalCashOut = totalExpenses + totalMarketing + paidPayables;
+  const totalCashOut = totalExpenses + totalMarketing;
   const netProfit = totalRevenue - totalCashOut;
   const netMarginPct = totalRevenue > 0 ? Math.round((netProfit / totalRevenue) * 1000) / 10 : null;
   const burnRate = Math.round(recentCashOut / 3); // avg monthly cash out, last 3 months
@@ -389,7 +383,7 @@ async function doDashboard(req, res) {
     monthlyEarnings: months, revenueByService,
     accountsReceivable: outstandingPayments,
     accountsPayable,
-    paidPayables, totalCashOut,
+    totalCashOut,
     // Cash & runway
     cashOnHand: settings.cashOnHand, burnRate, runwayMonths, cashFlow, totalExpenses, totalMarketing,
     // Customer economics

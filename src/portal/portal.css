@@ -130,3 +130,8 @@
   .admin-sidebar-logout span { display: none; }
   .admin-main { padding: 28px 20px 60px; }
 }
+
+/* Real logo image in portal/admin brand marks, matching the landing page treatment */
+.admin-sidebar-brand img { display: block; width: 92px; height: auto; object-fit: contain; filter: invert(1) brightness(.9); opacity: .95; }
+.portal-brand img { display: block; width: 74px; height: auto; object-fit: contain; filter: invert(1) brightness(.9); opacity: .95; }
+.portal-brand { display: flex; align-items: center; gap: 10px; }

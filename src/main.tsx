@@ -1,7 +1,8 @@
-import { StrictMode } from 'react';
+import { StrictMode, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import App from './App';
+import { Loader } from './components/Loader';
 import ProcessScrollFlight from './ProcessScrollFlight';
 import LowerPageSocials from './LowerPageSocials';
 import Login from './portal/Login';
@@ -21,6 +22,7 @@ import ExpertisePage from './pages/ExpertisePage';
 import ProcessPage from './pages/ProcessPage';
 import ContactPage from './pages/ContactPage';
 import ReviewsPage from './pages/ReviewsPage';
+import './tailwind.css';
 import './index.css';
 import './card-image-size.css';
 import './performance.css';
@@ -33,7 +35,13 @@ import './standalone-pages.css';
 import './portal/portal.css';
 
 function Home() {
-  return <><App/><ProcessScrollFlight/><LowerPageSocials/></>;
+  const [loading, setLoading] = useState(true);
+  return (
+    <>
+      {loading && <Loader onComplete={() => setLoading(false)} />}
+      <App/><ProcessScrollFlight/><LowerPageSocials/>
+    </>
+  );
 }
 
 createRoot(document.getElementById('root')!).render(

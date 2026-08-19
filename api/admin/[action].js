@@ -264,7 +264,7 @@ async function doDashboard(req, res) {
   }
 
   // ---- Ledger: expenses, marketing spend, payables ----
-  let totalExpenses = 0, totalMarketing = 0, accountsPayable = 0;
+  let totalExpenses = 0, totalMarketing = 0, accountsPayable = 0, paidPayables = 0;
   const last3MonthsCutoff = new Date(now.getFullYear(), now.getMonth() - 2, 1);
   let recentCashOut = 0;
   for (const e of ledger) {
@@ -275,15 +275,20 @@ async function doDashboard(req, res) {
       totalMarketing += e.amount;
       if (new Date(e.date) >= last3MonthsCutoff) recentCashOut += e.amount;
     } else if (e.category === "payable") {
-      if (!e.paid) accountsPayable += e.amount;
-      else if (new Date(e.date) >= last3MonthsCutoff) recentCashOut += e.amount;
+      if (!e.paid) {
+        accountsPayable += e.amount;
+      } else {
+        paidPayables += e.amount; // a paid bill is real money out — must count toward profit, same as an expense
+        if (new Date(e.date) >= last3MonthsCutoff) recentCashOut += e.amount;
+      }
     }
   }
-  const netProfit = totalRevenue - totalExpenses - totalMarketing;
+  const totalCashOut = totalExpenses + totalMarketing + paidPayables;
+  const netProfit = totalRevenue - totalCashOut;
   const netMarginPct = totalRevenue > 0 ? Math.round((netProfit / totalRevenue) * 1000) / 10 : null;
   const burnRate = Math.round(recentCashOut / 3); // avg monthly cash out, last 3 months
   const runwayMonths = burnRate > 0 ? Math.round((settings.cashOnHand / burnRate) * 10) / 10 : null;
-  const cashFlow = totalRevenue - (totalExpenses + totalMarketing);
+  const cashFlow = totalRevenue - totalCashOut;
 
   // ---- Pipeline: real stage counts + value of deals still open ----
   const stageCounts = Object.fromEntries(PIPELINE_STAGES.map((s) => [s, 0]));
@@ -384,6 +389,7 @@ async function doDashboard(req, res) {
     monthlyEarnings: months, revenueByService,
     accountsReceivable: outstandingPayments,
     accountsPayable,
+    paidPayables, totalCashOut,
     // Cash & runway
     cashOnHand: settings.cashOnHand, burnRate, runwayMonths, cashFlow, totalExpenses, totalMarketing,
     // Customer economics

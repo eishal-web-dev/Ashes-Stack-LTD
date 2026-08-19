@@ -12,6 +12,7 @@ import AdminClientDetail from './portal/AdminClientDetail';
 import AdminAccount from './portal/AdminAccount';
 import AdminDashboard from './portal/AdminDashboard';
 import AdminReviews from './portal/AdminReviews';
+import AdminFinance from './portal/AdminFinance';
 import AboutPage from './pages/AboutPage';
 import WorkPage from './pages/WorkPage';
 import ExpertisePage from './pages/ExpertisePage';
@@ -50,6 +51,7 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/admin" element={<AdminHome/>} />
         <Route path="/admin/dashboard" element={<AdminDashboard/>} />
         <Route path="/admin/reviews" element={<AdminReviews/>} />
+        <Route path="/admin/finance" element={<AdminFinance/>} />
         <Route path="/admin/account" element={<AdminAccount/>} />
         <Route path="/admin/client/:id" element={<AdminClientDetail/>} />
       </Routes>

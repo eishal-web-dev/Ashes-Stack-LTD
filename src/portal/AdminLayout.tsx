@@ -1,12 +1,13 @@
 import { ReactNode } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, Settings, LogOut, Star } from 'lucide-react';
+import { LayoutDashboard, Users, Settings, LogOut, Star, Wallet } from 'lucide-react';
 import { logout, Me } from './api';
 import NotificationBell from './NotificationBell';
 
 const NAV_ITEMS = [
   { to: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/admin', label: 'Clients', icon: Users, end: true },
+  { to: '/admin/finance', label: 'Finance', icon: Wallet },
   { to: '/admin/reviews', label: 'Reviews', icon: Star },
   { to: '/admin/account', label: 'Account', icon: Settings },
 ];

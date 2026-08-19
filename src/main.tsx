@@ -22,6 +22,7 @@ import ExpertisePage from './pages/ExpertisePage';
 import ProcessPage from './pages/ProcessPage';
 import ContactPage from './pages/ContactPage';
 import ReviewsPage from './pages/ReviewsPage';
+import { setupAshesPwa } from './pwa';
 import './tailwind.css';
 import './index.css';
 import './tablet-responsive.css';
@@ -34,6 +35,9 @@ import './final-sections.css';
 import './about-section.css';
 import './standalone-pages.css';
 import './portal/portal.css';
+import './pwa.css';
+
+setupAshesPwa();
 
 function Home() {
   const [loading, setLoading] = useState(true);

@@ -9,6 +9,25 @@ type TaskRow = { _id: string; title: string; status: string; assignedTo: { _id: 
 type ClientRow = { _id: string; name: string; company?: string };
 type AccountRow = { _id: string; name: string; email: string; role: string };
 
+async function fetchArray<T>(url: string, label: string): Promise<T[]> {
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), 12000);
+  try {
+    const res = await fetch(url, { cache: 'no-store', signal: controller.signal });
+    const data = await res.json().catch(() => null);
+    if (!res.ok) throw new Error(data?.error || `${label} request failed (${res.status})`);
+    if (!Array.isArray(data)) throw new Error(`${label} returned an invalid response`);
+    return data as T[];
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'AbortError') {
+      throw new Error(`${label} took too long to respond`);
+    }
+    throw error;
+  } finally {
+    window.clearTimeout(timeout);
+  }
+}
+
 export default function AdminTeam() {
   const navigate = useNavigate();
   const [user, setUser] = useState<Me | null>(null);
@@ -17,22 +36,31 @@ export default function AdminTeam() {
   const [clients, setClients] = useState<ClientRow[]>([]);
   const [accounts, setAccounts] = useState<AccountRow[]>([]);
   const [roleMessage, setRoleMessage] = useState('');
+  const [loadError, setLoadError] = useState('');
   const [loading, setLoading] = useState(true);
   const [showAssign, setShowAssign] = useState(false);
   const [form, setForm] = useState({ title: '', description: '', assignedTo: '', relatedClient: '', dueDate: '' });
   const [saving, setSaving] = useState(false);
 
   async function loadAll() {
-    const [t, tk, c, a] = await Promise.all([
-      fetch('/api/admin/team-list').then((r) => r.json()),
-      fetch('/api/tasks').then((r) => r.json()),
-      fetch('/api/admin/clients').then((r) => r.json()),
-      fetch('/api/admin/all-accounts').then((r) => r.json()),
+    const requests = await Promise.allSettled([
+      fetchArray<TeamMember>('/api/admin/team-list', 'Team members'),
+      fetchArray<TaskRow>('/api/tasks', 'Tasks'),
+      fetchArray<ClientRow>('/api/admin/clients', 'Clients'),
+      fetchArray<AccountRow>('/api/admin/all-accounts', 'Accounts'),
     ]);
-    setTeam(t);
-    setTasks(tk);
-    setClients(c);
-    setAccounts(a);
+
+    const [teamResult, tasksResult, clientsResult, accountsResult] = requests;
+    if (teamResult.status === 'fulfilled') setTeam(teamResult.value);
+    if (tasksResult.status === 'fulfilled') setTasks(tasksResult.value);
+    if (clientsResult.status === 'fulfilled') setClients(clientsResult.value);
+    if (accountsResult.status === 'fulfilled') setAccounts(accountsResult.value);
+
+    const failures = requests
+      .filter((result): result is PromiseRejectedResult => result.status === 'rejected')
+      .map((result) => result.reason instanceof Error ? result.reason.message : 'A request failed');
+
+    setLoadError(failures.length ? `Some team data could not load: ${failures.join(' · ')}` : '');
   }
 
   async function changeRole(userId: string, role: string) {
@@ -53,14 +81,23 @@ export default function AdminTeam() {
   }
 
   useEffect(() => {
-    getMe().then(async (u) => {
-      if (!u) return navigate('/login');
-      if (u.role === 'team') return navigate('/team');
-      if (u.role !== 'admin') return navigate('/portal');
-      setUser(u);
-      await loadAll();
-      setLoading(false);
-    });
+    let active = true;
+    (async () => {
+      try {
+        const u = await getMe();
+        if (!u) return navigate('/login');
+        if (u.role === 'team') return navigate('/team');
+        if (u.role !== 'admin') return navigate('/portal');
+        if (!active) return;
+        setUser(u);
+        await loadAll();
+      } catch (error) {
+        if (active) setLoadError(error instanceof Error ? error.message : 'The Team page could not be loaded.');
+      } finally {
+        if (active) setLoading(false);
+      }
+    })();
+    return () => { active = false; };
   }, [navigate]);
 
   async function assignTask(e: FormEvent) {
@@ -101,60 +138,70 @@ export default function AdminTeam() {
         </p>
       </div>
 
+      {loadError && (
+        <div className="portal-error admin-team-load-error">
+          <span>{loadError}</span>
+          <button className="pill-btn tiny" type="button" onClick={loadAll}>Retry</button>
+        </div>
+      )}
       {roleMessage && <div className={roleMessage.startsWith('Error') ? 'portal-error' : 'portal-success'}>{roleMessage}</div>}
 
       <div className="portal-card">
         <h2 className="portal-h2">All accounts</h2>
         <p className="portal-sub" style={{ marginTop: -2 }}>Every account, whatever its role — change someone's access level here.</p>
-        <table className="portal-table">
-          <thead><tr><th>Name</th><th>Email</th><th>Role</th><th></th></tr></thead>
-          <tbody>
-            {accounts.map((a) => (
-              <tr key={a._id}>
-                <td>{a.name}</td>
-                <td>{a.email}</td>
-                <td><span className="portal-badge sent" style={{ textTransform: 'capitalize' }}>{a.role}</span></td>
-                <td>
-                  <select
-                    value={a.role}
-                    onChange={(e) => changeRole(a._id, e.target.value)}
-                    style={{ padding: '6px 10px', borderRadius: 8, background: '#0a0a0b', border: '1px solid rgba(214,209,198,.2)', color: '#eceae4', fontSize: '.7rem' }}
-                  >
-                    <option value="client">Client</option>
-                    <option value="team">Team member</option>
-                    <option value="admin">Admin (full access)</option>
-                  </select>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <div className="portal-table-wrap">
+          <table className="portal-table admin-team-table">
+            <thead><tr><th>Name</th><th>Email</th><th>Role</th><th></th></tr></thead>
+            <tbody>
+              {accounts.map((a) => (
+                <tr key={a._id}>
+                  <td>{a.name}</td>
+                  <td>{a.email}</td>
+                  <td><span className="portal-badge sent" style={{ textTransform: 'capitalize' }}>{a.role}</span></td>
+                  <td>
+                    <select
+                      value={a.role}
+                      onChange={(e) => changeRole(a._id, e.target.value)}
+                      style={{ padding: '6px 10px', borderRadius: 8, background: '#0a0a0b', border: '1px solid rgba(214,209,198,.2)', color: '#eceae4', fontSize: '.7rem' }}
+                    >
+                      <option value="client">Client</option>
+                      <option value="team">Team member</option>
+                      <option value="admin">Admin (full access)</option>
+                    </select>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <div className="portal-card">
         {team.length === 0 ? (
           <div className="portal-empty">No team members yet. Add one from the Clients page → "+ New account" → role "Team member".</div>
         ) : (
-          <table className="portal-table">
-            <thead><tr><th>Name</th><th>Email</th><th>To do</th><th>In progress</th><th>Done</th><th></th></tr></thead>
-            <tbody>
-              {team.map((t) => (
-                <tr key={t._id}>
-                  <td>{t.name}</td>
-                  <td>{t.email}</td>
-                  <td>{t.taskCounts.todo}</td>
-                  <td>{t.taskCounts.in_progress}</td>
-                  <td>{t.taskCounts.done}</td>
-                  <td><button className="pill-btn tiny solid" onClick={() => { setForm({ ...form, assignedTo: t._id }); setShowAssign(true); }}>Assign task</button></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div className="portal-table-wrap">
+            <table className="portal-table admin-team-table">
+              <thead><tr><th>Name</th><th>Email</th><th>To do</th><th>In progress</th><th>Done</th><th></th></tr></thead>
+              <tbody>
+                {team.map((t) => (
+                  <tr key={t._id}>
+                    <td>{t.name}</td>
+                    <td>{t.email}</td>
+                    <td>{t.taskCounts.todo}</td>
+                    <td>{t.taskCounts.in_progress}</td>
+                    <td>{t.taskCounts.done}</td>
+                    <td><button className="pill-btn tiny solid" onClick={() => { setForm({ ...form, assignedTo: t._id }); setShowAssign(true); }}>Assign task</button></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 
       <div className="portal-card">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: showAssign ? 20 : 0 }}>
+        <div className="admin-team-toolbar" style={{ marginBottom: showAssign ? 20 : 0 }}>
           <h2 className="portal-h2" style={{ margin: 0 }}>Assign a task</h2>
           <button className="pill-btn" onClick={() => setShowAssign((v) => !v)}>{showAssign ? 'Cancel' : '+ New task'}</button>
         </div>
@@ -198,20 +245,22 @@ export default function AdminTeam() {
         {tasks.length === 0 ? (
           <div className="portal-empty">No tasks assigned yet.</div>
         ) : (
-          <table className="portal-table">
-            <thead><tr><th>Task</th><th>Assigned to</th><th>Status</th><th>Created</th><th></th></tr></thead>
-            <tbody>
-              {tasks.map((t) => (
-                <tr key={t._id}>
-                  <td>{t.title}</td>
-                  <td>{t.assignedTo?.name}</td>
-                  <td><span className={`portal-badge ${t.status === 'done' ? 'downloaded' : 'sent'}`}>{t.status.replace('_', ' ')}</span></td>
-                  <td>{new Date(t.createdAt).toLocaleDateString('en-GB')}</td>
-                  <td><button className="pill-btn tiny" style={{ color: '#ff8fa3', borderColor: 'rgba(255,73,108,.4)' }} onClick={() => deleteTask(t._id)}>Delete</button></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div className="portal-table-wrap">
+            <table className="portal-table admin-team-table">
+              <thead><tr><th>Task</th><th>Assigned to</th><th>Status</th><th>Created</th><th></th></tr></thead>
+              <tbody>
+                {tasks.map((t) => (
+                  <tr key={t._id}>
+                    <td>{t.title}</td>
+                    <td>{t.assignedTo?.name}</td>
+                    <td><span className={`portal-badge ${t.status === 'done' ? 'downloaded' : 'sent'}`}>{t.status.replace('_', ' ')}</span></td>
+                    <td>{new Date(t.createdAt).toLocaleDateString('en-GB')}</td>
+                    <td><button className="pill-btn tiny" style={{ color: '#ff8fa3', borderColor: 'rgba(255,73,108,.4)' }} onClick={() => deleteTask(t._id)}>Delete</button></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
     </AdminLayout>

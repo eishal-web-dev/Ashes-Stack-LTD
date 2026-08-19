@@ -1,5 +1,6 @@
 import { useState, FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import GoogleSignInButton from './GoogleSignInButton';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -43,6 +44,7 @@ export default function Login() {
               {loading ? 'Signing in…' : 'Sign in'}
             </button>
           </form>
+          <GoogleSignInButton onError={setError} />
           <p style={{ fontSize: '.68rem', marginTop: 20, color: '#8c8982' }}>
             Don't have an account? <Link className="portal-link" to="/signup">Create one</Link>
           </p>

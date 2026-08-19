@@ -1,6 +1,7 @@
 import { dbConnect } from "../../lib/mongodb.js";
 import User from "../../models/User.js";
 import bcrypt from "bcryptjs";
+import { OAuth2Client } from "google-auth-library";
 import { signToken, setAuthCookie, clearAuthCookie, getUserFromReq } from "../../lib/auth.js";
 import { logActivity } from "../../lib/logActivity.js";
 
@@ -51,6 +52,38 @@ async function doLogin(req, res) {
   res.status(200).json({ id: user._id, role: user.role, name: user.name, email: user.email });
 }
 
+const googleClient = process.env.GOOGLE_CLIENT_ID ? new OAuth2Client(process.env.GOOGLE_CLIENT_ID) : null;
+
+async function doGoogle(req, res) {
+  if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+  if (!googleClient) {
+    return res.status(500).json({ error: "Google Sign-In isn't configured yet (GOOGLE_CLIENT_ID missing)." });
+  }
+  await dbConnect();
+  const { idToken } = req.body;
+  if (!idToken) return res.status(400).json({ error: "Missing Google credential." });
+
+  let payload;
+  try {
+    const ticket = await googleClient.verifyIdToken({ idToken, audience: process.env.GOOGLE_CLIENT_ID });
+    payload = ticket.getPayload();
+  } catch (e) {
+    return res.status(401).json({ error: "Could not verify Google account." });
+  }
+  if (!payload?.email) return res.status(401).json({ error: "Google account has no email." });
+
+  const user = await User.findOne({ email: payload.email.toLowerCase().trim() });
+  if (!user) {
+    return res.status(404).json({
+      error: "No ASHES account found for that Gmail address. Ask your admin to add you as a client or team member first.",
+    });
+  }
+
+  const token = signToken({ id: user._id.toString(), role: user.role, name: user.name, email: user.email });
+  setAuthCookie(res, token);
+  res.status(200).json({ id: user._id, role: user.role, name: user.name, email: user.email });
+}
+
 function doLogout(req, res) {
   clearAuthCookie(res);
   res.status(200).json({ ok: true });
@@ -67,6 +100,7 @@ export default async function handler(req, res) {
   try {
     if (action === "signup") return await doSignup(req, res);
     if (action === "login") return await doLogin(req, res);
+    if (action === "google") return await doGoogle(req, res);
     if (action === "logout") return doLogout(req, res);
     if (action === "me") return doMe(req, res);
     return res.status(404).json({ error: "Unknown auth action" });

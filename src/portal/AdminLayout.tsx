@@ -2,6 +2,7 @@ import { ReactNode } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, Users, Settings, LogOut, Star } from 'lucide-react';
 import { logout, Me } from './api';
+import NotificationBell from './NotificationBell';
 
 const NAV_ITEMS = [
   { to: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -36,6 +37,9 @@ export default function AdminLayout({ user, children }: { user: Me | null; child
           ))}
         </nav>
         <div className="admin-sidebar-footer">
+          <div style={{ display: 'flex', justifyContent: 'center', padding: '0 0 14px' }}>
+            <NotificationBell />
+          </div>
           <div className="admin-sidebar-user">
             <div className="admin-sidebar-avatar">{(user?.name || '?').charAt(0).toUpperCase()}</div>
             <div>

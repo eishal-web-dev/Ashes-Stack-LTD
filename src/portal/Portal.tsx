@@ -2,6 +2,7 @@ import { useEffect, useState, FormEvent, Fragment } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getMe, logout, Me } from './api';
 import AccountSettings from './AccountSettings';
+import NotificationBell from './NotificationBell';
 
 const TYPE_LABELS: Record<string, string> = {
   welcome: 'Welcome Packet',
@@ -127,6 +128,7 @@ export default function Portal() {
       <div className="portal-topbar">
         <div className="portal-brand">ASHES <span>· Client Portal</span></div>
         <div className="portal-nav-actions">
+          <NotificationBell />
           <span className="portal-user">{user?.name}</span>
           <button className="pill-btn tiny" onClick={onLogout}>Log out</button>
         </div>

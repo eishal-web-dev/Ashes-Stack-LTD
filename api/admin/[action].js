@@ -9,6 +9,7 @@ import { getUserFromReq } from "../../lib/auth.js";
 import { generateDocPdf } from "../../lib/pdfTemplates.js";
 import { logActivity } from "../../lib/logActivity.js";
 import { sendMail, isMailConfigured } from "../../lib/mailer.js";
+import { notify } from "../../lib/notify.js";
 
 const TITLES = {
   welcome: "Welcome Packet",
@@ -63,6 +64,7 @@ async function doSendDocument(req, res, authUser) {
 
   res.status(201).json({ id: doc._id, title: doc.title, type: doc.type, createdAt: doc.createdAt, emailSent: emailResult.sent });
   await logActivity(client._id, "document_sent", { type: doc.type, title: doc.title, emailSent: emailResult.sent }, authUser.id);
+  await notify(client._id, { type: "document_sent", title: "New document", message: doc.title, link: "/portal" });
 }
 
 async function doCreateUser(req, res, authUser) {
@@ -102,6 +104,7 @@ async function doCreateUser(req, res, authUser) {
 
   res.status(201).json({ id: user._id, name: user.name, email: user.email, role: user.role, emailSent: emailResult.sent });
   await logActivity(user._id, "account_created", { via: "admin_panel", role: user.role, emailSent: emailResult.sent }, authUser.id);
+  await notify(user._id, { type: "account_created", title: "Welcome to ASHES", message: "Your account is ready.", link: user.role === "admin" ? "/admin" : "/portal" });
 }
 
 async function doUpdateClient(req, res, authUser) {
@@ -440,6 +443,7 @@ async function doUploadFile(req, res, authUser) {
 
   res.status(201).json({ id: doc._id, title: doc.title, type: doc.type, createdAt: doc.createdAt, emailSent: emailResult.sent });
   await logActivity(client._id, "document_sent", { type: "custom_file", title: doc.title, emailSent: emailResult.sent }, authUser.id);
+  await notify(client._id, { type: "document_sent", title: "New file", message: doc.title, link: "/portal" });
 }
 
 export default async function handler(req, res) {

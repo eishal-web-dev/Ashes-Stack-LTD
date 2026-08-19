@@ -141,6 +141,25 @@ export default function Portal() {
         <h1 className="portal-h1">Welcome, {user?.name}</h1>
         <p className="portal-sub">{profile.company} — {profile.project}</p>
 
+        <div className="portal-btn-grid" style={{ marginBottom: 20 }}>
+          <div className="portal-card" style={{ margin: 0, padding: 18 }}>
+            <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#eceae4' }}>{docs.length}</div>
+            <div style={{ fontSize: '.66rem', color: '#8c8982', marginTop: 4 }}>Document{docs.length === 1 ? '' : 's'} from ASHES</div>
+          </div>
+          <div className="portal-card" style={{ margin: 0, padding: 18 }}>
+            <div style={{ fontSize: '1.5rem', fontWeight: 800, color: docs.some((d) => d.type === 'contract' && !d.signedAt) ? '#ffb766' : '#eceae4' }}>
+              {docs.filter((d) => d.type === 'contract' && !d.signedAt).length}
+            </div>
+            <div style={{ fontSize: '.66rem', color: '#8c8982', marginTop: 4 }}>Contract{docs.filter((d) => d.type === 'contract' && !d.signedAt).length === 1 ? '' : 's'} awaiting your signature</div>
+          </div>
+          <div className="portal-card" style={{ margin: 0, padding: 18 }}>
+            <div style={{ fontSize: '1.5rem', fontWeight: 800, color: docs.some((d) => d.type === 'invoice' && d.paymentStatus !== 'paid') ? '#ff8fa3' : '#eceae4' }}>
+              {docs.filter((d) => d.type === 'invoice' && d.paymentStatus !== 'paid').length}
+            </div>
+            <div style={{ fontSize: '.66rem', color: '#8c8982', marginTop: 4 }}>Unpaid invoice{docs.filter((d) => d.type === 'invoice' && d.paymentStatus !== 'paid').length === 1 ? '' : 's'}</div>
+          </div>
+        </div>
+
         <div className="portal-card">
           <h2 className="portal-h2">Your details</h2>
           <p className="portal-sub" style={{ marginTop: -2 }}>We use this to book Google Meet calls and keep your file up to date.</p>

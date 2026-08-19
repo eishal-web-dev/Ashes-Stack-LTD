@@ -1,9 +1,10 @@
 import mongoose from "mongoose";
 
-// Tracks money out: operating expenses, marketing/ad spend, and bills you owe (payables).
+// Tracks money out (expense, marketing, payable) AND money in that
+// isn't from an invoice (income) — e.g. cash payment, other revenue.
 const LedgerSchema = new mongoose.Schema(
   {
-    category: { type: String, enum: ["expense", "marketing", "payable"], required: true },
+    category: { type: String, enum: ["expense", "marketing", "payable", "income"], required: true },
     amount: { type: Number, required: true },
     note: { type: String },
     date: { type: Date, default: Date.now },

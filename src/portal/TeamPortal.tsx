@@ -66,6 +66,18 @@ export default function TeamPortal() {
         <h1 className="portal-h1">Welcome, {user?.name}</h1>
         <p className="portal-sub">Here's what's assigned to you — update the status as you go.</p>
 
+        <div className="portal-btn-grid" style={{ marginBottom: 20 }}>
+          {STATUS_ORDER.map((s) => {
+            const count = tasks.filter((t) => t.status === s).length;
+            return (
+              <div className="portal-card" key={s} style={{ margin: 0, padding: 18 }}>
+                <div style={{ fontSize: '1.6rem', fontWeight: 800, color: s === 'done' ? '#d8ff62' : s === 'in_progress' ? '#66ebf2' : '#eceae4' }}>{count}</div>
+                <div style={{ fontSize: '.66rem', color: '#8c8982', marginTop: 4 }}>{STATUS_LABELS[s]}</div>
+              </div>
+            );
+          })}
+        </div>
+
         {STATUS_ORDER.map((statusKey) => {
           const group = tasks.filter((t) => t.status === statusKey);
           if (group.length === 0 && statusKey !== 'todo') return null;
@@ -77,7 +89,11 @@ export default function TeamPortal() {
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 12 }}>
                   {group.map((t) => (
-                    <div key={t._id} style={{ padding: 16, border: '1px solid rgba(214,209,198,.14)', borderRadius: 12, background: 'rgba(255,255,255,.02)' }}>
+                    <div key={t._id} style={{
+                      padding: 16, border: '1px solid rgba(214,209,198,.14)',
+                      borderLeft: `3px solid ${statusKey === 'done' ? '#d8ff62' : statusKey === 'in_progress' ? '#66ebf2' : '#8c8982'}`,
+                      borderRadius: 12, background: 'rgba(255,255,255,.02)',
+                    }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
                         <div>
                           <div style={{ fontWeight: 700, fontSize: '.85rem', color: '#eceae4' }}>{t.title}</div>

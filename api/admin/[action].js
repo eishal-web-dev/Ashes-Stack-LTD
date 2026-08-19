@@ -155,7 +155,7 @@ async function doLedgerList(req, res) {
 async function doLedgerAdd(req, res, authUser) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
   const { category, amount, note, date, paid } = req.body;
-  if (!["expense", "marketing", "payable"].includes(category)) return res.status(400).json({ error: "Invalid category" });
+  if (!["expense", "marketing", "payable", "income"].includes(category)) return res.status(400).json({ error: "Invalid category" });
   const amt = Number(amount);
   if (!amt || amt <= 0) return res.status(400).json({ error: "Amount must be a positive number" });
 
@@ -282,12 +282,18 @@ async function doDashboard(req, res) {
     months.push({ key, label: d.toLocaleString("en-GB", { month: "short" }), amount: monthlyMap[key] || 0 });
   }
 
-  // ---- Ledger: every entry, of any category, is either paid (real cash out
-  // now) or unpaid (still owed). No special-cased category behaves differently. ----
-  let totalExpenses = 0, totalMarketing = 0, accountsPayable = 0;
+  // ---- Ledger: expenses/marketing/payables (money out) and manual income
+  // (money in that isn't from an invoice — e.g. cash payment, other revenue).
+  // Same rule for everything: paid/received counts now, unpaid/pending doesn't yet. ----
+  let totalExpenses = 0, totalMarketing = 0, accountsPayable = 0, manualIncome = 0, pendingIncome = 0;
   const last3MonthsCutoff = new Date(now.getFullYear(), now.getMonth() - 2, 1);
   let recentCashOut = 0;
   for (const e of ledger) {
+    if (e.category === "income") {
+      if (e.paid) manualIncome += e.amount;
+      else pendingIncome += e.amount;
+      continue;
+    }
     if (e.paid) {
       if (e.category === "marketing") totalMarketing += e.amount;
       else totalExpenses += e.amount; // expense, or legacy "payable" once paid
@@ -296,6 +302,7 @@ async function doDashboard(req, res) {
       accountsPayable += e.amount; // still owed, not yet real cash out
     }
   }
+  totalRevenue += manualIncome;
   const totalCashOut = totalExpenses + totalMarketing;
   const netProfit = totalRevenue - totalCashOut;
   const netMarginPct = totalRevenue > 0 ? Math.round((netProfit / totalRevenue) * 1000) / 10 : null;
@@ -403,6 +410,7 @@ async function doDashboard(req, res) {
     monthlyEarnings: months, revenueByService,
     accountsReceivable: outstandingPayments,
     accountsPayable,
+    manualIncome, pendingIncome,
     totalCashOut,
     // Cash & runway
     cashOnHand: currentCashOnHand, startingCashBalance: settings.cashOnHand, burnRate, runwayMonths, cashFlow, totalExpenses, totalMarketing,

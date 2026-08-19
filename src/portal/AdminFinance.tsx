@@ -8,6 +8,7 @@ type LedgerEntry = { _id: string; category: string; amount: number; note?: strin
 type DashboardSlice = {
   totalRevenue: number; totalExpenses: number; totalMarketing: number;
   totalCashOut: number; netProfit: number; accountsPayable: number; cashOnHand: number;
+  manualIncome: number; pendingIncome: number;
 };
 
 function pkr(n: number) { return `PKR ${Math.round(n).toLocaleString()}`; }
@@ -20,6 +21,8 @@ export default function AdminFinance() {
   const [cashOnHand, setCashOnHand] = useState('');
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState({ category: 'expense', amount: '', note: '', date: new Date().toISOString().slice(0, 10), paid: true });
+  const [incomeForm, setIncomeForm] = useState({ category: 'income', amount: '', note: '', date: new Date().toISOString().slice(0, 10), paid: true });
+  const [savingIncome, setSavingIncome] = useState(false);
   const [saving, setSaving] = useState(false);
 
   async function loadAll() {
@@ -50,6 +53,20 @@ export default function AdminFinance() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ cashOnHand: Number(cashOnHand) || 0 }),
     });
+    loadAll();
+  }
+
+  async function addIncome(e: FormEvent) {
+    e.preventDefault();
+    if (!incomeForm.amount) return;
+    setSavingIncome(true);
+    await fetch('/api/admin/ledger-add', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(incomeForm),
+    });
+    setSavingIncome(false);
+    setIncomeForm({ category: 'income', amount: '', note: '', date: new Date().toISOString().slice(0, 10), paid: true });
     loadAll();
   }
 
@@ -107,7 +124,9 @@ export default function AdminFinance() {
         <div className="portal-card" style={{ margin: 0, borderColor: 'rgba(216,255,98,.3)' }}>
           <div style={{ fontSize: '.62rem', fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', color: '#8c8982' }}>Money in</div>
           <div style={{ fontSize: '1.9rem', fontWeight: 800, color: '#d8ff62', marginTop: 6 }}>{pkr(moneyIn)}</div>
-          <div style={{ fontSize: '.66rem', color: '#66625b', marginTop: 4 }}>From paid invoices</div>
+          <div style={{ fontSize: '.66rem', color: '#66625b', marginTop: 4 }}>
+            From paid invoices{data.manualIncome > 0 ? ` + ${pkr(data.manualIncome)} logged directly` : ''}
+          </div>
         </div>
         <div className="portal-card" style={{ margin: 0, borderColor: 'rgba(255,73,108,.3)' }}>
           <div style={{ fontSize: '.62rem', fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', color: '#8c8982' }}>Money out</div>
@@ -146,6 +165,48 @@ export default function AdminFinance() {
             style={{ width: 220, padding: '10px 12px', borderRadius: 8, background: '#0a0a0b', border: '1px solid rgba(214,209,198,.2)', color: '#eceae4', font: '700 .95rem "Courier New", monospace' }}
           />
         </div>
+      </div>
+
+      <div className="portal-card" style={{ borderColor: 'rgba(216,255,98,.3)' }}>
+        <h2 className="portal-h2" style={{ color: '#d8ff62' }}>Log money in</h2>
+        <p className="portal-sub" style={{ marginTop: -2 }}>
+          For income that isn't a client invoice — cash payment, a side gig, anything else coming in.
+          Invoices from clients already count automatically, don't re-log those here.
+        </p>
+        <form onSubmit={addIncome}>
+          <div className="portal-grid-2">
+            <div className="portal-field">
+              <label>What was it for?</label>
+              <input required value={incomeForm.note} onChange={(e) => setIncomeForm({ ...incomeForm, note: e.target.value })} placeholder="e.g. Cash payment, referral bonus" />
+            </div>
+            <div className="portal-field">
+              <label>Amount (PKR)</label>
+              <input type="number" required value={incomeForm.amount} onChange={(e) => setIncomeForm({ ...incomeForm, amount: e.target.value })} placeholder="e.g. 2000" />
+            </div>
+            <div className="portal-field">
+              <label>Date</label>
+              <input type="date" value={incomeForm.date} onChange={(e) => setIncomeForm({ ...incomeForm, date: e.target.value })} />
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: 10, margin: '4px 0 18px' }}>
+            <button type="button" onClick={() => setIncomeForm({ ...incomeForm, paid: true })}
+              className="pill-btn" style={incomeForm.paid ? { background: '#d8ff62', color: '#0a0a0b', borderColor: '#d8ff62' } : undefined}>
+              ✓ Already received
+            </button>
+            <button type="button" onClick={() => setIncomeForm({ ...incomeForm, paid: false })}
+              className="pill-btn" style={!incomeForm.paid ? { background: '#ffb766', color: '#0a0a0b', borderColor: '#ffb766' } : undefined}>
+              Expected, not yet received
+            </button>
+          </div>
+          <button className="pill-btn solid" style={{ background: '#d8ff62', color: '#0a0a0b', borderColor: '#d8ff62' }} disabled={savingIncome}>
+            {savingIncome ? 'Adding…' : 'Add'}
+          </button>
+        </form>
+        {data.pendingIncome > 0 && (
+          <p style={{ fontSize: '.72rem', color: '#ffb766', marginTop: 14, marginBottom: 0 }}>
+            {pkr(data.pendingIncome)} expected but not yet received — not counted in Money In until you mark it received.
+          </p>
+        )}
       </div>
 
       <div className="portal-card">
@@ -187,7 +248,7 @@ export default function AdminFinance() {
       </div>
 
       <div className="portal-card">
-        <h2 className="portal-h2">Paid — counts against your profit</h2>
+        <h2 className="portal-h2">Settled — already counted above</h2>
         {paidEntries.length === 0 ? (
           <div className="portal-empty">Nothing logged yet.</div>
         ) : (
@@ -199,9 +260,11 @@ export default function AdminFinance() {
                   <td>{e.note || '—'}</td>
                   <td style={{ textTransform: 'capitalize' }}>{e.category}</td>
                   <td>{new Date(e.date).toLocaleDateString('en-GB')}</td>
-                  <td>{pkr(e.amount)}</td>
+                  <td style={{ color: e.category === 'income' ? '#d8ff62' : '#ff8fa3', fontWeight: 700 }}>
+                    {e.category === 'income' ? '+' : '−'}{pkr(e.amount)}
+                  </td>
                   <td style={{ display: 'flex', gap: 8 }}>
-                    <button className="pill-btn tiny" onClick={() => togglePaid(e._id, e.paid)}>Mark unpaid</button>
+                    <button className="pill-btn tiny" onClick={() => togglePaid(e._id, e.paid)}>{e.category === 'income' ? 'Mark not received' : 'Mark unpaid'}</button>
                     <button className="pill-btn tiny" style={{ color: '#ff8fa3', borderColor: 'rgba(255,73,108,.4)' }} onClick={() => deleteEntry(e._id)}>Delete</button>
                   </td>
                 </tr>
@@ -213,7 +276,7 @@ export default function AdminFinance() {
 
       {unpaidEntries.length > 0 && (
         <div className="portal-card" style={{ borderColor: 'rgba(255,183,102,.3)' }}>
-          <h2 className="portal-h2" style={{ color: '#ffb766' }}>Still owed — not counted yet</h2>
+          <h2 className="portal-h2" style={{ color: '#ffb766' }}>Pending — not counted yet</h2>
           <table className="portal-table">
             <thead><tr><th>What</th><th>Type</th><th>Date</th><th>Amount</th><th></th></tr></thead>
             <tbody>
@@ -222,9 +285,9 @@ export default function AdminFinance() {
                   <td>{e.note || '—'}</td>
                   <td style={{ textTransform: 'capitalize' }}>{e.category}</td>
                   <td>{new Date(e.date).toLocaleDateString('en-GB')}</td>
-                  <td>{pkr(e.amount)}</td>
+                  <td style={{ fontWeight: 700 }}>{e.category === 'income' ? '+' : '−'}{pkr(e.amount)}</td>
                   <td style={{ display: 'flex', gap: 8 }}>
-                    <button className="pill-btn tiny solid" onClick={() => togglePaid(e._id, e.paid)}>✓ Mark paid</button>
+                    <button className="pill-btn tiny solid" onClick={() => togglePaid(e._id, e.paid)}>✓ {e.category === 'income' ? 'Mark received' : 'Mark paid'}</button>
                     <button className="pill-btn tiny" style={{ color: '#ff8fa3', borderColor: 'rgba(255,73,108,.4)' }} onClick={() => deleteEntry(e._id)}>Delete</button>
                   </td>
                 </tr>

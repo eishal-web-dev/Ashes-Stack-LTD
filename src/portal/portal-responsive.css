@@ -1,19 +1,89 @@
-/* Shared responsive layer for Client, Team and Admin portals. */
+/* Shared responsive layer for Client, Team and Admin portals.
+   This file is intentionally additive: no portal feature is removed. */
+
+html,
+body,
+#root,
+.portal-shell,
+.admin-shell {
+  width: 100%;
+  max-width: 100%;
+}
+
+.portal-shell,
+.admin-shell {
+  overflow-x: clip;
+}
+
+.portal-shell *,
+.admin-shell * {
+  box-sizing: border-box;
+}
 
 .portal-shell,
 .admin-shell,
 .admin-main,
 .portal-container,
-.portal-card {
+.portal-card,
+.portal-grid-2,
+.portal-btn-grid {
   min-width: 0;
 }
 
+.portal-container {
+  width: min(100%, 1028px);
+}
+
 .portal-card {
+  width: 100%;
   max-width: 100%;
 }
 
-.portal-table {
+.portal-card > * {
+  min-width: 0;
+}
+
+.portal-field input,
+.portal-field select,
+.portal-card input,
+.portal-card select,
+.portal-card textarea {
+  min-width: 0;
   max-width: 100%;
+}
+
+.portal-sub,
+.portal-h1,
+.portal-h2,
+.portal-error,
+.portal-success,
+.portal-table td {
+  overflow-wrap: anywhere;
+}
+
+.portal-table-wrap {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+
+.portal-table {
+  width: 100%;
+  max-width: 100%;
+}
+
+@media (max-width: 1100px) {
+  .admin-main {
+    padding-left: 30px;
+    padding-right: 30px;
+  }
+
+  .portal-btn-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 960px) {
@@ -26,40 +96,52 @@
   .admin-main {
     width: 100%;
     max-width: 100vw;
+    padding: 30px 20px 64px;
     overflow-x: hidden;
   }
 
-  .portal-btn-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .portal-card {
+  /* Tables stay usable instead of forcing the entire page wider. */
+  .portal-card:has(> .portal-table),
+  .portal-card:has(> .portal-table-wrap) {
     overflow-x: auto;
+    overscroll-behavior-x: contain;
     -webkit-overflow-scrolling: touch;
   }
 
   .portal-table {
-    min-width: 620px;
+    min-width: 600px;
   }
 
   .portal-table td,
   .portal-table th {
     white-space: normal;
+    vertical-align: middle;
   }
 
   .portal-table td[style*="display: flex"] {
     flex-wrap: wrap !important;
-    min-width: 170px;
+    min-width: 160px;
   }
 
-  .portal-card > div:has(> .pill-btn),
-  .portal-card form > div:has(> .pill-btn) {
+  /* Desktop two-column inline admin summaries (Finance etc.) reflow. */
+  .admin-main > div[style*="display: grid"][style*="grid-template-columns"] {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .portal-card > div[style*="display: flex"][style*="justify-content: space-between"] {
+    gap: 12px !important;
+    flex-wrap: wrap !important;
+  }
+
+  .portal-card form > div:has(> .pill-btn),
+  .portal-card div:has(> .pill-btn) {
     flex-wrap: wrap !important;
   }
 }
 
 @media (max-width: 720px) {
   .portal-topbar {
+    width: 100%;
     min-height: 62px;
     padding: 12px 14px;
     gap: 10px;
@@ -73,12 +155,15 @@
 
   .portal-brand img {
     width: 64px;
+    max-width: 22vw;
   }
 
   .portal-nav-actions {
     margin-left: auto;
     gap: 8px;
     min-width: 0;
+    flex-wrap: wrap;
+    justify-content: flex-end;
   }
 
   .portal-user {
@@ -89,7 +174,7 @@
   }
 
   .portal-container {
-    padding: 32px 14px 64px;
+    padding: 30px 14px 60px;
   }
 
   .portal-page-head {
@@ -98,13 +183,16 @@
 
   .portal-h1 {
     font-size: clamp(1.55rem, 7vw, 2.05rem);
-    overflow-wrap: anywhere;
+    line-height: 1.1;
+  }
+
+  .portal-h2 {
+    font-size: 1rem;
   }
 
   .portal-sub {
     font-size: .72rem;
     margin-bottom: 20px;
-    overflow-wrap: anywhere;
   }
 
   .portal-card {
@@ -113,21 +201,14 @@
     border-radius: 14px;
   }
 
-  .portal-grid-2 {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 0;
+  .portal-grid-2,
+  .admin-main > div[style*="display: grid"][style*="grid-template-columns"] {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 0 !important;
   }
 
   .portal-grid-2 .portal-field[style*="grid-column"] {
     grid-column: auto !important;
-  }
-
-  .portal-field input,
-  .portal-field select,
-  .portal-card input,
-  .portal-card select,
-  .portal-card textarea {
-    max-width: 100%;
   }
 
   .portal-btn-grid {
@@ -137,15 +218,56 @@
 
   .portal-btn-grid > .portal-card {
     min-width: 0;
+    padding: 16px 14px !important;
   }
 
   .pill-btn {
     max-width: 100%;
+    min-height: 34px;
     white-space: normal;
     text-align: center;
     justify-content: center;
   }
 
+  /* Task/status/button groups wrap instead of leaving the viewport. */
+  .portal-card div:has(> .pill-btn) {
+    flex-wrap: wrap !important;
+    max-width: 100%;
+  }
+
+  .portal-card div:has(> .pill-btn) > .pill-btn {
+    flex: 0 1 auto;
+  }
+
+  /* Fixed-width dashboard labels/values shrink around the chart bar. */
+  .admin-main .portal-card div[style*="width: 140px"],
+  .admin-main .portal-card div[style*="width: 110px"],
+  .admin-main .portal-card div[style*="width: 90px"],
+  .admin-main .portal-card div[style*="width: 30px"],
+  .admin-main .portal-card div[style*="width: 24px"] {
+    width: auto !important;
+    max-width: 34%;
+    flex: 0 1 auto;
+    overflow-wrap: anywhere;
+  }
+
+  /* Finance values and other large inline numbers cannot blow out cards. */
+  .admin-main [style*="font-size: 2.6rem"] {
+    font-size: clamp(1.75rem, 10vw, 2.35rem) !important;
+    overflow-wrap: anywhere;
+  }
+
+  .admin-main [style*="font-size: 1.9rem"] {
+    font-size: clamp(1.45rem, 8vw, 1.85rem) !important;
+    overflow-wrap: anywhere;
+  }
+
+  .admin-main input[style*="width: 220px"],
+  .admin-main input[style*="width:220px"] {
+    width: 100% !important;
+  }
+
+  /* Admin navigation becomes a compact two-row app bar. */
   .admin-sidebar {
     position: sticky;
     top: 0;
@@ -174,6 +296,7 @@
 
   .admin-sidebar-brand img {
     width: 78px;
+    max-width: 24vw;
   }
 
   .admin-sidebar-nav {
@@ -193,13 +316,13 @@
   }
 
   .admin-sidebar-link {
-    flex: 0 0 auto;
-    min-width: 72px;
-    padding: 8px 9px;
+    flex: 1 0 66px;
+    min-width: 66px;
+    padding: 8px 7px;
     flex-direction: column;
     justify-content: center;
     gap: 4px;
-    font-size: .58rem;
+    font-size: .55rem;
     text-align: center;
   }
 
@@ -229,6 +352,7 @@
   .admin-sidebar-logout {
     width: 34px;
     height: 34px;
+    min-width: 34px;
     padding: 0;
     justify-content: center;
   }
@@ -238,20 +362,38 @@
   }
 
   .admin-main {
-    padding: 26px 14px 56px;
-  }
-
-  .admin-main > div[style*="display: grid"][style*="grid-template-columns"] {
-    grid-template-columns: minmax(0, 1fr) !important;
+    padding: 24px 14px 54px;
   }
 
   .admin-main .portal-card > div[style*="display: flex"][style*="justify-content: space-between"] {
     align-items: stretch !important;
     flex-wrap: wrap !important;
   }
+
+  .admin-main .portal-card > div[style*="display: flex"][style*="justify-content: space-between"] > .pill-btn {
+    margin-left: 0;
+  }
+
+  /* Keep chart rows inside the card on small screens. */
+  .admin-main .portal-card div[style*="display: flex"][style*="align-items: center"] {
+    min-width: 0;
+  }
+
+  .admin-main .portal-card div[style*="display: flex"][style*="align-items: center"] > div[style*="flex: 1"] {
+    min-width: 38px;
+  }
+
+  /* Tables scroll locally, not the whole portal. */
+  .portal-card:has(.portal-table) {
+    overflow-x: auto;
+  }
+
+  .portal-table {
+    min-width: 540px;
+  }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 520px) {
   .portal-topbar {
     padding: 10px 12px;
   }
@@ -280,7 +422,7 @@
   }
 
   .portal-table {
-    min-width: 560px;
+    min-width: 500px;
   }
 
   .portal-card form > .pill-btn.solid,
@@ -288,8 +430,13 @@
     width: 100%;
   }
 
+  .portal-card div:has(> .pill-btn) {
+    width: 100%;
+    gap: 8px !important;
+  }
+
   .portal-card div:has(> .pill-btn) > .pill-btn {
-    flex: 1 1 145px;
+    flex: 1 1 138px;
   }
 
   .admin-sidebar {
@@ -298,27 +445,55 @@
   }
 
   .admin-sidebar-link {
-    min-width: 68px;
+    flex-basis: 62px;
+    min-width: 62px;
   }
 
   .admin-sidebar-brand img {
     width: 70px;
   }
+
+  /* Monthly dashboard bars stay readable without horizontal page overflow. */
+  .admin-main .portal-card div[style*="height: 140px"][style*="display: flex"] {
+    gap: 7px !important;
+  }
+
+  .admin-main .portal-card div[style*="height: 140px"] [style*="font-size: .62rem"] {
+    font-size: .52rem !important;
+  }
+
+  .admin-main .portal-card div[style*="height: 140px"] [style*="font-size: .68rem"] {
+    font-size: .56rem !important;
+  }
 }
 
-@media (max-width: 360px) {
+@media (max-width: 380px) {
   .portal-topbar {
-    padding-left: 10px;
-    padding-right: 10px;
+    padding-left: 9px;
+    padding-right: 9px;
+  }
+
+  .portal-nav-actions {
+    gap: 6px;
   }
 
   .portal-topbar .pill-btn.tiny {
-    padding-left: 10px;
-    padding-right: 10px;
+    padding-left: 9px;
+    padding-right: 9px;
   }
 
   .portal-card {
     padding-left: 11px;
     padding-right: 11px;
+  }
+
+  .portal-table {
+    min-width: 470px;
+  }
+
+  .admin-sidebar-link {
+    flex-basis: 58px;
+    min-width: 58px;
+    font-size: .52rem;
   }
 }

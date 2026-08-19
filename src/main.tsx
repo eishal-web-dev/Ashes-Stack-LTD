@@ -2,7 +2,7 @@ import { StrictMode, useState, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import App from './App';
-import { BlobLoaderCentered } from './components/BlobLoader';
+import BlobLoader from './components/BlobLoader';
 import ProcessScrollFlight from './ProcessScrollFlight';
 import LowerPageSocials from './LowerPageSocials';
 import Login from './portal/Login';
@@ -45,9 +45,9 @@ function Home() {
       {loading && (
         <div style={{
           position: 'fixed', inset: 0, zIndex: 100, background: '#080909',
-          display: 'grid', placeItems: 'center', transition: 'opacity .5s',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'opacity .5s',
         }}>
-          <BlobLoaderCentered />
+          <BlobLoader />
         </div>
       )}
       <App/><ProcessScrollFlight/><LowerPageSocials/>

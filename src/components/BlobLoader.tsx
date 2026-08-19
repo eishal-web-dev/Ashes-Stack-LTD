@@ -23,8 +23,14 @@ export default function BlobLoader() {
 
 export function BlobLoaderCentered() {
   return (
-    <div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <BlobLoader />
+    <div style={{
+      width: '100%', minHeight: '60vh',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      textAlign: 'center',
+    }}>
+      <div style={{ display: 'inline-flex' }}>
+        <BlobLoader />
+      </div>
     </div>
   );
 }

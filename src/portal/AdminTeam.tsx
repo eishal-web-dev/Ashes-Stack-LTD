@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { getMe, Me } from './api';
 import AdminLayout from './AdminLayout';
 import { BlobLoaderCentered } from '../components/BlobLoader';
+import './admin-team-responsive.css';
 
 type TeamMember = { _id: string; name: string; email: string; taskCounts: { todo: number; in_progress: number; done: number } };
 type TaskRow = { _id: string; title: string; status: string; assignedTo: { _id: string; name: string }; createdAt: string };

@@ -33,6 +33,7 @@ export default function AdminHome() {
   useEffect(() => {
     getMe().then(async (u) => {
       if (!u) return navigate('/login');
+      if (u.role === 'team') return navigate('/team');
       if (u.role !== 'admin') return navigate('/portal');
       setUser(u);
       await loadClients();
@@ -102,7 +103,8 @@ export default function AdminHome() {
                 <label>Role</label>
                 <select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })}>
                   <option value="client">Client</option>
-                  <option value="admin">Admin / team member</option>
+                  <option value="admin">Admin (full access)</option>
+                  <option value="team">Team member (only sees their own tasks)</option>
                 </select>
               </div>
               <div className="portal-field" style={{ gridColumn: '1 / -1' }}>

@@ -20,6 +20,7 @@ export default function AdminReviews() {
   useEffect(() => {
     getMe().then(async (u) => {
       if (!u) return navigate('/login');
+      if (u.role === 'team') return navigate('/team');
       if (u.role !== 'admin') return navigate('/portal');
       setUser(u);
       await load();

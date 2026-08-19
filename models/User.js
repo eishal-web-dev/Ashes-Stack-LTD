@@ -5,7 +5,7 @@ const UserSchema = new mongoose.Schema(
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     password: { type: String, required: true },
-    role: { type: String, enum: ["client", "admin"], default: "client" },
+    role: { type: String, enum: ["client", "admin", "team"], default: "client" },
 
     // Basic client profile data
     age: { type: Number },

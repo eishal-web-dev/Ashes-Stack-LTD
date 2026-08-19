@@ -26,7 +26,7 @@ export default function GoogleSignInButton({ onError }: { onError: (msg: string)
         onError(data.error || 'Google sign-in failed.');
         return;
       }
-      window.location.href = data.role === 'admin' ? '/admin' : '/portal';
+      window.location.href = data.role === 'admin' ? '/admin' : data.role === 'team' ? '/team' : '/portal';
     }
 
     function init() {

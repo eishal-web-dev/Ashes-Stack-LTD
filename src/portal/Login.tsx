@@ -20,7 +20,7 @@ export default function Login() {
     const data = await res.json();
     setLoading(false);
     if (!res.ok) return setError(data.error || 'Login failed');
-    navigate(data.role === 'admin' ? '/admin' : '/portal');
+    navigate(data.role === 'admin' ? '/admin' : data.role === 'team' ? '/team' : '/portal');
   }
 
   return (

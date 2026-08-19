@@ -4,6 +4,7 @@ import DocRecord from "../../models/DocRecord.js";
 import ActivityLog from "../../models/ActivityLog.js";
 import Ledger from "../../models/Ledger.js";
 import Settings from "../../models/Settings.js";
+import Task from "../../models/Task.js";
 import bcrypt from "bcryptjs";
 import { getUserFromReq } from "../../lib/auth.js";
 import { generateDocPdf } from "../../lib/pdfTemplates.js";
@@ -28,6 +29,24 @@ async function doClients(req, res) {
   const counts = await DocRecord.aggregate([{ $group: { _id: "$client", count: { $sum: 1 } } }]);
   const countMap = Object.fromEntries(counts.map((c) => [c._id.toString(), c.count]));
   const result = clients.map((c) => ({ ...c.toObject(), docCount: countMap[c._id.toString()] || 0 }));
+  res.status(200).json(result);
+}
+
+async function doTeamList(req, res) {
+  const team = await User.find({ role: "team" }).select("-password").sort({ createdAt: -1 });
+  const counts = await Task.aggregate([
+    { $group: { _id: { assignedTo: "$assignedTo", status: "$status" }, count: { $sum: 1 } } },
+  ]);
+  const countMap = {};
+  for (const c of counts) {
+    const key = c._id.assignedTo.toString();
+    if (!countMap[key]) countMap[key] = { todo: 0, in_progress: 0, done: 0 };
+    countMap[key][c._id.status] = c.count;
+  }
+  const result = team.map((t) => ({
+    ...t.toObject(),
+    taskCounts: countMap[t._id.toString()] || { todo: 0, in_progress: 0, done: 0 },
+  }));
   res.status(200).json(result);
 }
 
@@ -85,7 +104,7 @@ async function doCreateUser(req, res, authUser) {
     name,
     email: cleanEmail,
     password: hashed,
-    role: role === "admin" ? "admin" : "client",
+    role: ["admin", "team"].includes(role) ? role : "client",
     company: company || undefined,
     project: project || undefined,
     source: source || "other",
@@ -94,9 +113,9 @@ async function doCreateUser(req, res, authUser) {
 
   const emailResult = await sendMail({
     to: cleanEmail,
-    subject: user.role === "admin" ? "Your ASHES team account" : "Welcome to your ASHES Client Portal",
+    subject: user.role === "admin" ? "Your ASHES admin account" : user.role === "team" ? "Your ASHES team account" : "Welcome to your ASHES Client Portal",
     html: `<p>Hi ${name},</p>
-      <p>An account has been created for you${company ? ` at ${company}` : ""} on the ASHES ${user.role === "admin" ? "admin" : "client"} portal.</p>
+      <p>An account has been created for you${company ? ` at ${company}` : ""} on the ASHES ${user.role === "client" ? "client" : user.role} portal.</p>
       <p><b>Login email:</b> ${cleanEmail}<br/><b>Temporary password:</b> ${password}</p>
       <p><a href="https://ashes-stack.vercel.app/login">Log in here</a> — you can change your password anytime from your account settings.</p>
       <p>— ASHES</p>`,
@@ -104,7 +123,7 @@ async function doCreateUser(req, res, authUser) {
 
   res.status(201).json({ id: user._id, name: user.name, email: user.email, role: user.role, emailSent: emailResult.sent });
   await logActivity(user._id, "account_created", { via: "admin_panel", role: user.role, emailSent: emailResult.sent }, authUser.id);
-  await notify(user._id, { type: "account_created", title: "Welcome to ASHES", message: "Your account is ready.", link: user.role === "admin" ? "/admin" : "/portal" });
+  await notify(user._id, { type: "account_created", title: "Welcome to ASHES", message: "Your account is ready.", link: user.role === "admin" ? "/admin" : user.role === "team" ? "/team" : "/portal" });
 }
 
 async function doUpdateClient(req, res, authUser) {
@@ -455,6 +474,7 @@ export default async function handler(req, res) {
   const { action } = req.query;
   try {
     if (action === "clients") return await doClients(req, res);
+    if (action === "team-list") return await doTeamList(req, res);
     if (action === "send-document") return await doSendDocument(req, res, authUser);
     if (action === "create-user") return await doCreateUser(req, res, authUser);
     if (action === "activity") return await doActivity(req, res);

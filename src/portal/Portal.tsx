@@ -67,6 +67,7 @@ export default function Portal() {
     getMe().then(async (u) => {
       if (!u) return navigate('/login');
       if (u.role === 'admin') return navigate('/admin');
+      if (u.role === 'team') return navigate('/team');
       setUser(u);
       const [p, d, allReviews] = await Promise.all([
         fetch('/api/client/profile').then((r) => r.json()),

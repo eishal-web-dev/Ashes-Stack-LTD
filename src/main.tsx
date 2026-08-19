@@ -13,6 +13,8 @@ import AdminAccount from './portal/AdminAccount';
 import AdminDashboard from './portal/AdminDashboard';
 import AdminReviews from './portal/AdminReviews';
 import AdminFinance from './portal/AdminFinance';
+import AdminTeam from './portal/AdminTeam';
+import TeamPortal from './portal/TeamPortal';
 import AboutPage from './pages/AboutPage';
 import WorkPage from './pages/WorkPage';
 import ExpertisePage from './pages/ExpertisePage';
@@ -48,8 +50,10 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/login" element={<Login/>} />
         <Route path="/signup" element={<Signup/>} />
         <Route path="/portal" element={<Portal/>} />
+        <Route path="/team" element={<TeamPortal/>} />
         <Route path="/admin" element={<AdminHome/>} />
         <Route path="/admin/dashboard" element={<AdminDashboard/>} />
+        <Route path="/admin/team" element={<AdminTeam/>} />
         <Route path="/admin/reviews" element={<AdminReviews/>} />
         <Route path="/admin/finance" element={<AdminFinance/>} />
         <Route path="/admin/account" element={<AdminAccount/>} />

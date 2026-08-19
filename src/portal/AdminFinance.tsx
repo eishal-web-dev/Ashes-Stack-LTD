@@ -1,6 +1,7 @@
 import { useEffect, useState, FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getMe, Me } from './api';
+import BrandLoader from './BrandLoader';
 import AdminLayout from './AdminLayout';
 
 type LedgerEntry = { _id: string; category: string; amount: number; note?: string; date: string; paid: boolean };
@@ -80,7 +81,7 @@ export default function AdminFinance() {
     loadAll();
   }
 
-  if (loading || !data) return <AdminLayout user={user}><div>Loading…</div></AdminLayout>;
+  if (loading || !data) return <AdminLayout user={user}><BrandLoader /></AdminLayout>;
 
   const moneyIn = data.totalRevenue;
   const moneyOut = data.totalCashOut;
@@ -129,13 +130,21 @@ export default function AdminFinance() {
       </div>
 
       <div className="portal-card">
-        <div style={{ fontSize: '.6rem', fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', color: '#8c8982', marginBottom: 8 }}>Cash on hand right now</div>
-        <input
-          type="number" value={cashOnHand} onChange={(e) => setCashOnHand(e.target.value)} onBlur={saveCashOnHand}
-          placeholder="e.g. 50000"
-          style={{ width: 220, padding: '10px 12px', borderRadius: 8, background: '#0a0a0b', border: '1px solid rgba(214,209,198,.2)', color: '#eceae4', font: '700 1.1rem "Courier New", monospace' }}
-        />
-        <div style={{ fontSize: '.64rem', color: '#66625b', marginTop: 8 }}>Your actual bank/cash balance today — just type the number, it saves automatically. Powers Runway on the dashboard.</div>
+        <div style={{ fontSize: '.6rem', fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', color: '#8c8982', marginBottom: 8 }}>Cash on hand</div>
+        <div style={{ fontSize: '1.9rem', fontWeight: 800, color: '#eceae4' }}>{pkr(data.cashOnHand)}</div>
+        <div style={{ fontSize: '.66rem', color: '#66625b', marginTop: 6 }}>
+          Updates itself automatically — your starting balance below, plus everything earned, minus everything paid out.
+        </div>
+        <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid rgba(214,209,198,.1)' }}>
+          <label style={{ display: 'block', fontSize: '.6rem', fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: '#a19e97', marginBottom: 8 }}>
+            Starting balance (set once — your actual bank balance the day you started tracking here)
+          </label>
+          <input
+            type="number" value={cashOnHand} onChange={(e) => setCashOnHand(e.target.value)} onBlur={saveCashOnHand}
+            placeholder="e.g. 50000"
+            style={{ width: 220, padding: '10px 12px', borderRadius: 8, background: '#0a0a0b', border: '1px solid rgba(214,209,198,.2)', color: '#eceae4', font: '700 .95rem "Courier New", monospace' }}
+          />
+        </div>
       </div>
 
       <div className="portal-card">

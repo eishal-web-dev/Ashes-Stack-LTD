@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { getMe, Me } from './api';
 import { DOC_TYPES, FieldDef } from './docConfig';
+import BrandLoader from './BrandLoader';
 import AdminLayout from './AdminLayout';
 
 type ClientInfo = { _id: string; name: string; email: string; company?: string; googleEmail?: string; age?: number; gender?: string; stage?: string; source?: string; dealValue?: number };
@@ -228,7 +229,7 @@ export default function AdminClientDetail() {
     }
   }
 
-  if (loading || !client) return <AdminLayout user={user}><div>Loading…</div></AdminLayout>;
+  if (loading || !client) return <AdminLayout user={user}><BrandLoader /></AdminLayout>;
 
   const activeConfig = DOC_TYPES.find((d) => d.type === activeType);
 

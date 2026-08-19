@@ -1,6 +1,7 @@
 import { useEffect, useState, FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getMe, Me } from './api';
+import BrandLoader from './BrandLoader';
 import AdminLayout from './AdminLayout';
 
 type DashboardData = {
@@ -106,7 +107,7 @@ export default function AdminDashboard() {
     loadAll();
   }
 
-  if (loading || !data) return <AdminLayout user={user}><div>Loading…</div></AdminLayout>;
+  if (loading || !data) return <AdminLayout user={user}><BrandLoader /></AdminLayout>;
 
   const maxMonthly = Math.max(1, ...data.monthlyEarnings.map((m) => m.amount));
   const maxStage = Math.max(1, ...PIPELINE_ORDER.map((s) => data.stageCounts[s] || 0));
@@ -171,7 +172,7 @@ export default function AdminDashboard() {
           <KpiCard label="Cash Flow" value={pkr(data.cashFlow)} sub="Revenue − cash out, all-time" />
           <KpiCard label="Burn Rate" value={pkr(data.burnRate)} sub="Avg monthly cash out, last 3mo" />
           <KpiCard label="Runway" value={data.runwayMonths === null ? '—' : `${data.runwayMonths} mo`} sub="Cash on hand ÷ burn rate" />
-          <KpiCard label="Cash on Hand" value={pkr(data.cashOnHand)} sub="Set below" />
+          <KpiCard label="Cash on Hand" value={pkr(data.cashOnHand)} sub="Auto-updates — see Finance page" />
         </div>
 
         <SectionLabel>Customer Economics</SectionLabel>
@@ -291,7 +292,7 @@ export default function AdminDashboard() {
             <>
               <div className="portal-grid-2" style={{ marginBottom: 10 }}>
                 <div className="portal-field">
-                  <label>Cash on hand (PKR)</label>
+                  <label>Starting balance (set once — see Finance page for the auto-updating figure)</label>
                   <input type="number" value={cashOnHand} onChange={(e) => setCashOnHand(e.target.value)} onBlur={saveCashOnHand} placeholder="e.g. 50000" />
                 </div>
               </div>

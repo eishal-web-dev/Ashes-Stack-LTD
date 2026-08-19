@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getMe, Me } from './api';
 import AccountSettings from './AccountSettings';
+import BrandLoader from './BrandLoader';
 import AdminLayout from './AdminLayout';
 
 export default function AdminAccount() {
@@ -32,7 +33,7 @@ export default function AdminAccount() {
     setTestResult(res.ok ? `Sent — check ${user?.email}.` : `Error: ${data.error}`);
   }
 
-  if (loading || !user) return <AdminLayout user={user}><div>Loading…</div></AdminLayout>;
+  if (loading || !user) return <AdminLayout user={user}><BrandLoader /></AdminLayout>;
 
   return (
     <AdminLayout user={user}>

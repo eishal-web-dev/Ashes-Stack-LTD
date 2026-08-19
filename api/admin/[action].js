@@ -281,7 +281,8 @@ async function doDashboard(req, res) {
   const netProfit = totalRevenue - totalCashOut;
   const netMarginPct = totalRevenue > 0 ? Math.round((netProfit / totalRevenue) * 1000) / 10 : null;
   const burnRate = Math.round(recentCashOut / 3); // avg monthly cash out, last 3 months
-  const runwayMonths = burnRate > 0 ? Math.round((settings.cashOnHand / burnRate) * 10) / 10 : null;
+  const currentCashOnHand = settings.cashOnHand + totalRevenue - totalCashOut;
+  const runwayMonths = burnRate > 0 ? Math.round((currentCashOnHand / burnRate) * 10) / 10 : null;
   const cashFlow = totalRevenue - totalCashOut;
 
   // ---- Pipeline: real stage counts + value of deals still open ----
@@ -385,7 +386,7 @@ async function doDashboard(req, res) {
     accountsPayable,
     totalCashOut,
     // Cash & runway
-    cashOnHand: settings.cashOnHand, burnRate, runwayMonths, cashFlow, totalExpenses, totalMarketing,
+    cashOnHand: currentCashOnHand, startingCashBalance: settings.cashOnHand, burnRate, runwayMonths, cashFlow, totalExpenses, totalMarketing,
     // Customer economics
     arpu, revenuePerLead, revenuePerPayingClient, ltv, cac, ltvCacRatio,
     repeatPurchaseRate, retentionRate, churnRate, clientConcentrationRisk,

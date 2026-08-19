@@ -1,5 +1,6 @@
 import { dbConnect } from "../lib/mongodb.js";
 import Task from "../models/Task.js";
+import User from "../models/User.js";
 import { getUserFromReq } from "../lib/auth.js";
 import { notify } from "../lib/notify.js";
 import { logActivity } from "../lib/logActivity.js";
@@ -19,8 +20,8 @@ export default async function handler(req, res) {
       return res.status(403).json({ error: "Not allowed" });
     }
     const tasks = await Task.find(filter)
-      .populate("assignedTo", "name email")
-      .populate("relatedClient", "name company")
+      .populate({ path: "assignedTo", select: "name email", model: User })
+      .populate({ path: "relatedClient", select: "name company", model: User })
       .sort({ createdAt: -1 });
     return res.status(200).json(tasks);
   }

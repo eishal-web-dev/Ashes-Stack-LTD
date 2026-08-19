@@ -1,0 +1,46 @@
+/* Fills the gap between the 800px mobile breakpoint and full desktop —
+   several grids jumped straight from 4/3 columns to 1 column with nothing
+   in between, so tablet-range screens (roughly 801-1180px) saw a cramped
+   desktop layout squeezed into a narrower viewport. Purely additive: only
+   applies within this specific range, doesn't touch mobile or desktop CSS. */
+@media (min-width: 801px) and (max-width: 1180px) {
+  .nav nav {
+    gap: 2.2vw !important;
+  }
+  .nav nav a {
+    font-size: 0.62rem !important;
+  }
+  .power-grid {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 14px !important;
+  }
+  .work-cards {
+    position: relative !important;
+    right: auto !important;
+    top: auto !important;
+    width: 92% !important;
+    max-width: 900px !important;
+    margin: 6vh auto 0 !important;
+    grid-template-columns: 1fr 1fr !important;
+  }
+  .process-grid {
+    width: 70% !important;
+    gap: 12vh 5vw !important;
+  }
+  .principles {
+    left: 4vw !important;
+    gap: 3vw !important;
+    flex-wrap: wrap !important;
+  }
+  .about ul {
+    left: 6vw !important;
+    font-size: 0.62rem !important;
+  }
+}
+
+@media (min-width: 801px) and (max-width: 980px) {
+  .work-cards {
+    grid-template-columns: 1fr !important;
+    width: 88% !important;
+  }
+}

@@ -24,6 +24,7 @@ import ContactPage from './pages/ContactPage';
 import ReviewsPage from './pages/ReviewsPage';
 import './tailwind.css';
 import './index.css';
+import './tablet-responsive.css';
 import './card-image-size.css';
 import './performance.css';
 import './selected-work.css';

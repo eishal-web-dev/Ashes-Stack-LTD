@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="192" height="192" viewBox="0 0 512 512" role="img" aria-label="ASHES">
+  <defs>
+    <linearGradient id="g" x1="120" y1="80" x2="390" y2="430" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#66ebf2"/>
+      <stop offset=".48" stop-color="#ad77ff"/>
+      <stop offset="1" stop-color="#ff62c7"/>
+    </linearGradient>
+    <radialGradient id="bg" cx="50%" cy="38%" r="70%">
+      <stop offset="0" stop-color="#211820"/>
+      <stop offset="1" stop-color="#070808"/>
+    </radialGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <path d="M256 70c-32 54-70 91-109 128 34-10 62-8 84 2-38 44-67 92-82 146 33-29 69-48 107-53-19 41-28 82-26 123 18-31 41-58 69-81 19 29 35 61 47 96 17-69 12-130-15-183 29 11 57 30 84 57-21-57-54-104-101-141 20-10 45-14 73-11-50-30-93-59-131-83Z" fill="url(#g)"/>
+  <path d="M256 180 167 383h58l18-47h82l19 47h60l-91-203h-57Zm8 103 20-51 20 51h-40Z" fill="#070808"/>
+  <circle cx="256" cy="256" r="208" fill="none" stroke="#ffffff" stroke-opacity=".08" stroke-width="2"/>
+</svg>

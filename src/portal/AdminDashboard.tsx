@@ -1,6 +1,7 @@
 import { useEffect, useState, FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { getMe, logout, Me } from './api';
+import { useNavigate } from 'react-router-dom';
+import { getMe, Me } from './api';
+import AdminLayout from './AdminLayout';
 
 type DashboardData = {
   totalRevenue: number; outstandingPayments: number; outstandingInvoiceCount: number; avgProjectValue: number;
@@ -67,11 +68,6 @@ export default function AdminDashboard() {
     });
   }, [navigate]);
 
-  async function onLogout() {
-    await logout();
-    navigate('/login');
-  }
-
   async function saveCashOnHand() {
     await fetch('/api/admin/update-settings', {
       method: 'POST',
@@ -110,7 +106,7 @@ export default function AdminDashboard() {
     loadAll();
   }
 
-  if (loading || !data) return <div className="portal-shell"><div className="portal-container">Loading…</div></div>;
+  if (loading || !data) return <AdminLayout user={user}><div>Loading…</div></AdminLayout>;
 
   const maxMonthly = Math.max(1, ...data.monthlyEarnings.map((m) => m.amount));
   const maxStage = Math.max(1, ...PIPELINE_ORDER.map((s) => data.stageCounts[s] || 0));
@@ -119,18 +115,8 @@ export default function AdminDashboard() {
   const maxService = Math.max(1, ...serviceEntries.map(([, v]) => v));
 
   return (
-    <div className="portal-shell">
-      <div className="portal-topbar">
-        <div className="portal-brand">ASHES <span>· Admin</span></div>
-        <div className="portal-nav-actions">
-          <Link className="pill-btn tiny" to="/admin">Clients</Link>
-          <Link className="pill-btn tiny" to="/admin/account">Account</Link>
-          <span className="portal-user">{user?.name}</span>
-          <button className="pill-btn tiny" onClick={onLogout}>Log out</button>
-        </div>
-      </div>
-
-      <div className="portal-container">
+    <AdminLayout user={user}>
+      <div className="portal-page-head">
         <div className="portal-eyebrow">BUSINESS DASHBOARD</div>
         <h1 className="portal-h1">Command center</h1>
         <p className="portal-sub">
@@ -139,8 +125,9 @@ export default function AdminDashboard() {
           billing — doesn't apply until you run retainers) and <b>Utilization / billable hours</b> (needs real
           time-tracking, which doesn't exist yet). Everything else here is real.
         </p>
+      </div>
 
-        {(data.staleClients > 0 || data.outstandingInvoiceCount > 0) && (
+      {(data.staleClients > 0 || data.outstandingInvoiceCount > 0) && (
           <div className="portal-card" style={{ borderColor: 'rgba(255,98,199,.35)' }}>
             <h2 className="portal-h2" style={{ color: '#ff62c7' }}>Needs attention today</h2>
             <div className="portal-btn-grid">
@@ -365,8 +352,7 @@ export default function AdminDashboard() {
             </>
           )}
         </div>
-      </div>
-    </div>
+    </AdminLayout>
   );
 }
 

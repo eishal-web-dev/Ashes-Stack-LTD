@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { getMe, logout, Me } from './api';
+import { getMe, Me } from './api';
 import { DOC_TYPES, FieldDef } from './docConfig';
+import AdminLayout from './AdminLayout';
 
 type ClientInfo = { _id: string; name: string; email: string; company?: string; googleEmail?: string; age?: number; gender?: string; stage?: string; source?: string; dealValue?: number };
 type DocRow = {
@@ -145,7 +146,7 @@ export default function AdminClientDetail() {
       if (!res.ok) {
         setMessage(`Error: ${data.error}`);
       } else {
-        setMessage(`"${uploadTitle}" sent to ${client?.name}'s portal.`);
+        setMessage(`"${uploadTitle}" sent to ${client?.name}'s portal${data.emailSent ? ' and emailed to them.' : '.'}`);
         setUploadMode(false);
         refreshDocs();
       }
@@ -170,7 +171,7 @@ export default function AdminClientDetail() {
     if (!res.ok) {
       setMessage(`Error: ${data.error}`);
     } else {
-      setMessage(`${data.title} sent to ${client?.name}'s portal.`);
+      setMessage(`${data.title} sent to ${client?.name}'s portal${data.emailSent ? ' and emailed to them.' : '.'}`);
       setActiveType(null);
       refreshDocs();
     }
@@ -227,27 +228,14 @@ export default function AdminClientDetail() {
     }
   }
 
-  async function onLogout() {
-    await logout();
-    navigate('/login');
-  }
-
-  if (loading || !client) return <div className="portal-shell"><div className="portal-container">Loading…</div></div>;
+  if (loading || !client) return <AdminLayout user={user}><div>Loading…</div></AdminLayout>;
 
   const activeConfig = DOC_TYPES.find((d) => d.type === activeType);
 
   return (
-    <div className="portal-shell">
-      <div className="portal-topbar">
-        <div className="portal-brand">ASHES <span>· Admin</span></div>
-        <div className="portal-nav-actions">
-          <Link className="pill-btn tiny" to="/admin">← All clients</Link>
-          <span className="portal-user">{user?.name}</span>
-          <button className="pill-btn tiny" onClick={onLogout}>Log out</button>
-        </div>
-      </div>
-
-      <div className="portal-container">
+    <AdminLayout user={user}>
+      <div className="portal-page-head">
+        <Link to="/admin" className="pill-btn tiny" style={{ marginBottom: 16, display: 'inline-flex' }}>← All clients</Link>
         <div className="portal-eyebrow">CLIENT FILE</div>
         <h1 className="portal-h1">{client.name}</h1>
         <p className="portal-sub">
@@ -256,6 +244,7 @@ export default function AdminClientDetail() {
           {client.age ? ` · Age ${client.age}` : ''}
           {client.gender ? ` · ${client.gender}` : ''}
         </p>
+      </div>
 
         {message && <div className={message.startsWith('Error') ? 'portal-error' : 'portal-success'}>{message}</div>}
 
@@ -511,7 +500,6 @@ export default function AdminClientDetail() {
             </div>
           )}
         </div>
-      </div>
-    </div>
+    </AdminLayout>
   );
 }

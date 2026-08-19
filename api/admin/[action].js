@@ -8,6 +8,7 @@ import bcrypt from "bcryptjs";
 import { getUserFromReq } from "../../lib/auth.js";
 import { generateDocPdf } from "../../lib/pdfTemplates.js";
 import { logActivity } from "../../lib/logActivity.js";
+import { sendMail, isMailConfigured } from "../../lib/mailer.js";
 
 const TITLES = {
   welcome: "Welcome Packet",
@@ -49,8 +50,19 @@ async function doSendDocument(req, res, authUser) {
     sentBy: authUser.id,
   });
 
-  res.status(201).json({ id: doc._id, title: doc.title, type: doc.type, createdAt: doc.createdAt });
-  await logActivity(client._id, "document_sent", { type: doc.type, title: doc.title }, authUser.id);
+  const emailResult = await sendMail({
+    to: client.email,
+    subject: `New document from ASHES: ${doc.title}`,
+    html: `<p>Hi ${client.name},</p>
+      <p>A new document — <b>${doc.title}</b> — has been added to your ASHES Client Portal.</p>
+      <p>It's attached to this email as a PDF, and always available at
+      <a href="https://ashes-stack.vercel.app/portal">your portal</a>.</p>
+      <p>— ASHES</p>`,
+    attachments: [{ filename: `${doc.title.replace(/[^a-z0-9]/gi, "_")}.pdf`, content: Buffer.from(pdfBase64, "base64") }],
+  });
+
+  res.status(201).json({ id: doc._id, title: doc.title, type: doc.type, createdAt: doc.createdAt, emailSent: emailResult.sent });
+  await logActivity(client._id, "document_sent", { type: doc.type, title: doc.title, emailSent: emailResult.sent }, authUser.id);
 }
 
 async function doCreateUser(req, res, authUser) {
@@ -78,8 +90,18 @@ async function doCreateUser(req, res, authUser) {
     dealValue: dealValue || undefined,
   });
 
-  res.status(201).json({ id: user._id, name: user.name, email: user.email, role: user.role });
-  await logActivity(user._id, "account_created", { via: "admin_panel", role: user.role }, authUser.id);
+  const emailResult = await sendMail({
+    to: cleanEmail,
+    subject: user.role === "admin" ? "Your ASHES team account" : "Welcome to your ASHES Client Portal",
+    html: `<p>Hi ${name},</p>
+      <p>An account has been created for you${company ? ` at ${company}` : ""} on the ASHES ${user.role === "admin" ? "admin" : "client"} portal.</p>
+      <p><b>Login email:</b> ${cleanEmail}<br/><b>Temporary password:</b> ${password}</p>
+      <p><a href="https://ashes-stack.vercel.app/login">Log in here</a> — you can change your password anytime from your account settings.</p>
+      <p>— ASHES</p>`,
+  });
+
+  res.status(201).json({ id: user._id, name: user.name, email: user.email, role: user.role, emailSent: emailResult.sent });
+  await logActivity(user._id, "account_created", { via: "admin_panel", role: user.role, emailSent: emailResult.sent }, authUser.id);
 }
 
 async function doUpdateClient(req, res, authUser) {
@@ -141,6 +163,25 @@ async function doLedgerTogglePaid(req, res) {
   entry.paid = !!paid;
   await entry.save();
   res.status(200).json(entry);
+}
+
+async function doMailStatus(req, res) {
+  res.status(200).json({ configured: isMailConfigured() });
+}
+
+async function doTestEmail(req, res, authUser) {
+  if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+  if (!isMailConfigured()) {
+    return res.status(400).json({ error: "GMAIL_USER / GMAIL_APP_PASSWORD are not set in your environment variables yet." });
+  }
+  const user = await User.findById(authUser.id);
+  const result = await sendMail({
+    to: user.email,
+    subject: "ASHES — test email",
+    html: `<p>If you're reading this, your Gmail integration is working. Documents, files, and new-account emails will now be sent from ${process.env.GMAIL_USER}.</p>`,
+  });
+  if (!result.sent) return res.status(500).json({ error: result.reason || "Failed to send." });
+  res.status(200).json({ ok: true });
 }
 
 async function doGetSettings(req, res) {
@@ -386,7 +427,19 @@ async function doUploadFile(req, res, authUser) {
     sentBy: authUser.id,
   });
 
-  res.status(201).json({ id: doc._id, title: doc.title, type: doc.type, createdAt: doc.createdAt });
+  const emailResult = await sendMail({
+    to: client.email,
+    subject: `New file from ASHES: ${title}`,
+    html: `<p>Hi ${client.name},</p>
+      <p>A new file — <b>${title}</b> — has been added to your ASHES Client Portal.</p>
+      <p>It's attached to this email, and always available at
+      <a href="https://ashes-stack.vercel.app/portal">your portal</a>.</p>
+      <p>— ASHES</p>`,
+    attachments: [{ filename: fileName || title, content: Buffer.from(fileBase64, "base64") }],
+  });
+
+  res.status(201).json({ id: doc._id, title: doc.title, type: doc.type, createdAt: doc.createdAt, emailSent: emailResult.sent });
+  await logActivity(client._id, "document_sent", { type: "custom_file", title: doc.title, emailSent: emailResult.sent }, authUser.id);
 }
 
 export default async function handler(req, res) {
@@ -409,6 +462,8 @@ export default async function handler(req, res) {
     if (action === "ledger-toggle-paid") return await doLedgerTogglePaid(req, res);
     if (action === "get-settings") return await doGetSettings(req, res);
     if (action === "update-settings") return await doUpdateSettings(req, res);
+    if (action === "mail-status") return await doMailStatus(req, res);
+    if (action === "test-email") return await doTestEmail(req, res, authUser);
     return res.status(404).json({ error: "Unknown admin action" });
   } catch (e) {
     res.status(500).json({ error: e.message });

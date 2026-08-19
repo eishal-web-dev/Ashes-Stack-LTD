@@ -7,6 +7,7 @@ import { BlobLoaderCentered } from '../components/BlobLoader';
 type TeamMember = { _id: string; name: string; email: string; taskCounts: { todo: number; in_progress: number; done: number } };
 type TaskRow = { _id: string; title: string; status: string; assignedTo: { _id: string; name: string }; createdAt: string };
 type ClientRow = { _id: string; name: string; company?: string };
+type AccountRow = { _id: string; name: string; email: string; role: string };
 
 export default function AdminTeam() {
   const navigate = useNavigate();
@@ -14,20 +15,41 @@ export default function AdminTeam() {
   const [team, setTeam] = useState<TeamMember[]>([]);
   const [tasks, setTasks] = useState<TaskRow[]>([]);
   const [clients, setClients] = useState<ClientRow[]>([]);
+  const [accounts, setAccounts] = useState<AccountRow[]>([]);
+  const [roleMessage, setRoleMessage] = useState('');
   const [loading, setLoading] = useState(true);
   const [showAssign, setShowAssign] = useState(false);
   const [form, setForm] = useState({ title: '', description: '', assignedTo: '', relatedClient: '', dueDate: '' });
   const [saving, setSaving] = useState(false);
 
   async function loadAll() {
-    const [t, tk, c] = await Promise.all([
+    const [t, tk, c, a] = await Promise.all([
       fetch('/api/admin/team-list').then((r) => r.json()),
       fetch('/api/tasks').then((r) => r.json()),
       fetch('/api/admin/clients').then((r) => r.json()),
+      fetch('/api/admin/all-accounts').then((r) => r.json()),
     ]);
     setTeam(t);
     setTasks(tk);
     setClients(c);
+    setAccounts(a);
+  }
+
+  async function changeRole(userId: string, role: string) {
+    setRoleMessage('');
+    const res = await fetch('/api/admin/update-role', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, role }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      setRoleMessage(`Error: ${data.error}`);
+    } else {
+      setRoleMessage(`${data.name} is now ${role}.`);
+      loadAll();
+    }
+    setTimeout(() => setRoleMessage(''), 4000);
   }
 
   useEffect(() => {
@@ -75,9 +97,38 @@ export default function AdminTeam() {
         <h1 className="portal-h1">Team members</h1>
         <p className="portal-sub">
           Team accounts see only their own assigned tasks — no clients, no revenue, no finance data.
-          Create one from Clients → "+ New account" → role "Admin / team member" is full access;
-          for a restricted teammate, use role "Team member" there instead.
+          Create one from Clients → "+ New account" → role "Team member (only sees their own tasks)".
         </p>
+      </div>
+
+      {roleMessage && <div className={roleMessage.startsWith('Error') ? 'portal-error' : 'portal-success'}>{roleMessage}</div>}
+
+      <div className="portal-card">
+        <h2 className="portal-h2">All accounts</h2>
+        <p className="portal-sub" style={{ marginTop: -2 }}>Every account, whatever its role — change someone's access level here.</p>
+        <table className="portal-table">
+          <thead><tr><th>Name</th><th>Email</th><th>Role</th><th></th></tr></thead>
+          <tbody>
+            {accounts.map((a) => (
+              <tr key={a._id}>
+                <td>{a.name}</td>
+                <td>{a.email}</td>
+                <td><span className="portal-badge sent" style={{ textTransform: 'capitalize' }}>{a.role}</span></td>
+                <td>
+                  <select
+                    value={a.role}
+                    onChange={(e) => changeRole(a._id, e.target.value)}
+                    style={{ padding: '6px 10px', borderRadius: 8, background: '#0a0a0b', border: '1px solid rgba(214,209,198,.2)', color: '#eceae4', fontSize: '.7rem' }}
+                  >
+                    <option value="client">Client</option>
+                    <option value="team">Team member</option>
+                    <option value="admin">Admin (full access)</option>
+                  </select>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
 
       <div className="portal-card">

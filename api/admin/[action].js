@@ -50,6 +50,27 @@ async function doTeamList(req, res) {
   res.status(200).json(result);
 }
 
+async function doAllAccounts(req, res) {
+  const users = await User.find({}).select("-password").sort({ createdAt: -1 });
+  res.status(200).json(users);
+}
+
+async function doUpdateRole(req, res, authUser) {
+  if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+  const { userId, role } = req.body;
+  if (!["admin", "team", "client"].includes(role)) return res.status(400).json({ error: "Invalid role" });
+  if (userId === authUser.id) return res.status(400).json({ error: "You can't change your own role." });
+
+  const user = await User.findById(userId);
+  if (!user) return res.status(404).json({ error: "Account not found" });
+
+  const prevRole = user.role;
+  user.role = role;
+  await user.save();
+  await logActivity(user._id, "role_changed", { from: prevRole, to: role }, authUser.id);
+  res.status(200).json({ id: user._id, name: user.name, email: user.email, role: user.role });
+}
+
 async function doSendDocument(req, res, authUser) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
   const { clientId, type, meta } = req.body;
@@ -483,6 +504,8 @@ export default async function handler(req, res) {
   try {
     if (action === "clients") return await doClients(req, res);
     if (action === "team-list") return await doTeamList(req, res);
+    if (action === "all-accounts") return await doAllAccounts(req, res);
+    if (action === "update-role") return await doUpdateRole(req, res, authUser);
     if (action === "send-document") return await doSendDocument(req, res, authUser);
     if (action === "create-user") return await doCreateUser(req, res, authUser);
     if (action === "activity") return await doActivity(req, res);

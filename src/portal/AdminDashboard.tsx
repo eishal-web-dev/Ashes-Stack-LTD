@@ -1,7 +1,7 @@
 import { useEffect, useState, FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getMe, Me } from './api';
-import BrandLoader from './BrandLoader';
+import { BlobLoaderCentered } from '../components/BlobLoader';
 import AdminLayout from './AdminLayout';
 
 type DashboardData = {
@@ -108,7 +108,7 @@ export default function AdminDashboard() {
     loadAll();
   }
 
-  if (loading || !data) return <AdminLayout user={user}><BrandLoader /></AdminLayout>;
+  if (loading || !data) return <AdminLayout user={user}><BlobLoaderCentered /></AdminLayout>;
 
   const maxMonthly = Math.max(1, ...data.monthlyEarnings.map((m) => m.amount));
   const maxStage = Math.max(1, ...PIPELINE_ORDER.map((s) => data.stageCounts[s] || 0));

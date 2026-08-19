@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getMe, Me } from './api';
-import BrandLoader from './BrandLoader';
+import { BlobLoaderCentered } from '../components/BlobLoader';
 import AdminLayout from './AdminLayout';
 
 type ReviewRow = { _id: string; clientName: string; company?: string; rating: number; comment?: string; createdAt: string };
@@ -34,7 +34,7 @@ export default function AdminReviews() {
     load();
   }
 
-  if (loading) return <AdminLayout user={user}><BrandLoader /></AdminLayout>;
+  if (loading) return <AdminLayout user={user}><BlobLoaderCentered /></AdminLayout>;
 
   const avg = reviews.length ? (reviews.reduce((a, r) => a + r.rating, 0) / reviews.length).toFixed(1) : null;
 

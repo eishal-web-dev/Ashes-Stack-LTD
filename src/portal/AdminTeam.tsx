@@ -2,7 +2,7 @@ import { useEffect, useState, FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getMe, Me } from './api';
 import AdminLayout from './AdminLayout';
-import BrandLoader from './BrandLoader';
+import { BlobLoaderCentered } from '../components/BlobLoader';
 
 type TeamMember = { _id: string; name: string; email: string; taskCounts: { todo: number; in_progress: number; done: number } };
 type TaskRow = { _id: string; title: string; status: string; assignedTo: { _id: string; name: string }; createdAt: string };
@@ -66,7 +66,7 @@ export default function AdminTeam() {
     loadAll();
   }
 
-  if (loading) return <AdminLayout user={user}><BrandLoader /></AdminLayout>;
+  if (loading) return <AdminLayout user={user}><BlobLoaderCentered /></AdminLayout>;
 
   return (
     <AdminLayout user={user}>

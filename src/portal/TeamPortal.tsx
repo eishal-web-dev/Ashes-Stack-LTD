@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getMe, logout, Me } from './api';
 import NotificationBell from './NotificationBell';
-import BrandLoader from './BrandLoader';
+import { BlobLoaderCentered } from '../components/BlobLoader';
 
 type TaskRow = {
   _id: string; title: string; description?: string; status: 'todo' | 'in_progress' | 'done';
@@ -48,7 +48,7 @@ export default function TeamPortal() {
     loadTasks();
   }
 
-  if (loading) return <div className="portal-shell"><BrandLoader /></div>;
+  if (loading) return <div className="portal-shell"><BlobLoaderCentered /></div>;
 
   return (
     <div className="portal-shell">

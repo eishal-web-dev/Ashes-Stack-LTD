@@ -1,8 +1,8 @@
-import { StrictMode, useState } from 'react';
+import { StrictMode, useState, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import App from './App';
-import { Loader } from './components/Loader';
+import { BlobLoaderCentered } from './components/BlobLoader';
 import ProcessScrollFlight from './ProcessScrollFlight';
 import LowerPageSocials from './LowerPageSocials';
 import Login from './portal/Login';
@@ -36,9 +36,20 @@ import './portal/portal.css';
 
 function Home() {
   const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    const timer = setTimeout(() => setLoading(false), 1200);
+    return () => clearTimeout(timer);
+  }, []);
   return (
     <>
-      {loading && <Loader onComplete={() => setLoading(false)} />}
+      {loading && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 100, background: '#080909',
+          display: 'grid', placeItems: 'center', transition: 'opacity .5s',
+        }}>
+          <BlobLoaderCentered />
+        </div>
+      )}
       <App/><ProcessScrollFlight/><LowerPageSocials/>
     </>
   );

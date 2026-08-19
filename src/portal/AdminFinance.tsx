@@ -1,7 +1,7 @@
 import { useEffect, useState, FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getMe, Me } from './api';
-import BrandLoader from './BrandLoader';
+import { BlobLoaderCentered } from '../components/BlobLoader';
 import AdminLayout from './AdminLayout';
 
 type LedgerEntry = { _id: string; category: string; amount: number; note?: string; date: string; paid: boolean };
@@ -82,7 +82,7 @@ export default function AdminFinance() {
     loadAll();
   }
 
-  if (loading || !data) return <AdminLayout user={user}><BrandLoader /></AdminLayout>;
+  if (loading || !data) return <AdminLayout user={user}><BlobLoaderCentered /></AdminLayout>;
 
   const moneyIn = data.totalRevenue;
   const moneyOut = data.totalCashOut;

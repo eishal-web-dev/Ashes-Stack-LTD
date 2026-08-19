@@ -1,7 +1,7 @@
 import { useEffect, useState, FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { getMe, Me } from './api';
-import BrandLoader from './BrandLoader';
+import { BlobLoaderCentered } from '../components/BlobLoader';
 import AdminLayout from './AdminLayout';
 
 type ClientRow = { _id: string; name: string; email: string; company?: string; docCount: number; stage?: string };
@@ -65,7 +65,7 @@ export default function AdminHome() {
     return c.name.toLowerCase().includes(q) || c.email.toLowerCase().includes(q) || (c.company || '').toLowerCase().includes(q);
   });
 
-  if (loading) return <AdminLayout user={user}><BrandLoader /></AdminLayout>;
+  if (loading) return <AdminLayout user={user}><BlobLoaderCentered /></AdminLayout>;
 
   return (
     <AdminLayout user={user}>

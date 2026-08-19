@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { getMe, logout, Me } from './api';
 import AccountSettings from './AccountSettings';
 import NotificationBell from './NotificationBell';
-import BrandLoader from './BrandLoader';
+import { BlobLoaderCentered } from '../components/BlobLoader';
 
 const TYPE_LABELS: Record<string, string> = {
   welcome: 'Welcome Packet',
@@ -123,7 +123,7 @@ export default function Portal() {
     navigate('/login');
   }
 
-  if (loading || !profile) return <div className="portal-shell"><BrandLoader /></div>;
+  if (loading || !profile) return <div className="portal-shell"><BlobLoaderCentered /></div>;
 
   return (
     <div className="portal-shell">

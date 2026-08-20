@@ -1,27 +1,39 @@
-/* Performance layer — keep the same visual direction while making motion feel lighter. */
+/* Performance layer — preserve the current visual design while reducing rendering work. */
 html{scroll-behavior:smooth;scroll-padding-top:76px}
 body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;overscroll-behavior-y:none}
-img{transform:translateZ(0);backface-visibility:hidden}
 
-/* Keep reveal motion fluid and avoid long compositing work. */
+/* Reveal motion stays visually identical but relinquishes compositor memory after reveal. */
 .reveal{transition:opacity .62s cubic-bezier(.22,1,.36,1),transform .62s cubic-bezier(.22,1,.36,1);will-change:opacity,transform}
 .reveal.shown{will-change:auto}
 
+/* Isolate large landing-page sections so scrolling does not repaint the whole document. */
+.capabilities,.work,.philosophy,.process,.about{contain:layout paint style;content-visibility:auto;contain-intrinsic-size:900px}
+.work-stage,.power-grid,.process-world,.philosophy-world{contain:layout paint style}
+
 /* Cards get their own paint layer so hover effects do not repaint the whole section. */
-.power-card,.work-cards article{contain:paint;backface-visibility:hidden;transform-style:preserve-3d}
+.power-card,.work-cards article{contain:layout paint style;backface-visibility:hidden;transform-style:preserve-3d}
 .power-card{transition:transform .18s cubic-bezier(.22,1,.36,1),border-color .28s ease,box-shadow .28s ease!important}
 .power-phoenix{backface-visibility:hidden;transition:transform .3s cubic-bezier(.22,1,.36,1)!important}
 .work-cards article{transition:transform .26s cubic-bezier(.22,1,.36,1),border-color .26s ease!important}
 
-/* The canvas stays GPU-composited instead of forcing page repaints. */
-.signal-network{pointer-events:none;contain:strict;transform:translateZ(0);backface-visibility:hidden}
-.grain{transform:translateZ(0);backface-visibility:hidden}
+/* Keep only frequently animated layers promoted to the compositor. */
+.hero-phoenix,.power-phoenix,.card-glare,.scan-line,.signal-network,.grain{backface-visibility:hidden;transform:translateZ(0)}
+.signal-network{pointer-events:none;contain:strict}
 
-/* Slow decorative loops slightly; visually the same, with less continuous work. */
-.power-card:hover .scan-line{animation-duration:3s!important}
-.power-card:hover .card-particles i{animation-duration:2.4s!important}
+/* Reduce expensive paint propagation from decorative effects without removing them. */
+.grain,.energy-aura,.hero-energy,.radar,.philosophy-glow,.process-core{contain:paint;pointer-events:none}
+.card-glare,.cyber-lines,.card-particles,.corner-elements,.scan-line{pointer-events:none}
 
-/* Avoid expensive hover compositing on touch/mobile devices where it adds no value. */
+/* Decorative loops retain the same effect with less continuous compositor churn. */
+.power-card:hover .scan-line{animation-duration:3.4s!important}
+.power-card:hover .card-particles i{animation-duration:2.8s!important}
+
+/* Browser can skip rendering content that is far outside the viewport. */
+@supports (content-visibility:auto){
+  .work-project,.power-card{content-visibility:auto;contain-intrinsic-size:520px}
+}
+
+/* Avoid expensive hover/canvas work on touch devices where those interactions are unused. */
 @media (hover:none),(pointer:coarse){
   .signal-network{display:none!important}
   .card-glare,.card-particles,.scan-line{display:none!important}
@@ -33,4 +45,10 @@ img{transform:translateZ(0);backface-visibility:hidden}
   .grain{opacity:.04!important}
   .cyber-lines{opacity:.22!important}
   .power-card{box-shadow:none!important}
+  .capabilities,.work,.philosophy,.process,.about{contain-intrinsic-size:760px}
+}
+
+/* Respect OS reduced-motion without affecting normal visual presentation. */
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{scroll-behavior:auto!important;animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}
 }

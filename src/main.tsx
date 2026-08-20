@@ -1,8 +1,7 @@
-import { StrictMode, useState, useEffect, lazy, Suspense } from 'react';
+import { StrictMode, lazy, Suspense } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import App from './App';
-import BlobLoader from './components/BlobLoader';
 import ProcessScrollFlight from './ProcessScrollFlight';
 import LowerPageSocials from './LowerPageSocials';
 import { setupAshesPwa } from './pwa';
@@ -42,24 +41,7 @@ const ReviewsPage = lazy(() => import('./pages/ReviewsPage'));
 setupAshesPwa();
 
 function Home() {
-  const [loading, setLoading] = useState(true);
-  useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 900);
-    return () => clearTimeout(timer);
-  }, []);
-  return (
-    <>
-      {loading && (
-        <div style={{
-          position: 'fixed', inset: 0, zIndex: 100, background: '#080909',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'opacity .5s',
-        }}>
-          <BlobLoader />
-        </div>
-      )}
-      <App/><ProcessScrollFlight/><LowerPageSocials/>
-    </>
-  );
+  return <App/>;
 }
 
 function RouteFallback() {

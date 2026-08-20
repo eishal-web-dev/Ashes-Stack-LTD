@@ -1,8 +1,8 @@
 {
   "id": "/",
-  "name": "ASHES Stack",
-  "short_name": "ASHES",
-  "description": "ASHES client portal and digital product studio.",
+  "name": "Ashes Stack",
+  "short_name": "Ashes Stack",
+  "description": "Ashes Stack client portal and digital product studio.",
   "start_url": "/?source=pwa",
   "scope": "/",
   "display": "standalone",

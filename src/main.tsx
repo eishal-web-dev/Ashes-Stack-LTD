@@ -41,7 +41,7 @@ const ReviewsPage = lazy(() => import('./pages/ReviewsPage'));
 setupAshesPwa();
 
 function Home() {
-  return <App/>;
+  return <><App/><ProcessScrollFlight/><LowerPageSocials/></>;
 }
 
 function RouteFallback() {

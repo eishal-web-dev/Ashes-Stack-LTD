@@ -259,6 +259,33 @@ export default function Workspace() {
     updateActive({ memory: activeProject.memory.filter((item) => item.id !== id) });
   }
 
+  async function shareProject() {
+    if (!activeProject) return;
+    if (authState !== 'signed-in') {
+      setToast('Sign in to Brain to share');
+      window.setTimeout(() => window.location.assign('/workspace/login'), 650);
+      return;
+    }
+    try {
+      setToast('Creating share link…');
+      const sync = await fetch('/api/workspace', {
+        method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'sync', projects, replace: true }),
+      });
+      if (!sync.ok) throw new Error('Could not sync project');
+      const response = await fetch('/api/workspace', {
+        method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'share', id: activeProject.id }),
+      });
+      const data = await response.json() as { shareUrl?: string; error?: string };
+      if (!response.ok || !data.shareUrl) throw new Error(data.error || 'Could not create share link');
+      await copyText(data.shareUrl);
+      setToast('Share link copied');
+    } catch {
+      setToast('Could not create share link');
+    }
+  }
+
   async function openAgent(agent: AgentName) {
     if (!activeProject) return;
     const url = AGENT_LINKS[agent];
@@ -322,6 +349,7 @@ export default function Workspace() {
             <input className="brain-goal" value={activeProject.goal} onChange={(e) => updateActive({ goal: e.target.value })} aria-label="Project goal" />
           </div>
           <div className="brain-header-actions">
+            <button className="brain-quiet" onClick={shareProject}>Share brain ↗</button>
             <a className="brain-connect" href="#connect-ais"><span />Connect your AIs</a>
             <button className="brain-quiet danger" onClick={deleteProject}>Delete</button>
           </div>

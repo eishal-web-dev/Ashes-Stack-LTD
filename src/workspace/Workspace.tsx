@@ -24,10 +24,8 @@ const starterProject: WorkspaceProject = {
   goal: 'Keep every AI working from the same project context.',
   memory: [{
     id: 'welcome-memory',
-    text: 'Install the Ashes Bridge, link a chat once, and that conversation can become shared context for the other supported AIs.',
-    createdAt: Date.now(),
-    source: 'Ashes',
-    kind: 'memory',
+    text: 'Connect Ashes once. After that, supported AI chats can sync to this project and one-click handoffs carry the same brain into the next AI.',
+    createdAt: Date.now(), source: 'Ashes', kind: 'memory',
   }],
 };
 
@@ -52,23 +50,18 @@ async function copyText(text: string) {
   catch {
     const area = document.createElement('textarea');
     area.value = text; area.style.position = 'fixed'; area.style.opacity = '0';
-    document.body.appendChild(area); area.select();
-    const ok = document.execCommand('copy'); area.remove(); return ok;
+    document.body.appendChild(area); area.select(); const ok = document.execCommand('copy'); area.remove(); return ok;
   }
 }
 
 export default function Workspace() {
   const initial = useRef(loadProjects());
   const [projects, setProjects] = useState<WorkspaceProject[]>(initial.current);
-  const [activeProjectId, setActiveProjectId] = useState(
-    () => localStorage.getItem(ACTIVE_KEY) || initial.current[0]?.id || starterProject.id,
-  );
-  const [activeAgent, setActiveAgent] = useState<AgentName>('ChatGPT');
+  const [activeProjectId, setActiveProjectId] = useState(() => localStorage.getItem(ACTIVE_KEY) || initial.current[0]?.id || starterProject.id);
   const [draft, setDraft] = useState('');
   const [projectName, setProjectName] = useState('');
-  const [importDraft, setImportDraft] = useState('');
-  const [showImport, setShowImport] = useState(false);
   const [bridgeReady, setBridgeReady] = useState(false);
+  const [bridgeAuto, setBridgeAuto] = useState(false);
   const [authState, setAuthState] = useState<AuthState>('checking');
   const [syncState, setSyncState] = useState<SyncState>('local');
   const [toast, setToast] = useState('');
@@ -87,9 +80,11 @@ export default function Workspace() {
       `Project: ${activeProject.name}`,
       `Goal: ${activeProject.goal || 'No goal set.'}`,
       '',
-      'Continue this project using the shared context below. Do not ask the user to repeat information already present. Preserve existing decisions unless the user changes them.',
+      'Use the shared project context below. Do not ask the user to repeat information already here. Preserve existing decisions unless the user changes them.',
       '',
       memory || 'No shared memory yet.',
+      '',
+      'My next instruction: ',
     ].join('\n').slice(-22000);
   }, [activeProject]);
 
@@ -104,13 +99,14 @@ export default function Workspace() {
     const onMessage = (event: MessageEvent) => {
       if (event.source !== window || event.origin !== window.location.origin) return;
       const data = event.data;
-      if (data?.type === 'ASHES_BRIDGE_READY') { setBridgeReady(true); return; }
+      if (data?.type === 'ASHES_BRIDGE_READY') {
+        setBridgeReady(true); setBridgeAuto(data.autoSync === true); return;
+      }
+      if (data?.type === 'ASHES_AUTO_SYNC_STATE') { setBridgeAuto(data.enabled === true); return; }
       if (data?.type === 'ASHES_BRIDGE_PROJECTS' && Array.isArray(data.projects) && data.projects.length) {
         const incoming = data.projects as WorkspaceProject[];
         setProjects(incoming);
-        if (data.activeProjectId && incoming.some((project) => project.id === data.activeProjectId)) {
-          setActiveProjectId(data.activeProjectId);
-        }
+        if (data.activeProjectId && incoming.some((project) => project.id === data.activeProjectId)) setActiveProjectId(data.activeProjectId);
       }
     };
     window.addEventListener('message', onMessage);
@@ -123,10 +119,7 @@ export default function Workspace() {
     async function bootCloud() {
       try {
         const me = await fetch('/api/auth/me', { credentials: 'include' });
-        if (!me.ok) {
-          if (!cancelled) { setAuthState('guest'); setSyncState('local'); }
-          return;
-        }
+        if (!me.ok) { if (!cancelled) { setAuthState('guest'); setSyncState('local'); } return; }
         if (!cancelled) setAuthState('signed-in');
         const response = await fetch('/api/workspace', { credentials: 'include' });
         if (!response.ok) throw new Error('Cloud unavailable');
@@ -172,7 +165,7 @@ export default function Workspace() {
 
   useEffect(() => {
     if (!toast) return;
-    const timer = window.setTimeout(() => setToast(''), 2000);
+    const timer = window.setTimeout(() => setToast(''), 2200);
     return () => window.clearTimeout(timer);
   }, [toast]);
 
@@ -187,33 +180,54 @@ export default function Workspace() {
     setProjects((current) => [project, ...current]); setActiveProjectId(project.id); setProjectName('');
   }
 
-  function addMemory(kind: MemoryKind = 'memory', textOverride?: string, sourceOverride?: string) {
-    const text = (textOverride ?? draft).trim(); if (!text || !activeProject) return;
-    const item: MemoryItem = {
-      id: `memory-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-      text: text.slice(0, 12000), createdAt: Date.now(), source: sourceOverride || activeAgent, kind,
-    };
-    updateActive({ memory: [item, ...activeProject.memory].slice(0, 250) });
-    if (!textOverride) setDraft('');
-  }
-
-  function importConversation() {
-    const text = importDraft.trim(); if (!text) return;
-    addMemory('conversation', text, activeAgent); setImportDraft(''); setShowImport(false); setToast('Chat added to brain');
-  }
-
-  async function copyContext() { setToast(await copyText(contextPacket) ? 'Context copied' : 'Copy failed'); }
-
-  async function openAgent(agent: AgentName) {
-    setActiveAgent(agent); await copyText(contextPacket);
-    window.open(AGENT_LINKS[agent], '_blank', 'noopener,noreferrer');
-    addMemory('handoff', `Prepared shared context for ${agent}.`, 'Ashes');
-    setToast(bridgeReady ? `Open ${agent} and use the Ashes bubble` : `Context copied for ${agent}`);
+  function addMemory(kind: MemoryKind = 'memory') {
+    const text = draft.trim(); if (!text || !activeProject) return;
+    const item: MemoryItem = { id: `memory-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, text: text.slice(0, 12000), createdAt: Date.now(), source: 'You', kind };
+    updateActive({ memory: [item, ...activeProject.memory].slice(0, 250) }); setDraft('');
   }
 
   function removeMemory(id: string) {
     if (!activeProject) return;
     updateActive({ memory: activeProject.memory.filter((item) => item.id !== id) });
+  }
+
+  function connectAshes() {
+    if (!bridgeReady) {
+      const anchor = document.createElement('a'); anchor.href = '/ashes-bridge.zip'; anchor.download = 'ashes-bridge.zip'; anchor.click();
+      setToast('Install the bridge once, then refresh. After that it is one click.');
+      return;
+    }
+    const enabled = !bridgeAuto;
+    window.postMessage({ type: 'ASHES_SET_AUTO_SYNC', enabled }, window.location.origin);
+    setBridgeAuto(enabled);
+    setToast(enabled ? 'Ashes connected — AI chats now share this project' : 'Ashes disconnected');
+  }
+
+  async function openAgent(agent: AgentName) {
+    if (!activeProject) return;
+    const url = AGENT_LINKS[agent];
+    if (bridgeReady) {
+      if (!bridgeAuto) {
+        window.postMessage({ type: 'ASHES_SET_AUTO_SYNC', enabled: true }, window.location.origin);
+        setBridgeAuto(true);
+      }
+      const popup = window.open('about:blank', '_blank');
+      window.postMessage({
+        type: 'ASHES_OPEN_AGENT',
+        agent,
+        targetSite: agent === 'Codex' ? 'ChatGPT' : agent,
+        projectId: activeProject.id,
+      }, window.location.origin);
+      window.setTimeout(() => {
+        if (popup) popup.location.href = url;
+        else window.open(url, '_blank', 'noopener,noreferrer');
+      }, 180);
+      setToast(`${agent} is opening with the shared brain`);
+      return;
+    }
+    await copyText(contextPacket);
+    window.open(url, '_blank', 'noopener,noreferrer');
+    setToast('Bridge not installed — context copied as fallback');
   }
 
   function deleteProject() {
@@ -224,7 +238,6 @@ export default function Workspace() {
   }
 
   if (!activeProject) return null;
-
   const syncLabel = authState === 'checking' ? 'checking' : authState === 'guest' ? 'local'
     : syncState === 'syncing' ? 'syncing' : syncState === 'error' ? 'sync issue' : 'cloud synced';
 
@@ -234,15 +247,11 @@ export default function Workspace() {
       <aside className="brain-sidebar">
         <a href="/" className="brain-brand"><span>A</span> Ashes</a>
         <div className="brain-create">
-          <input value={projectName} onChange={(e) => setProjectName(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && createProject()} placeholder="New project" />
+          <input value={projectName} onChange={(e) => setProjectName(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && createProject()} placeholder="New project" />
           <button onClick={createProject}>+</button>
         </div>
         <nav className="brain-projects">
-          {projects.map((project) => (
-            <button key={project.id} className={project.id === activeProject.id ? 'active' : ''}
-              onClick={() => setActiveProjectId(project.id)}>{project.name}</button>
-          ))}
+          {projects.map((project) => <button key={project.id} className={project.id === activeProject.id ? 'active' : ''} onClick={() => setActiveProjectId(project.id)}>{project.name}</button>)}
         </nav>
         <div className="brain-sidebar-bottom">
           <span><i className={syncState === 'error' ? 'error' : ''} />{syncLabel}</span>
@@ -253,64 +262,36 @@ export default function Workspace() {
 
       <section className="brain-main">
         <header className="brain-header">
-          <div>
-            <p>SHARED BRAIN</p><h1>{activeProject.name}</h1>
-            <input className="brain-goal" value={activeProject.goal}
-              onChange={(e) => updateActive({ goal: e.target.value })} aria-label="Project goal" />
+          <div><p>SHARED BRAIN</p><h1>{activeProject.name}</h1>
+            <input className="brain-goal" value={activeProject.goal} onChange={(e) => updateActive({ goal: e.target.value })} aria-label="Project goal" />
           </div>
-          <button className="brain-quiet danger" onClick={deleteProject}>Delete</button>
+          <div className="brain-header-actions">
+            <button className={`brain-connect ${bridgeAuto ? 'connected' : ''}`} onClick={connectAshes}>
+              <span />{bridgeAuto ? 'Connected' : 'Connect Ashes'}
+            </button>
+            <button className="brain-quiet danger" onClick={deleteProject}>Delete</button>
+          </div>
         </header>
 
-        <div className="brain-agents">
-          {AGENTS.map((agent) => <button key={agent} className={activeAgent === agent ? 'active' : ''}
-            onClick={() => setActiveAgent(agent)}>{agent}</button>)}
-        </div>
+        <section className="brain-launch">
+          <div><p>CONTINUE ANYWHERE</p><h2>One brain. One click.</h2></div>
+          <div>{AGENTS.map((agent) => <button key={agent} onClick={() => openAgent(agent)}>{agent}<b>↗</b></button>)}</div>
+        </section>
 
-        <div className="brain-layout">
-          <section className="brain-panel brain-memory">
-            <div className="brain-panel-title"><div><p>MEMORY</p><h2>Tell it once.</h2></div><span>{activeProject.memory.length}</span></div>
-            <div className="brain-composer">
-              <textarea value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="What should every AI know?" />
-              <div><button className="brain-quiet" onClick={() => addMemory('decision')}>Decision</button><button onClick={() => addMemory('memory')}>Save</button></div>
-            </div>
-            <div className="brain-memory-list">
-              {activeProject.memory.length === 0 ? <div className="brain-empty">No memory yet.</div> : activeProject.memory.map((item) => (
-                <article key={item.id}>
-                  <div><span>{item.source} · {kindLabel(item.kind)}</span><button onClick={() => removeMemory(item.id)} aria-label="Remove memory">×</button></div>
-                  <p>{item.text}</p>
-                </article>
-              ))}
-            </div>
-          </section>
+        <section className="brain-panel brain-memory">
+          <div className="brain-panel-title"><div><p>MEMORY</p><h2>What every AI knows.</h2></div><span>{activeProject.memory.length}</span></div>
+          <div className="brain-composer">
+            <textarea value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="Add a decision or project fact…" />
+            <div><button className="brain-quiet" onClick={() => addMemory('decision')}>Decision</button><button onClick={() => addMemory('memory')}>Save</button></div>
+          </div>
+          <div className="brain-memory-list">
+            {activeProject.memory.length === 0 ? <div className="brain-empty">Your synced AI chats and decisions will appear here.</div> : activeProject.memory.map((item) => (
+              <article key={item.id}><div><span>{item.source} · {kindLabel(item.kind)}</span><button onClick={() => removeMemory(item.id)} aria-label="Remove memory">×</button></div><p>{item.text}</p></article>
+            ))}
+          </div>
+        </section>
 
-          <aside className="brain-side">
-            <section className="brain-panel bridge-panel">
-              <div className="bridge-status"><span className={bridgeReady ? 'on' : ''} /><div><strong>Browser bridge</strong><small>{bridgeReady ? 'connected' : 'not installed'}</small></div></div>
-              <p>Link a ChatGPT, Claude or Gemini chat once. Ashes keeps that chat synced to this project and can inject the same brain into the next AI.</p>
-              <a className="bridge-download" href="/ashes-bridge.zip" download>Download bridge</a>
-              <details><summary>Install steps</summary><ol>
-                <li>Unzip the file.</li><li>Firefox: open <b>about:debugging</b> → This Firefox → Load Temporary Add-on.</li>
-                <li>Select <b>manifest.json</b>.</li><li>Refresh this page.</li>
-              </ol></details>
-            </section>
-
-            <section className="brain-panel">
-              <div className="brain-panel-title compact"><div><p>CONTINUE IN</p><h2>Same brain.</h2></div></div>
-              <div className="brain-open-list">
-                {AGENTS.map((agent) => <button key={agent} onClick={() => openAgent(agent)}><span>{agent}</span><b>↗</b></button>)}
-              </div>
-            </section>
-
-            <section className="brain-panel brain-small-actions">
-              <button onClick={() => setShowImport((v) => !v)}>Import chat</button>
-              <button onClick={copyContext}>Copy context</button>
-              {showImport && <div className="brain-import">
-                <textarea value={importDraft} onChange={(e) => setImportDraft(e.target.value)} placeholder={`Paste a ${activeAgent} chat`} />
-                <button onClick={importConversation}>Add to brain</button>
-              </div>}
-            </section>
-          </aside>
-        </div>
+        {!bridgeReady && <p className="brain-install-note">For this test build, the browser requires one manual extension install. The public release will use the browser store, so users click Install once and never see setup again.</p>}
       </section>
     </main>
   );

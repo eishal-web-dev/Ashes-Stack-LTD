@@ -1,12 +1,18 @@
 import { useState, FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import GoogleSignInButton from './GoogleSignInButton';
 
 export default function Login() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [form, setForm] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  function safeNext() {
+    const next = searchParams.get('next') || '';
+    return next.startsWith('/oauth/authorize?') ? next : '';
+  }
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -20,6 +26,11 @@ export default function Login() {
     const data = await res.json();
     setLoading(false);
     if (!res.ok) return setError(data.error || 'Login failed');
+    const next = safeNext();
+    if (next) {
+      window.location.assign(next);
+      return;
+    }
     navigate(data.role === 'admin' ? '/admin' : data.role === 'team' ? '/team' : '/portal');
   }
 
@@ -29,7 +40,7 @@ export default function Login() {
         <div className="portal-card">
           <div className="portal-eyebrow">ASHES CLIENT PORTAL</div>
           <h1 className="portal-h1">Sign in</h1>
-          <p className="portal-sub">Access your project, documents and invoices.</p>
+          <p className="portal-sub">{safeNext() ? 'Sign in to approve your Ashes AI connection.' : 'Access your project, documents and invoices.'}</p>
           {error && <div className="portal-error">{error}</div>}
           <form onSubmit={onSubmit}>
             <div className="portal-field">
@@ -44,7 +55,7 @@ export default function Login() {
               {loading ? 'Signing in…' : 'Sign in'}
             </button>
           </form>
-          <GoogleSignInButton onError={setError} />
+          {!safeNext() && <GoogleSignInButton onError={setError} />}
           <p style={{ fontSize: '.68rem', marginTop: 20, color: '#8c8982' }}>
             Don't have an account? <Link className="portal-link" to="/signup">Create one</Link>
           </p>

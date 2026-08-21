@@ -18,6 +18,8 @@ const WorkOSProjectSchema = new mongoose.Schema(
     name: { type: String, required: true, trim: true, maxlength: 120 },
     goal: { type: String, default: "", trim: true, maxlength: 4000 },
     memory: { type: [MemorySchema], default: [] },
+    shareEnabled: { type: Boolean, default: false },
+    shareToken: { type: String, default: null, index: { unique: true, sparse: true } },
   },
   { timestamps: true }
 );

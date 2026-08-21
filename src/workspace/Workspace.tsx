@@ -18,13 +18,46 @@ const AGENT_LINKS: Record<AgentName, string> = {
 const STORAGE_KEY = 'ashes-work-os-projects-v2';
 const ACTIVE_KEY = 'ashes-work-os-active-project-v1';
 
+const CONNECTIONS = [
+  {
+    name: 'ChatGPT + Codex',
+    method: 'Ashes app / plugin',
+    status: 'Publishing path',
+    tone: 'soon',
+    steps: ['Open the ChatGPT Plugins Directory', 'Find Ashes', 'Press Connect once'],
+    note: 'After Ashes is published, this becomes a normal ChatGPT/Codex app connection. No browser extension.',
+    href: 'https://chatgpt.com/',
+    action: 'Open ChatGPT',
+  },
+  {
+    name: 'Claude',
+    method: 'Remote MCP connector',
+    status: 'Officially supported',
+    tone: 'ready',
+    steps: ['Claude → Settings → Connectors', 'Add custom connector', 'Paste the Ashes MCP URL and approve access'],
+    note: 'Claude supports remote MCP connectors on Pro, Max, Team and Enterprise. Ashes still needs its public MCP endpoint before this row becomes one-click.',
+    href: 'https://claude.ai/',
+    action: 'Open Claude',
+  },
+  {
+    name: 'Gemini',
+    method: 'MCP via CLI / agent mode',
+    status: 'Supported surface',
+    tone: 'limited',
+    steps: ['Open Gemini CLI or Gemini agent mode', 'Add the Ashes MCP server', 'Use Ashes as the shared project memory'],
+    note: 'Google documents MCP support in Gemini CLI / agent mode. Ordinary Gemini web chat does not currently expose the same custom-connector setup.',
+    href: 'https://developers.google.com/gemini-code-assist/docs/gemini-cli',
+    action: 'Gemini MCP guide',
+  },
+] as const;
+
 const starterProject: WorkspaceProject = {
   id: 'ashes-demo',
   name: 'My shared brain',
   goal: 'Keep every AI working from the same project context.',
   memory: [{
     id: 'welcome-memory',
-    text: 'Connect Ashes once. After that, supported AI chats can sync to this project and one-click handoffs carry the same brain into the next AI.',
+    text: 'Ashes is the shared project brain. Connect supported AI clients to Ashes once, then let every client read and update the same project context.',
     createdAt: Date.now(), source: 'Ashes', kind: 'memory',
   }],
 };
@@ -191,18 +224,6 @@ export default function Workspace() {
     updateActive({ memory: activeProject.memory.filter((item) => item.id !== id) });
   }
 
-  function connectAshes() {
-    if (!bridgeReady) {
-      const anchor = document.createElement('a'); anchor.href = '/ashes-bridge.zip'; anchor.download = 'ashes-bridge.zip'; anchor.click();
-      setToast('Install the bridge once, then refresh. After that it is one click.');
-      return;
-    }
-    const enabled = !bridgeAuto;
-    window.postMessage({ type: 'ASHES_SET_AUTO_SYNC', enabled }, window.location.origin);
-    setBridgeAuto(enabled);
-    setToast(enabled ? 'Ashes connected — AI chats now share this project' : 'Ashes disconnected');
-  }
-
   async function openAgent(agent: AgentName) {
     if (!activeProject) return;
     const url = AGENT_LINKS[agent];
@@ -227,7 +248,7 @@ export default function Workspace() {
     }
     await copyText(contextPacket);
     window.open(url, '_blank', 'noopener,noreferrer');
-    setToast('Bridge not installed — context copied as fallback');
+    setToast(`Opened ${agent}. Official Ashes connection setup is shown below.`);
   }
 
   function deleteProject() {
@@ -266,9 +287,7 @@ export default function Workspace() {
             <input className="brain-goal" value={activeProject.goal} onChange={(e) => updateActive({ goal: e.target.value })} aria-label="Project goal" />
           </div>
           <div className="brain-header-actions">
-            <button className={`brain-connect ${bridgeAuto ? 'connected' : ''}`} onClick={connectAshes}>
-              <span />{bridgeAuto ? 'Connected' : 'Connect Ashes'}
-            </button>
+            <a className="brain-connect" href="#connect-ais"><span />Connect your AIs</a>
             <button className="brain-quiet danger" onClick={deleteProject}>Delete</button>
           </div>
         </header>
@@ -291,7 +310,30 @@ export default function Workspace() {
           </div>
         </section>
 
-        {!bridgeReady && <p className="brain-install-note">For this test build, the browser requires one manual extension install. The public release will use the browser store, so users click Install once and never see setup again.</p>}
+        <section className="brain-connect-guide" id="connect-ais">
+          <div className="connect-guide-head">
+            <div><p>CONNECT ONCE</p><h2>How Ashes connects to each AI.</h2></div>
+            <span>Official paths only</span>
+          </div>
+          <p className="connect-guide-intro">AI providers must show their own permission screen once. After that, Ashes can act as the shared project brain without asking users to install a browser extension.</p>
+          <div className="connect-guide-list">
+            {CONNECTIONS.map((connection) => (
+              <details key={connection.name} className={`connect-row ${connection.tone}`}>
+                <summary>
+                  <div className="connect-name"><b>{connection.name}</b><small>{connection.method}</small></div>
+                  <span className="connect-status">{connection.status}</span>
+                  <i>⌄</i>
+                </summary>
+                <div className="connect-body">
+                  <ol>{connection.steps.map((step) => <li key={step}>{step}</li>)}</ol>
+                  <p>{connection.note}</p>
+                  <a href={connection.href} target="_blank" rel="noreferrer">{connection.action} ↗</a>
+                </div>
+              </details>
+            ))}
+          </div>
+          <div className="connect-result"><span>After setup</span><b>ChatGPT / Claude / Gemini client → Ashes Brain → same project memory everywhere</b></div>
+        </section>
       </section>
     </main>
   );

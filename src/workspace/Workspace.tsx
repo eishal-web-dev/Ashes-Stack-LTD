@@ -17,67 +17,70 @@ const AGENT_LINKS: Record<AgentName, string> = {
 };
 const STORAGE_KEY = 'ashes-work-os-projects-v2';
 const ACTIVE_KEY = 'ashes-work-os-active-project-v1';
+const MCP_URL = 'https://www.ashesstack.cloud/mcp';
 
 const CONNECTIONS = [
   {
     name: 'ChatGPT',
     method: 'ChatGPT App · MCP',
-    status: 'NOT PUBLISHED YET',
+    status: 'MCP LIVE · APP UNPUBLISHED',
     tone: 'soon',
     steps: [
-      'Do not search the Plugin Directory yet — Ashes has not been submitted or approved there.',
-      'For private testing, your ChatGPT account/workspace must have Developer Mode access.',
-      'In ChatGPT open Settings → Apps & Connectors → Advanced settings and enable Developer Mode when that option is available.',
-      'Then go to Apps → Create, paste the public Ashes MCP endpoint, scan the tools, and create the app.',
-      'After OpenAI approves our public submission, normal users will simply open the Plugins Directory → search “Ashes” → Connect.',
+      'Ashes is not in the public directory yet, so do not search for it there.',
+      'If your ChatGPT workspace shows Developer Mode: Settings → Apps & Connectors → Advanced settings → Developer Mode.',
+      'Open Apps → Create.',
+      `Paste this MCP URL exactly: ${MCP_URL}`,
+      'Let ChatGPT discover the Ashes tools, then approve the Ashes sign-in/permission screen.',
+      'After public approval, normal users will only need to search “Ashes” in the app/plugin directory and press Connect.',
     ],
-    note: 'Current blocker: the public Ashes /mcp endpoint is not deployed yet, so there is nothing valid to paste into ChatGPT today. Full custom-MCP Developer Mode is currently centered on Business / Enterprise / Edu workspaces; availability varies by plan and rollout.',
+    note: 'The Ashes MCP server is live now. Private ChatGPT testing still depends on whether Developer Mode/custom MCP is available on that ChatGPT account or workspace.',
     href: 'https://help.openai.com/en/articles/12584461-developer-mode-and-full-mcp-connectors-in-chatgpt',
     action: 'Open official ChatGPT setup guide',
   },
   {
     name: 'Codex',
     method: 'Plugin / app connection',
-    status: 'AFTER ASHES IS PUBLISHED',
+    status: 'MCP LIVE · DIRECTORY LATER',
     tone: 'soon',
     steps: [
-      'Ashes is not searchable in Codex yet either.',
-      'Once the Ashes plugin/app is approved, open the Plugins Directory in Codex.',
+      'Ashes is not searchable in Codex yet.',
+      `The shared backend is already live at ${MCP_URL}.`,
+      'Once the Ashes plugin/app is submitted and approved, open the Plugins Directory in Codex.',
       'Search for Ashes, open its listing, and press Connect.',
-      'The same Ashes Brain service can then expose project context to supported Codex workflows.',
     ],
-    note: 'OpenAI now uses the Plugins Directory as the main discovery surface across ChatGPT and Codex. Ashes must be submitted and approved before users can find it there.',
+    note: 'The shared brain backend is ready; public discovery is the remaining Codex publishing step.',
     href: 'https://help.openai.com/en/articles/20001256-plugins-in-codexOpenAI',
     action: 'Open official Codex plugin guide',
   },
   {
     name: 'Claude',
     method: 'Remote MCP connector',
-    status: 'SUPPORTED · ASHES ENDPOINT NEEDED',
+    status: 'MCP ENDPOINT LIVE',
     tone: 'ready',
     steps: [
       'Open Claude → Settings → Connectors.',
       'Choose Add custom connector.',
-      'Paste the public Ashes MCP URL.',
-      'Approve the connection once.',
-      'After that Claude can use the Ashes Brain tools exposed by that MCP server.',
+      `Paste this URL exactly: ${MCP_URL}`,
+      'Claude should open the Ashes sign-in/permission flow. Sign in and press Allow Ashes once.',
+      'After approval, Claude can read the shared project brain and use the Ashes memory/handoff tools exposed to it.',
     ],
-    note: 'Claude already supports remote MCP connectors. We still need to deploy the Ashes MCP endpoint before this can be completed.',
+    note: 'This is the cleanest place to test the live Ashes MCP endpoint now if your Claude plan exposes custom connectors.',
     href: 'https://claude.ai/',
     action: 'Open Claude',
   },
   {
     name: 'Gemini',
     method: 'MCP via CLI / agent mode',
-    status: 'CLI / AGENT SURFACE',
+    status: 'MCP ENDPOINT LIVE · CLI / AGENT',
     tone: 'limited',
     steps: [
       'Ordinary Gemini web chat does not currently have the same custom-connector flow.',
       'Use Gemini CLI or a supported Gemini agent surface with MCP support.',
-      'Add the public Ashes MCP server there.',
+      `Add this MCP server: ${MCP_URL}`,
+      'Approve Ashes when the client starts the authorization flow.',
       'Then use Ashes as the same shared project-memory service.',
     ],
-    note: 'This is deliberately marked separately so users are not told to look for an Ashes button in normal Gemini web chat.',
+    note: 'This stays marked separately so users are not told to look for an Ashes button in normal Gemini web chat.',
     href: 'https://developers.google.com/gemini-code-assist/docs/gemini-cli',
     action: 'Open Gemini MCP guide',
   },
@@ -280,7 +283,7 @@ export default function Workspace() {
     }
     await copyText(contextPacket);
     window.open(url, '_blank', 'noopener,noreferrer');
-    setToast(`Opened ${agent}. Ashes is not officially connected there yet — see setup below.`);
+    setToast(`Opened ${agent}. Use the live MCP setup below to connect Ashes.`);
   }
 
   function deleteProject() {
@@ -345,9 +348,9 @@ export default function Workspace() {
         <section className="brain-connect-guide" id="connect-ais">
           <div className="connect-guide-head">
             <div><p>CONNECT ONCE</p><h2>Exact setup for each AI.</h2></div>
-            <span>No fake connections</span>
+            <span>MCP live</span>
           </div>
-          <p className="connect-guide-intro"><strong>Important:</strong> Ashes is not published in ChatGPT/Codex yet, so searching for it today will return nothing. The cards below separate what you can do now from what becomes available after Ashes is submitted and approved.</p>
+          <p className="connect-guide-intro"><strong>Live endpoint:</strong> {MCP_URL}. Ashes is still unpublished in the ChatGPT/Codex directory, but the shared-brain server and OAuth discovery are online now.</p>
           <div className="connect-guide-list">
             {CONNECTIONS.map((connection) => (
               <details key={connection.name} className={`connect-row ${connection.tone}`}>
@@ -364,7 +367,7 @@ export default function Workspace() {
               </details>
             ))}
           </div>
-          <div className="connect-result"><span>Target experience</span><b>Connect once → every supported AI reads/writes the same Ashes project brain</b></div>
+          <div className="connect-result"><span>Live architecture</span><b>Supported AI client → OAuth → Ashes Brain → same project memory everywhere</b></div>
         </section>
       </section>
     </main>

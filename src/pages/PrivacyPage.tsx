@@ -15,8 +15,11 @@ export default function PrivacyPage() {
         <h2>AI connections</h2>
         <p>When you authorize an AI client through Ashes MCP, that client receives permission to use the Ashes Brain tools available to it. Ashes does not ask for or store your ChatGPT, Claude, Gemini or Codex passwords, browser cookies or provider session tokens. OAuth access tokens issued by Ashes identify the authorized Brain account and are scoped to Ashes Brain.</p>
 
+        <h2>Usage analytics</h2>
+        <p>We use first-party analytics to understand whether Ashes is useful. We may record page paths, anonymous browser-session identifiers, referring site or campaign source, coarse device type, country-level request metadata, link clicks, Brain account events, AI authorization approvals, shared-link views and MCP tool names. We do not store raw IP addresses in the Ashes analytics database, do not record MCP prompts or memory text as analytics events, and do not use cross-site advertising identifiers. The browser analytics tracker respects the browser Do Not Track setting.</p>
+
         <h2>How data is used</h2>
-        <p>We use your data to provide account access, synchronize project context, return relevant project memory to authorized AI clients, save memories and handoffs you request, operate project sharing, prevent abuse and troubleshoot the service. We do not sell personal data to advertisers.</p>
+        <p>We use your data to provide account access, synchronize project context, return relevant project memory to authorized AI clients, save memories and handoffs you request, operate project sharing, understand product usage, prevent abuse and troubleshoot the service. We do not sell personal data to advertisers.</p>
 
         <h2>Public sharing</h2>
         <p>Projects are private by default. A project only becomes accessible through a public share URL after the Brain owner presses Share brain. Treat a share URL like any other private link and only share it with people you intend to give access to that snapshot.</p>

@@ -37,6 +37,8 @@ const ExpertisePage = lazy(() => import('./pages/ExpertisePage'));
 const ProcessPage = lazy(() => import('./pages/ProcessPage'));
 const ContactPage = lazy(() => import('./pages/ContactPage'));
 const ReviewsPage = lazy(() => import('./pages/ReviewsPage'));
+const PrivacyPage = lazy(() => import('./pages/PrivacyPage'));
+const TermsPage = lazy(() => import('./pages/TermsPage'));
 const Workspace = lazy(() => import('./workspace/Workspace'));
 const WorkspaceLogin = lazy(() => import('./workspace/WorkspaceLogin'));
 const WorkspaceShare = lazy(() => import('./workspace/WorkspaceShare'));
@@ -63,6 +65,8 @@ createRoot(document.getElementById('root')!).render(
           <Route path="/process" element={<ProcessPage/>} />
           <Route path="/contact" element={<ContactPage/>} />
           <Route path="/reviews" element={<ReviewsPage/>} />
+          <Route path="/privacy" element={<PrivacyPage/>} />
+          <Route path="/terms" element={<TermsPage/>} />
           <Route path="/workspace" element={<Workspace/>} />
           <Route path="/workspace/login" element={<WorkspaceLogin/>} />
           <Route path="/workspace/share/:token" element={<WorkspaceShare/>} />

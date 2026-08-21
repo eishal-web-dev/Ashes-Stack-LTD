@@ -1,0 +1,31 @@
+{
+  "manifest_version": 3,
+  "name": "Ashes Bridge",
+  "version": "0.1.0",
+  "description": "Share one Ashes project brain across ChatGPT, Claude and Gemini.",
+  "permissions": ["storage"],
+  "host_permissions": [
+    "https://www.ashesstack.cloud/*",
+    "https://ashesstack.cloud/*",
+    "https://chatgpt.com/*",
+    "https://claude.ai/*",
+    "https://gemini.google.com/*"
+  ],
+  "content_scripts": [{
+    "matches": [
+      "https://www.ashesstack.cloud/*",
+      "https://ashesstack.cloud/*",
+      "https://chatgpt.com/*",
+      "https://claude.ai/*",
+      "https://gemini.google.com/*"
+    ],
+    "js": ["content.js"],
+    "run_at": "document_idle"
+  }],
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "ashes-bridge@ashesstack.cloud",
+      "strict_min_version": "109.0"
+    }
+  }
+}

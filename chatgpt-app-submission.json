@@ -1,0 +1,152 @@
+{
+  "$schema": "https://developers.openai.com/apps-sdk/schemas/chatgpt-app-submission.v1.json",
+  "schema_version": 1,
+  "app_info": {
+    "display_name": "Ashes Brain",
+    "subtitle": "Share project memory",
+    "description": "Ashes Brain gives ChatGPT a shared project memory that can also be used by other supported AI clients. Users can list projects, retrieve project context, search saved memories, save durable decisions and context, and leave handoffs for the next AI working on the same project.",
+    "category": "PRODUCTIVITY"
+  },
+  "tools": {
+    "list_projects": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only retrieves the authenticated user's Ashes Brain project metadata without modifying it.",
+        "open_world_justification": "Reads private Ashes Brain data and does not change public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, overwrite, revoke, or otherwise irreversibly change project data."
+      }
+    },
+    "get_project_context": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Retrieves a selected Ashes project, goal and saved memory without changing the project.",
+        "open_world_justification": "Only reads private data from the user's Ashes Brain account.",
+        "destructive_justification": "Performs no deletion, overwrite, revocation or irreversible action."
+      }
+    },
+    "search": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Searches existing Ashes project names, goals and memory text without writing any records.",
+        "open_world_justification": "Searches only the authenticated user's private Ashes Brain data.",
+        "destructive_justification": "Does not modify or remove any project or memory data."
+      }
+    },
+    "fetch": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Fetches an existing project or memory item by an Ashes result identifier and does not update it.",
+        "open_world_justification": "Retrieves private Ashes Brain content only and does not publish or send data to third-party systems.",
+        "destructive_justification": "Cannot delete, overwrite or revoke any stored content."
+      }
+    },
+    "remember": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Creates a new private memory, decision or conversation item in the selected Ashes Brain project.",
+        "open_world_justification": "Writes only to the user's private Ashes Brain and does not change public or third-party state.",
+        "destructive_justification": "Adds a new memory item without deleting or irreversibly replacing existing project data."
+      }
+    },
+    "handoff": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Creates a private handoff memory in the selected Ashes project for another AI client to use later.",
+        "open_world_justification": "The handoff is stored only in the user's private Ashes Brain rather than posted to an external service.",
+        "destructive_justification": "Adds a handoff record and does not delete or overwrite existing project content."
+      }
+    }
+  },
+  "test_cases": [
+    {
+      "description": "List the user's available Ashes Brain projects before choosing one.",
+      "user_prompt": "What projects do I have in Ashes?",
+      "file_attachment_urls": null,
+      "tools_triggered": "list_projects",
+      "expected_output": "Returns the user's Ashes projects with names, IDs and goals so the user can choose one.",
+      "expected_output_url": null
+    },
+    {
+      "description": "Load the shared context for the current or most recently updated project.",
+      "user_prompt": "Continue my latest Ashes project and tell me the important context first.",
+      "file_attachment_urls": null,
+      "tools_triggered": "get_project_context",
+      "expected_output": "Returns the project's goal and recent shared memories, decisions, conversations and handoffs before continuing work.",
+      "expected_output_url": null
+    },
+    {
+      "description": "Search project memory and fetch the relevant result in full.",
+      "user_prompt": "Find what we decided about authentication in my Ashes project and show me the saved item.",
+      "file_attachment_urls": null,
+      "tools_triggered": "search, fetch",
+      "expected_output": "Finds relevant authentication-related memory and retrieves the selected matching item with its project context.",
+      "expected_output_url": null
+    },
+    {
+      "description": "Save a durable project decision to shared memory.",
+      "user_prompt": "Remember that this project will use a separate Brain login from the client portal.",
+      "file_attachment_urls": null,
+      "tools_triggered": "remember",
+      "expected_output": "Stores the decision in the selected or latest Ashes project and confirms it was saved to shared memory.",
+      "expected_output_url": null
+    },
+    {
+      "description": "Leave a concise state handoff for the next AI client.",
+      "user_prompt": "Save a handoff saying the MCP backend is working and the next step is marketplace submission.",
+      "file_attachment_urls": null,
+      "tools_triggered": "handoff",
+      "expected_output": "Stores the requested handoff in the shared Ashes project so another authorized AI can retrieve it later.",
+      "expected_output_url": null
+    }
+  ],
+  "negative_test_cases": [
+    {
+      "description": "Do not invoke Ashes for unrelated current weather requests.",
+      "user_prompt": "What's the weather in Islamabad today?",
+      "file_attachment_urls": null,
+      "tools_triggered": null,
+      "expected_output": "Ashes Brain should not be invoked because the request does not involve the user's saved project context.",
+      "expected_output_url": null
+    },
+    {
+      "description": "Do not invoke Ashes for general knowledge with no project-memory request.",
+      "user_prompt": "Explain how OAuth PKCE works in simple terms.",
+      "file_attachment_urls": null,
+      "tools_triggered": null,
+      "expected_output": "The assistant should answer normally without accessing Ashes because no saved project context was requested or needed.",
+      "expected_output_url": null
+    },
+    {
+      "description": "Do not use Ashes as a credential store.",
+      "user_prompt": "Save my bank password and one-time authentication code in Ashes for later.",
+      "file_attachment_urls": null,
+      "tools_triggered": null,
+      "expected_output": "The app should not store authentication secrets or one-time codes and should advise the user to use an appropriate secure credential manager.",
+      "expected_output_url": null
+    }
+  ]
+}

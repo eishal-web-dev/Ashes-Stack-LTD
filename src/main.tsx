@@ -39,6 +39,7 @@ const ContactPage = lazy(() => import('./pages/ContactPage'));
 const ReviewsPage = lazy(() => import('./pages/ReviewsPage'));
 const Workspace = lazy(() => import('./workspace/Workspace'));
 const WorkspaceLogin = lazy(() => import('./workspace/WorkspaceLogin'));
+const WorkspaceShare = lazy(() => import('./workspace/WorkspaceShare'));
 
 setupAshesPwa();
 
@@ -64,6 +65,7 @@ createRoot(document.getElementById('root')!).render(
           <Route path="/reviews" element={<ReviewsPage/>} />
           <Route path="/workspace" element={<Workspace/>} />
           <Route path="/workspace/login" element={<WorkspaceLogin/>} />
+          <Route path="/workspace/share/:token" element={<WorkspaceShare/>} />
           <Route path="/login" element={<Login/>} />
           <Route path="/signup" element={<Signup/>} />
           <Route path="/portal" element={<Portal/>} />

@@ -20,34 +20,66 @@ const ACTIVE_KEY = 'ashes-work-os-active-project-v1';
 
 const CONNECTIONS = [
   {
-    name: 'ChatGPT + Codex',
-    method: 'Ashes app / plugin',
-    status: 'Publishing path',
+    name: 'ChatGPT',
+    method: 'ChatGPT App · MCP',
+    status: 'NOT PUBLISHED YET',
     tone: 'soon',
-    steps: ['Open the ChatGPT Plugins Directory', 'Find Ashes', 'Press Connect once'],
-    note: 'After Ashes is published, this becomes a normal ChatGPT/Codex app connection. No browser extension.',
-    href: 'https://chatgpt.com/',
-    action: 'Open ChatGPT',
+    steps: [
+      'Do not search the Plugin Directory yet — Ashes has not been submitted or approved there.',
+      'For private testing, your ChatGPT account/workspace must have Developer Mode access.',
+      'In ChatGPT open Settings → Apps & Connectors → Advanced settings and enable Developer Mode when that option is available.',
+      'Then go to Apps → Create, paste the public Ashes MCP endpoint, scan the tools, and create the app.',
+      'After OpenAI approves our public submission, normal users will simply open the Plugins Directory → search “Ashes” → Connect.',
+    ],
+    note: 'Current blocker: the public Ashes /mcp endpoint is not deployed yet, so there is nothing valid to paste into ChatGPT today. Full custom-MCP Developer Mode is currently centered on Business / Enterprise / Edu workspaces; availability varies by plan and rollout.',
+    href: 'https://help.openai.com/en/articles/12584461-developer-mode-and-full-mcp-connectors-in-chatgpt',
+    action: 'Open official ChatGPT setup guide',
+  },
+  {
+    name: 'Codex',
+    method: 'Plugin / app connection',
+    status: 'AFTER ASHES IS PUBLISHED',
+    tone: 'soon',
+    steps: [
+      'Ashes is not searchable in Codex yet either.',
+      'Once the Ashes plugin/app is approved, open the Plugins Directory in Codex.',
+      'Search for Ashes, open its listing, and press Connect.',
+      'The same Ashes Brain service can then expose project context to supported Codex workflows.',
+    ],
+    note: 'OpenAI now uses the Plugins Directory as the main discovery surface across ChatGPT and Codex. Ashes must be submitted and approved before users can find it there.',
+    href: 'https://help.openai.com/en/articles/20001256-plugins-in-codexOpenAI',
+    action: 'Open official Codex plugin guide',
   },
   {
     name: 'Claude',
     method: 'Remote MCP connector',
-    status: 'Officially supported',
+    status: 'SUPPORTED · ASHES ENDPOINT NEEDED',
     tone: 'ready',
-    steps: ['Claude → Settings → Connectors', 'Add custom connector', 'Paste the Ashes MCP URL and approve access'],
-    note: 'Claude supports remote MCP connectors on Pro, Max, Team and Enterprise. Ashes still needs its public MCP endpoint before this row becomes one-click.',
+    steps: [
+      'Open Claude → Settings → Connectors.',
+      'Choose Add custom connector.',
+      'Paste the public Ashes MCP URL.',
+      'Approve the connection once.',
+      'After that Claude can use the Ashes Brain tools exposed by that MCP server.',
+    ],
+    note: 'Claude already supports remote MCP connectors. We still need to deploy the Ashes MCP endpoint before this can be completed.',
     href: 'https://claude.ai/',
     action: 'Open Claude',
   },
   {
     name: 'Gemini',
     method: 'MCP via CLI / agent mode',
-    status: 'Supported surface',
+    status: 'CLI / AGENT SURFACE',
     tone: 'limited',
-    steps: ['Open Gemini CLI or Gemini agent mode', 'Add the Ashes MCP server', 'Use Ashes as the shared project memory'],
-    note: 'Google documents MCP support in Gemini CLI / agent mode. Ordinary Gemini web chat does not currently expose the same custom-connector setup.',
+    steps: [
+      'Ordinary Gemini web chat does not currently have the same custom-connector flow.',
+      'Use Gemini CLI or a supported Gemini agent surface with MCP support.',
+      'Add the public Ashes MCP server there.',
+      'Then use Ashes as the same shared project-memory service.',
+    ],
+    note: 'This is deliberately marked separately so users are not told to look for an Ashes button in normal Gemini web chat.',
     href: 'https://developers.google.com/gemini-code-assist/docs/gemini-cli',
-    action: 'Gemini MCP guide',
+    action: 'Open Gemini MCP guide',
   },
 ] as const;
 
@@ -248,7 +280,7 @@ export default function Workspace() {
     }
     await copyText(contextPacket);
     window.open(url, '_blank', 'noopener,noreferrer');
-    setToast(`Opened ${agent}. Official Ashes connection setup is shown below.`);
+    setToast(`Opened ${agent}. Ashes is not officially connected there yet — see setup below.`);
   }
 
   function deleteProject() {
@@ -312,10 +344,10 @@ export default function Workspace() {
 
         <section className="brain-connect-guide" id="connect-ais">
           <div className="connect-guide-head">
-            <div><p>CONNECT ONCE</p><h2>How Ashes connects to each AI.</h2></div>
-            <span>Official paths only</span>
+            <div><p>CONNECT ONCE</p><h2>Exact setup for each AI.</h2></div>
+            <span>No fake connections</span>
           </div>
-          <p className="connect-guide-intro">AI providers must show their own permission screen once. After that, Ashes can act as the shared project brain without asking users to install a browser extension.</p>
+          <p className="connect-guide-intro"><strong>Important:</strong> Ashes is not published in ChatGPT/Codex yet, so searching for it today will return nothing. The cards below separate what you can do now from what becomes available after Ashes is submitted and approved.</p>
           <div className="connect-guide-list">
             {CONNECTIONS.map((connection) => (
               <details key={connection.name} className={`connect-row ${connection.tone}`}>
@@ -332,7 +364,7 @@ export default function Workspace() {
               </details>
             ))}
           </div>
-          <div className="connect-result"><span>After setup</span><b>ChatGPT / Claude / Gemini client → Ashes Brain → same project memory everywhere</b></div>
+          <div className="connect-result"><span>Target experience</span><b>Connect once → every supported AI reads/writes the same Ashes project brain</b></div>
         </section>
       </section>
     </main>

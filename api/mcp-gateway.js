@@ -1,5 +1,6 @@
 import mcpHandler from "../lib/mcpRpc.js";
 import oauthHandler from "../lib/mcpOAuth.js";
+import runMcpSelfTest from "../lib/mcpSelfTest.js";
 import { mcpResource, oauthIssuer } from "../lib/mcpAuth.js";
 
 function first(value) {
@@ -11,6 +12,11 @@ export default async function handler(req, res) {
 
   if (route === "mcp") return mcpHandler(req, res);
   if (route === "oauth") return oauthHandler(req, res);
+  if (route === "selftest") {
+    res.setHeader("Cache-Control", "no-store");
+    const result = await runMcpSelfTest();
+    return res.status(result.ok ? 200 : 500).json(result);
+  }
 
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Cache-Control", "public, max-age=300");

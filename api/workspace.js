@@ -1,6 +1,14 @@
+import bcrypt from "bcryptjs";
 import { dbConnect } from "../lib/mongodb.js";
 import { getUserFromReq } from "../lib/auth.js";
+import {
+  clearWorkOSCookie,
+  getWorkOSUserFromReq,
+  setWorkOSCookie,
+  signWorkOSSession,
+} from "../lib/workspaceAuth.js";
 import WorkOSProject from "../models/WorkOSProject.js";
+import WorkOSUser from "../models/WorkOSUser.js";
 
 function cleanMemory(memory = []) {
   if (!Array.isArray(memory)) return [];
@@ -32,8 +40,81 @@ function toClient(project) {
   };
 }
 
+async function claimLegacyProjects(req, brainUser) {
+  const legacy = getUserFromReq(req);
+  if (!legacy?.id || !legacy?.email) return 0;
+  if (String(legacy.email).toLowerCase() !== String(brainUser.email).toLowerCase()) return 0;
+
+  const alreadyOwned = await WorkOSProject.countDocuments({ owner: brainUser._id });
+  if (alreadyOwned > 0) return 0;
+
+  const result = await WorkOSProject.updateMany(
+    { owner: legacy.id },
+    { $set: { owner: brainUser._id } }
+  );
+  return result.modifiedCount || 0;
+}
+
+async function handleBrainAuth(req, res, action) {
+  if (action === "me") {
+    const session = getWorkOSUserFromReq(req);
+    if (!session) return res.status(401).json({ error: "Not authenticated" });
+    return res.status(200).json({ id: session.id, name: session.name, email: session.email, account: "workos" });
+  }
+
+  if (action === "logout") {
+    clearWorkOSCookie(res);
+    return res.status(200).json({ ok: true });
+  }
+
+  if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+  await dbConnect();
+
+  if (action === "signup") {
+    const name = String(req.body?.name || "").trim().slice(0, 120);
+    const email = String(req.body?.email || "").trim().toLowerCase();
+    const password = String(req.body?.password || "");
+    if (!name || !email || !password) return res.status(400).json({ error: "Name, email and password are required." });
+    if (password.length < 6) return res.status(400).json({ error: "Password must be at least 6 characters." });
+
+    const existing = await WorkOSUser.findOne({ email });
+    if (existing) return res.status(409).json({ error: "A Brain account with this email already exists." });
+
+    const user = await WorkOSUser.create({ name, email, password: await bcrypt.hash(password, 10) });
+    const migratedProjects = await claimLegacyProjects(req, user);
+    const token = signWorkOSSession({ id: user._id.toString(), name: user.name, email: user.email });
+    setWorkOSCookie(res, token);
+    return res.status(201).json({ id: user._id, name: user.name, email: user.email, account: "workos", migratedProjects });
+  }
+
+  if (action === "login") {
+    const email = String(req.body?.email || "").trim().toLowerCase();
+    const password = String(req.body?.password || "");
+    const user = await WorkOSUser.findOne({ email });
+    if (!user) return res.status(401).json({ error: "Invalid Brain email or password." });
+    const match = await bcrypt.compare(password, user.password);
+    if (!match) return res.status(401).json({ error: "Invalid Brain email or password." });
+
+    const migratedProjects = await claimLegacyProjects(req, user);
+    const token = signWorkOSSession({ id: user._id.toString(), name: user.name, email: user.email });
+    setWorkOSCookie(res, token);
+    return res.status(200).json({ id: user._id, name: user.name, email: user.email, account: "workos", migratedProjects });
+  }
+
+  return res.status(404).json({ error: "Unknown Brain auth action" });
+}
+
 export default async function handler(req, res) {
-  const authUser = getUserFromReq(req);
+  const authAction = String(req.query?.auth || "");
+  if (authAction) {
+    try {
+      return await handleBrainAuth(req, res, authAction);
+    } catch (error) {
+      return res.status(500).json({ error: error?.message || "Brain authentication failed" });
+    }
+  }
+
+  const authUser = getWorkOSUserFromReq(req);
   if (!authUser) return res.status(401).json({ error: "Not authenticated" });
 
   try {

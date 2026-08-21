@@ -61,10 +61,10 @@ const CONNECTIONS = [
       'Open Claude → Settings → Connectors.',
       'Choose Add custom connector.',
       `Paste this URL exactly: ${MCP_URL}`,
-      'Claude should open the Ashes sign-in/permission flow. Sign in and press Allow Ashes once.',
+      'Claude should open the Ashes Brain sign-in/permission flow. Sign in and press Allow Ashes once.',
       'After approval, Claude can read the shared project brain and use the Ashes memory/handoff tools exposed to it.',
     ],
-    note: 'This is the cleanest place to test the live Ashes MCP endpoint now if your Claude plan exposes custom connectors.',
+    note: 'The Brain login is separate from the Ashes Stack client/team/admin portal.',
     href: 'https://claude.ai/',
     action: 'Open Claude',
   },
@@ -186,7 +186,7 @@ export default function Workspace() {
     let cancelled = false;
     async function bootCloud() {
       try {
-        const me = await fetch('/api/auth/me', { credentials: 'include' });
+        const me = await fetch('/api/workspace?auth=me', { credentials: 'include' });
         if (!me.ok) { if (!cancelled) { setAuthState('guest'); setSyncState('local'); } return; }
         if (!cancelled) setAuthState('signed-in');
         const response = await fetch('/api/workspace', { credentials: 'include' });
@@ -295,7 +295,7 @@ export default function Workspace() {
 
   if (!activeProject) return null;
   const syncLabel = authState === 'checking' ? 'checking' : authState === 'guest' ? 'local'
-    : syncState === 'syncing' ? 'syncing' : syncState === 'error' ? 'sync issue' : 'cloud synced';
+    : syncState === 'syncing' ? 'syncing' : syncState === 'error' ? 'sync issue' : 'brain cloud synced';
 
   return (
     <main className="brain-shell">
@@ -311,7 +311,7 @@ export default function Workspace() {
         </nav>
         <div className="brain-sidebar-bottom">
           <span><i className={syncState === 'error' ? 'error' : ''} />{syncLabel}</span>
-          {authState === 'guest' && <a href="/login">Sign in for cloud</a>}
+          {authState === 'guest' && <a href="/workspace/login">Sign in to Brain</a>}
           <a href="/">Back home</a>
         </div>
       </aside>
@@ -350,7 +350,7 @@ export default function Workspace() {
             <div><p>CONNECT ONCE</p><h2>Exact setup for each AI.</h2></div>
             <span>MCP live</span>
           </div>
-          <p className="connect-guide-intro"><strong>Live endpoint:</strong> {MCP_URL}. Ashes is still unpublished in the ChatGPT/Codex directory, but the shared-brain server and OAuth discovery are online now.</p>
+          <p className="connect-guide-intro"><strong>Live endpoint:</strong> {MCP_URL}. Ashes Brain authentication is separate from the existing Ashes Stack client/team/admin portal.</p>
           <div className="connect-guide-list">
             {CONNECTIONS.map((connection) => (
               <details key={connection.name} className={`connect-row ${connection.tone}`}>
@@ -367,7 +367,7 @@ export default function Workspace() {
               </details>
             ))}
           </div>
-          <div className="connect-result"><span>Live architecture</span><b>Supported AI client → OAuth → Ashes Brain → same project memory everywhere</b></div>
+          <div className="connect-result"><span>Live architecture</span><b>Supported AI client → Brain-only OAuth → Ashes Brain → same project memory everywhere</b></div>
         </section>
       </section>
     </main>

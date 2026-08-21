@@ -13,7 +13,7 @@ const MemorySchema = new mongoose.Schema(
 
 const WorkOSProjectSchema = new mongoose.Schema(
   {
-    owner: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true, index: true },
+    owner: { type: mongoose.Schema.Types.ObjectId, ref: "WorkOSUser", required: true, index: true },
     clientId: { type: String, required: true },
     name: { type: String, required: true, trim: true, maxlength: 120 },
     goal: { type: String, default: "", trim: true, maxlength: 4000 },

@@ -3,26 +3,26 @@
   const ACTIVE_KEY = 'ashes-work-os-active-project-v1';
   const host = location.hostname;
   const isAshes = host === 'ashesstack.cloud' || host.endsWith('.ashesstack.cloud');
-
   const site = host === 'chatgpt.com' ? 'ChatGPT'
     : host === 'claude.ai' ? 'Claude'
     : host === 'gemini.google.com' ? 'Gemini'
     : 'Ashes';
 
-  function storageGet(keys) {
-    if (typeof browser !== 'undefined') return browser.storage.local.get(keys);
-    return new Promise((resolve) => chrome.storage.local.get(keys, resolve));
-  }
-  function storageSet(value) {
-    if (typeof browser !== 'undefined') return browser.storage.local.set(value);
-    return new Promise((resolve) => chrome.storage.local.set(value, resolve));
-  }
-  function postReady() {
-    window.postMessage({ type: 'ASHES_BRIDGE_READY' }, location.origin);
+  const storageGet = (keys) => typeof browser !== 'undefined'
+    ? browser.storage.local.get(keys)
+    : new Promise((resolve) => chrome.storage.local.get(keys, resolve));
+  const storageSet = (value) => typeof browser !== 'undefined'
+    ? browser.storage.local.set(value)
+    : new Promise((resolve) => chrome.storage.local.set(value, resolve));
+
+  async function postReady() {
+    const state = await storageGet(['ashesAutoSync']);
+    window.postMessage({ type: 'ASHES_BRIDGE_READY', autoSync: state.ashesAutoSync === true }, location.origin);
   }
 
   if (isAshes) {
     let lastState = '';
+
     async function pushPageState() {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw || raw === lastState) return;
@@ -39,7 +39,24 @@
       if (event.source !== window || event.origin !== location.origin) return;
       const data = event.data;
       if (data?.type === 'ASHES_WORKSPACE_PING') {
-        postReady();
+        await postReady();
+        return;
+      }
+      if (data?.type === 'ASHES_SET_AUTO_SYNC') {
+        const enabled = data.enabled === true;
+        await storageSet({ ashesAutoSync: enabled });
+        window.postMessage({ type: 'ASHES_AUTO_SYNC_STATE', enabled }, location.origin);
+        return;
+      }
+      if (data?.type === 'ASHES_OPEN_AGENT') {
+        await storageSet({
+          ashesAutoSync: true,
+          ashesPendingTarget: data.targetSite || data.agent,
+          ashesPendingAgent: data.agent,
+          ashesPendingProjectId: data.projectId || '',
+          ashesPendingAt: Date.now(),
+        });
+        window.postMessage({ type: 'ASHES_HANDOFF_READY', agent: data.agent }, location.origin);
         return;
       }
       if (data?.type === 'ASHES_WORKSPACE_STATE' && Array.isArray(data.projects)) {
@@ -56,7 +73,11 @@
     });
 
     const onStorageChanged = (changes, area) => {
-      if (area !== 'local' || !changes.ashesProjects?.newValue) return;
+      if (area !== 'local') return;
+      if (changes.ashesAutoSync) {
+        window.postMessage({ type: 'ASHES_AUTO_SYNC_STATE', enabled: changes.ashesAutoSync.newValue === true }, location.origin);
+      }
+      if (!changes.ashesProjects?.newValue) return;
       const projects = changes.ashesProjects.newValue;
       if (!Array.isArray(projects) || !projects.length) return;
       const serialized = JSON.stringify(projects);
@@ -78,11 +99,10 @@
   if (!['ChatGPT', 'Claude', 'Gemini'].includes(site)) return;
 
   let linked = false;
+  let autoSync = false;
   let lastCaptured = '';
-  let statusEl;
-  let projectEl;
-  let panelEl;
   let captureTimer;
+  let indicator;
 
   function hash(text) {
     let value = 2166136261;
@@ -111,9 +131,11 @@
       `Project: ${project?.name || 'Untitled'}`,
       `Goal: ${project?.goal || 'No goal set.'}`,
       '',
-      'Continue this project using the shared context below. Do not ask me to repeat information already present. Preserve existing decisions unless I change them.',
+      'Use the shared project context below. Do not ask me to repeat information already here. Preserve existing decisions unless I change them.',
       '',
       body || 'No shared memory yet.',
+      '',
+      'My next instruction: ',
     ].join('\n').slice(-22000);
   }
 
@@ -127,21 +149,16 @@
       nodes = [...document.querySelectorAll('main user-query, main model-response, main .query-text, main .response-container')];
     }
     let text = nodes.map((node) => (node.innerText || node.textContent || '').trim()).filter(Boolean).join('\n\n');
-    if (text.length < 40) {
-      const main = document.querySelector('main');
-      text = (main?.innerText || '').trim();
-    }
+    if (text.length < 40) text = (document.querySelector('main')?.innerText || '').trim();
     return text.slice(-12000);
   }
 
-  async function saveChat(manual = false) {
+  async function saveChat() {
+    if (!linked || !autoSync) return false;
     const text = extractChat();
-    if (text.length < 40 || (!manual && text === lastCaptured)) return false;
+    if (text.length < 40 || text === lastCaptured) return false;
     const { projects, project } = await getBrain();
-    if (!project) {
-      setStatus('Open Ashes Work OS first');
-      return false;
-    }
+    if (!project) return false;
     lastCaptured = text;
     const memory = Array.isArray(project.memory) ? [...project.memory] : [];
     const id = `bridge-${site.toLowerCase()}-${hash(location.origin + location.pathname + location.search)}`;
@@ -153,7 +170,6 @@
       candidate.id === project.id ? { ...candidate, memory: memory.slice(0, 250), updatedAt: new Date().toISOString() } : candidate
     );
     await storageSet({ ashesProjects: nextProjects, ashesActiveProjectId: project.id, ashesUpdatedAt: Date.now() });
-    if (manual) setStatus('Chat saved to brain');
     return true;
   }
 
@@ -170,96 +186,115 @@
     return null;
   }
 
-  async function injectBrain() {
-    const { project } = await getBrain();
-    if (!project) {
-      setStatus('Open Ashes Work OS first');
-      return;
+  async function waitForComposer(timeout = 12000) {
+    const started = Date.now();
+    while (Date.now() - started < timeout) {
+      const composer = findComposer();
+      if (composer) return composer;
+      await new Promise((resolve) => setTimeout(resolve, 250));
     }
-    const text = buildContext(project);
-    const composer = findComposer();
-    if (!composer) {
-      try {
-        await navigator.clipboard.writeText(text);
-        setStatus('Brain copied — paste it');
-      } catch {
-        setStatus('Could not find prompt box');
-      }
-      return;
-    }
+    return null;
+  }
+
+  function setComposer(composer, text) {
     composer.focus();
     if ('value' in composer) {
-      composer.value = text;
+      const setter = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(composer), 'value')?.set;
+      if (setter) setter.call(composer, text); else composer.value = text;
       composer.dispatchEvent(new Event('input', { bubbles: true }));
       composer.dispatchEvent(new Event('change', { bubbles: true }));
-    } else {
-      try {
-        document.execCommand('selectAll', false);
-        const inserted = document.execCommand('insertText', false, text);
-        if (!inserted) throw new Error('insertText failed');
-      } catch {
-        composer.textContent = text;
-        composer.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText', data: text }));
-      }
+      return;
     }
-    linked = true;
-    await saveChat(true);
-    setStatus('Brain loaded · chat linked');
+    try {
+      const selection = window.getSelection();
+      const range = document.createRange();
+      range.selectNodeContents(composer);
+      selection?.removeAllRanges();
+      selection?.addRange(range);
+      const inserted = document.execCommand('insertText', false, text);
+      if (!inserted) throw new Error('insertText failed');
+    } catch {
+      composer.textContent = text;
+      composer.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText', data: text }));
+    }
   }
 
-  function setStatus(text) {
-    if (statusEl) statusEl.textContent = text;
-  }
-  async function refreshProjectName() {
+  async function injectBrain() {
     const { project } = await getBrain();
-    if (projectEl) projectEl.textContent = project?.name || 'Open Ashes Work OS';
+    if (!project) return false;
+    const composer = await waitForComposer();
+    if (!composer) return false;
+    setComposer(composer, buildContext(project));
+    linked = true;
+    updateIndicator();
+    return true;
   }
 
-  function mountUi() {
+  function updateIndicator() {
+    if (!indicator) return;
+    indicator.style.opacity = autoSync ? '1' : '.45';
+    indicator.style.borderColor = autoSync ? '#7ef3ad' : '#3b3b3b';
+    indicator.title = autoSync ? 'Ashes is syncing this AI to your active project' : 'Click to connect Ashes';
+  }
+
+  function mountIndicator() {
     if (document.getElementById('ashes-bridge-root')) return;
     const root = document.createElement('div');
     root.id = 'ashes-bridge-root';
-    Object.assign(root.style, { position: 'fixed', right: '18px', bottom: '18px', zIndex: '2147483647' });
+    Object.assign(root.style, { position: 'fixed', right: '16px', bottom: '16px', zIndex: '2147483647' });
     document.documentElement.appendChild(root);
     const shadow = root.attachShadow({ mode: 'open' });
-    shadow.innerHTML = `
-      <style>
-        *{box-sizing:border-box;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-        button{font:inherit}.pill{width:38px;height:38px;border-radius:12px;border:1px solid rgba(255,255,255,.18);background:#0d0d0d;color:#fff;font-weight:900;cursor:pointer;box-shadow:0 8px 35px rgba(0,0,0,.3)}
-        .panel{display:none;position:absolute;right:0;bottom:48px;width:230px;border:1px solid #292929;background:#0d0d0d;color:#f1f1ee;border-radius:13px;padding:12px;box-shadow:0 18px 60px rgba(0,0,0,.45)}
-        .panel.open{display:block}.title{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:2px}.title strong{font-size:11px}.site{font-size:8px;color:#666;text-transform:uppercase;letter-spacing:.12em}
-        .project{font-size:10px;color:#aaa;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:9px 0 10px}.action{width:100%;border:0;border-radius:8px;padding:9px;margin-top:6px;cursor:pointer;font-size:10px;font-weight:700}
-        .primary{background:#f1f1ed;color:#111}.secondary{background:#171717;color:#b7b7b2;border:1px solid #262626}.status{font-size:8px;color:#686868;line-height:1.4;margin-top:9px}.dot{width:6px;height:6px;background:#7ef3ad;border-radius:50%;display:inline-block;margin-right:5px}
-      </style>
-      <button class="pill" aria-label="Ashes Bridge">A</button>
-      <div class="panel">
-        <div class="title"><strong>Ashes Bridge</strong><span class="site">${site}</span></div>
-        <div class="project">Loading project…</div>
-        <button class="action primary use">Use project brain</button>
-        <button class="action secondary save">Save this chat</button>
-        <div class="status"><span class="dot"></span>Use the brain once. This tab then auto-syncs back to Ashes.</div>
-      </div>`;
-    panelEl = shadow.querySelector('.panel');
-    statusEl = shadow.querySelector('.status');
-    projectEl = shadow.querySelector('.project');
-    shadow.querySelector('.pill').addEventListener('click', () => { panelEl.classList.toggle('open'); refreshProjectName(); });
-    shadow.querySelector('.use').addEventListener('click', injectBrain);
-    shadow.querySelector('.save').addEventListener('click', async () => { linked = true; await saveChat(true); });
-    refreshProjectName();
+    shadow.innerHTML = `<button aria-label="Ashes Bridge" style="width:32px;height:32px;border-radius:10px;border:1px solid #3b3b3b;background:#0d0d0d;color:#fff;font:800 12px system-ui;cursor:pointer;box-shadow:0 8px 30px rgba(0,0,0,.25)">A</button>`;
+    indicator = shadow.querySelector('button');
+    indicator.addEventListener('click', async () => {
+      autoSync = !autoSync;
+      linked = autoSync;
+      await storageSet({ ashesAutoSync: autoSync });
+      updateIndicator();
+      if (autoSync) saveChat();
+    });
+    updateIndicator();
   }
 
-  mountUi();
+  async function boot() {
+    const state = await storageGet(['ashesAutoSync', 'ashesPendingTarget', 'ashesPendingProjectId', 'ashesPendingAt']);
+    autoSync = state.ashesAutoSync === true;
+    linked = autoSync;
+    mountIndicator();
+
+    const pendingFresh = Date.now() - Number(state.ashesPendingAt || 0) < 90000;
+    if (pendingFresh && state.ashesPendingTarget === site) {
+      if (state.ashesPendingProjectId) await storageSet({ ashesActiveProjectId: state.ashesPendingProjectId });
+      autoSync = true;
+      linked = true;
+      await storageSet({ ashesAutoSync: true });
+      await injectBrain();
+      await storageSet({ ashesPendingTarget: '', ashesPendingAgent: '', ashesPendingProjectId: '', ashesPendingAt: 0 });
+      updateIndicator();
+    } else if (autoSync) {
+      setTimeout(() => saveChat(), 1600);
+    }
+  }
 
   const observer = new MutationObserver(() => {
-    if (!linked) return;
+    if (!linked || !autoSync) return;
     clearTimeout(captureTimer);
-    captureTimer = setTimeout(() => saveChat(false), 2600);
+    captureTimer = setTimeout(() => saveChat(), 2200);
   });
   const target = document.querySelector('main') || document.body;
   if (target) observer.observe(target, { childList: true, subtree: true, characterData: true });
 
-  setInterval(() => {
-    refreshProjectName();
-    if (linked) saveChat(false);
-  }, 6000);
+  const onStorageChanged = (changes, area) => {
+    if (area !== 'local') return;
+    if (changes.ashesAutoSync) {
+      autoSync = changes.ashesAutoSync.newValue === true;
+      linked = autoSync;
+      updateIndicator();
+    }
+  };
+  if (typeof browser !== 'undefined') browser.storage.onChanged.addListener(onStorageChanged);
+  else chrome.storage.onChanged.addListener(onStorageChanged);
+
+  boot();
+  setInterval(() => { if (linked && autoSync) saveChat(); }, 5500);
 })();

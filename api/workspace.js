@@ -1,3 +1,4 @@
+import crypto from "node:crypto";
 import bcrypt from "bcryptjs";
 import { dbConnect } from "../lib/mongodb.js";
 import { getUserFromReq } from "../lib/auth.js";
@@ -30,6 +31,22 @@ function toClient(project) {
     name: project.name,
     goal: project.goal || "",
     memory: (project.memory || []).map((item) => ({
+      id: item.clientId,
+      text: item.text,
+      source: item.source,
+      kind: item.kind || "memory",
+      createdAt: new Date(item.createdAt).getTime(),
+    })),
+    updatedAt: project.updatedAt,
+  };
+}
+
+function toPublicProject(project) {
+  return {
+    id: project.clientId,
+    name: project.name,
+    goal: project.goal || "",
+    memory: (project.memory || []).slice(0, 50).map((item) => ({
       id: item.clientId,
       text: item.text,
       source: item.source,
@@ -114,6 +131,18 @@ export default async function handler(req, res) {
     }
   }
 
+  const publicShare = String(req.query?.share || "").trim();
+  if (req.method === "GET" && publicShare) {
+    try {
+      await dbConnect();
+      const project = await WorkOSProject.findOne({ shareToken: publicShare, shareEnabled: true });
+      if (!project) return res.status(404).json({ error: "Shared Brain not found or sharing was disabled." });
+      return res.status(200).json({ project: toPublicProject(project), shared: true });
+    } catch (error) {
+      return res.status(500).json({ error: error?.message || "Could not load shared Brain" });
+    }
+  }
+
   const authUser = getWorkOSUserFromReq(req);
   if (!authUser) return res.status(401).json({ error: "Not authenticated" });
 
@@ -159,6 +188,27 @@ export default async function handler(req, res) {
 
       const projects = await WorkOSProject.find({ owner: authUser.id }).sort({ updatedAt: -1 });
       return res.status(200).json({ ok: true, projects: projects.map(toClient) });
+    }
+
+    if (action === "share") {
+      const id = String(req.body.id || "").trim();
+      if (!id) return res.status(400).json({ error: "Missing project id" });
+      const project = await WorkOSProject.findOne({ owner: authUser.id, clientId: id });
+      if (!project) return res.status(404).json({ error: "Project not found" });
+      if (!project.shareToken) project.shareToken = crypto.randomBytes(24).toString("base64url");
+      project.shareEnabled = true;
+      await project.save();
+      return res.status(200).json({
+        ok: true,
+        shareUrl: `https://www.ashesstack.cloud/workspace/share/${project.shareToken}`,
+      });
+    }
+
+    if (action === "unshare") {
+      const id = String(req.body.id || "").trim();
+      if (!id) return res.status(400).json({ error: "Missing project id" });
+      await WorkOSProject.updateOne({ owner: authUser.id, clientId: id }, { $set: { shareEnabled: false } });
+      return res.status(200).json({ ok: true });
     }
 
     if (action === "delete") {

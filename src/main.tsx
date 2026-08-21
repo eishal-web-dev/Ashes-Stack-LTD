@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import App from './App';
 import ProcessScrollFlight from './ProcessScrollFlight';
 import LowerPageSocials from './LowerPageSocials';
+import AnalyticsTracker from './analytics/AnalyticsTracker';
 import { setupAshesPwa } from './pwa';
 import './tailwind.css';
 import './index.css';
@@ -27,6 +28,7 @@ const AdminHome = lazy(() => import('./portal/AdminHome'));
 const AdminClientDetail = lazy(() => import('./portal/AdminClientDetail'));
 const AdminAccount = lazy(() => import('./portal/AdminAccount'));
 const AdminDashboard = lazy(() => import('./portal/AdminDashboard'));
+const AdminAnalytics = lazy(() => import('./portal/AdminAnalytics'));
 const AdminReviews = lazy(() => import('./portal/AdminReviews'));
 const AdminFinance = lazy(() => import('./portal/AdminFinance'));
 const AdminTeam = lazy(() => import('./portal/AdminTeam'));
@@ -57,6 +59,7 @@ function RouteFallback() {
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>
+      <AnalyticsTracker />
       <Suspense fallback={<RouteFallback/>}>
         <Routes>
           <Route path="/" element={<Home/>} />
@@ -78,6 +81,7 @@ createRoot(document.getElementById('root')!).render(
           <Route path="/team" element={<TeamPortal/>} />
           <Route path="/admin" element={<AdminHome/>} />
           <Route path="/admin/dashboard" element={<AdminDashboard/>} />
+          <Route path="/admin/analytics" element={<AdminAnalytics/>} />
           <Route path="/admin/team" element={<AdminTeam/>} />
           <Route path="/admin/reviews" element={<AdminReviews/>} />
           <Route path="/admin/finance" element={<AdminFinance/>} />

@@ -4,8 +4,8 @@ import { useSEO } from '../useSEO';
 
 export default function AboutPage() {
   useSEO({
-    title: 'About Ashes Stack — Software House Founded by Eishal, Islamabad',
-    description: 'Ashes Stack is a design-led software house in Islamabad, Pakistan, founded by Eishal. We build web design, full-stack development, AI-powered products and immersive 3D websites for brands that refuse to be boring.',
+    title: 'About Ashes Stack — Software House Founded by Eishal, London',
+    description: 'Ashes Stack is a design-led software house in London, United Kingdom, founded by Eishal. We build web design, full-stack development, AI-powered products and immersive 3D websites for brands that refuse to be boring.',
     path: '/about',
   });
 
@@ -16,7 +16,7 @@ export default function AboutPage() {
         <div className="page-kicker">ABOUT ASHES</div>
         <h1>ASHES IS A DESIGN-LED<br/>SOFTWARE HOUSE FOR<br/>BRANDS THAT REFUSE<br/><span>TO BE BORING.</span></h1>
         <p className="page-lede">
-          Ashes Stack is a software house based in Islamabad, Pakistan, founded by Eishal.
+          Ashes Stack is a software house based in London, United Kingdom, founded by Eishal.
           We build websites, web applications, and AI-powered products for startups and growing
           brands — specializing in custom web design, full-stack development, product engineering,
           AI integration, and immersive 3D web experiences.
@@ -35,9 +35,9 @@ export default function AboutPage() {
             </div>
             <div className="page-card" style={{ ['--accent' as any]: '#ad77ff' }}>
               <div className="page-card-num">WHERE WE WORK</div>
-              <h3>Islamabad, Pakistan</h3>
+              <h3>London, United Kingdom</h3>
               <p>
-                Based in Islamabad and building for clients everywhere — local businesses, international
+                Based in London and building for clients everywhere — local businesses, international
                 startups, and everything in between. Remote-first, deadline-serious.
               </p>
             </div>

@@ -19,7 +19,7 @@ export default function Footer() {
         <PwaInstallButton />
         <a href="#top">BACK TO TOP ↑</a>
       </nav>
-      <small>© 2026 ASHES · LONDON / EVERYWHERE</small>
+      <small>© 2026 ASHES · LONDON, UNITED KINGDOM</small>
     </footer>
   );
 }

@@ -1,8 +1,127 @@
 import { dbConnect } from "../lib/mongodb.js";
 import Notification from "../models/Notification.js";
+import WorkOSUser from "../models/WorkOSUser.js";
 import { getUserFromReq } from "../lib/auth.js";
+import { getWorkOSUserFromReq } from "../lib/workspaceAuth.js";
+import {
+  BRAIN_PLANS,
+  buildCheckoutUrl,
+  checkoutBaseForPlan,
+  hasPaidAccess,
+  planFromWebhook,
+  readRawBody,
+  verifyLemonSignature,
+} from "../lib/lemonBilling.js";
+
+export const config = { api: { bodyParser: false } };
+
+async function parseJsonBody(req) {
+  const raw = await readRawBody(req);
+  if (!raw) return {};
+  try { return JSON.parse(raw); }
+  catch { return {}; }
+}
+
+async function handleLemonWebhook(req, res) {
+  if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+  const rawBody = await readRawBody(req);
+  const signature = req.headers["x-signature"];
+  if (!verifyLemonSignature(rawBody, signature)) return res.status(401).json({ error: "Invalid signature" });
+
+  let payload;
+  try { payload = JSON.parse(rawBody); }
+  catch { return res.status(400).json({ error: "Invalid JSON" }); }
+
+  const eventName = String(payload?.meta?.event_name || req.headers["x-event-name"] || "");
+  const supported = new Set([
+    "subscription_created",
+    "subscription_updated",
+    "subscription_cancelled",
+    "subscription_resumed",
+    "subscription_expired",
+    "subscription_paused",
+  ]);
+  if (!supported.has(eventName)) return res.status(200).json({ ok: true, ignored: eventName || "unknown" });
+
+  const userId = String(payload?.meta?.custom_data?.user_id || "");
+  if (!/^[a-f0-9]{24}$/i.test(userId)) return res.status(200).json({ ok: true, ignored: "missing user" });
+
+  await dbConnect();
+  const attrs = payload?.data?.attributes || {};
+  const status = String(attrs.status || "");
+  const endsAt = attrs.ends_at || null;
+  const paidPlan = planFromWebhook(payload);
+  const plan = hasPaidAccess(status, endsAt) ? paidPlan : "free";
+  const portalUrl = String(attrs?.urls?.customer_portal || attrs?.urls?.customer_portal_update_subscription || "");
+
+  await WorkOSUser.updateOne(
+    { _id: userId },
+    {
+      $set: {
+        plan,
+        "billing.provider": "lemonsqueezy",
+        "billing.subscriptionId": String(payload?.data?.id || ""),
+        "billing.customerId": String(attrs.customer_id || ""),
+        "billing.variantId": String(attrs.variant_id || ""),
+        "billing.status": status,
+        "billing.renewsAt": attrs.renews_at ? new Date(attrs.renews_at) : null,
+        "billing.endsAt": endsAt ? new Date(endsAt) : null,
+        "billing.portalUrl": portalUrl,
+        "billing.updatedAt": new Date(),
+      },
+    }
+  );
+
+  return res.status(200).json({ ok: true });
+}
+
+async function handleBrainBilling(req, res, action) {
+  const session = getWorkOSUserFromReq(req);
+  if (!session) return res.status(401).json({ error: "Sign in to Ashes Brain first." });
+  await dbConnect();
+  const user = await WorkOSUser.findById(session.id);
+  if (!user) return res.status(404).json({ error: "Brain account not found" });
+
+  if (action === "status") {
+    if (req.method !== "GET") return res.status(405).json({ error: "Method not allowed" });
+    const plan = BRAIN_PLANS[user.plan] || BRAIN_PLANS.free;
+    return res.status(200).json({
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      plan: plan.id,
+      planName: plan.name,
+      limits: { projects: plan.projectLimit, memoriesPerProject: plan.memoryLimit },
+      billing: {
+        status: user.billing?.status || "",
+        renewsAt: user.billing?.renewsAt || null,
+        endsAt: user.billing?.endsAt || null,
+        portalUrl: user.billing?.portalUrl || "",
+      },
+      checkoutConfigured: Boolean(checkoutBaseForPlan("pro")),
+    });
+  }
+
+  if (action === "checkout") {
+    if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+    const body = await parseJsonBody(req);
+    const plan = String(body?.plan || "").toLowerCase();
+    if (plan !== "pro") return res.status(400).json({ error: "Only Ashes Brain Pro is available right now." });
+    const base = checkoutBaseForPlan(plan);
+    if (!base) return res.status(503).json({ error: "Checkout is being connected. Try again after the store is activated." });
+    return res.status(200).json({ checkoutUrl: buildCheckoutUrl(base, user, plan) });
+  }
+
+  return res.status(404).json({ error: "Unknown billing action" });
+}
 
 export default async function handler(req, res) {
+  const lemonAction = String(req.query?.lemon || "");
+  if (lemonAction === "webhook") return handleLemonWebhook(req, res);
+
+  const billingAction = String(req.query?.billing || "");
+  if (billingAction) return handleBrainBilling(req, res, billingAction);
+
   const authUser = getUserFromReq(req);
   if (!authUser) return res.status(401).json({ error: "Not authenticated" });
   await dbConnect();
@@ -14,7 +133,8 @@ export default async function handler(req, res) {
   }
 
   if (req.method === "POST") {
-    const { action, id } = req.body;
+    const body = await parseJsonBody(req);
+    const { action, id } = body;
     if (action === "mark-read" && id) {
       await Notification.updateOne({ _id: id, recipient: authUser.id }, { read: true });
       return res.status(200).json({ ok: true });
@@ -26,5 +146,5 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: "Unknown action" });
   }
 
-  res.status(405).json({ error: "Method not allowed" });
+  return res.status(405).json({ error: "Method not allowed" });
 }

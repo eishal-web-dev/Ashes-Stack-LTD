@@ -4,7 +4,7 @@ import { useSEO } from '../useSEO';
 
 export default function ContactPage() {
   useSEO({
-    title: 'Contact Ashes Stack — Software House in Islamabad, Pakistan',
+    title: 'Contact Ashes Stack — Software House in London, United Kingdom',
     description: 'Get in touch with Ashes Stack. Email, WhatsApp, Instagram, LinkedIn and TikTok — reach Eishal and the team to start a web design, AI, or 3D website project.',
     path: '/contact',
   });

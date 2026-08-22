@@ -67,7 +67,7 @@ export default function App(){const [power,setPower]=useState(0);return <>
   <main>
     <section id="top" className="hero"><div className="radar radar-a"/><div className="radar radar-b"/><div className="energy-aura" aria-hidden="true"/><Phoenix className="hero-phoenix" variant="vr" priority/><div className="hero-energy"/>
       <div className="hero-copy hero-left"><p className="hero-index">01 / DESIGN-LED SOFTWARE</p><h1>WE<br/>BUILD</h1><p className="hero-intro">Digital products engineered<br/>to move people and business.</p><a href="#capabilities">EXPLORE ASHES <ArrowDownRight/></a></div>
-      <div className="hero-copy hero-right"><p className="hero-index">ISLAMABAD · EVERYWHERE</p><h1>WHAT<br/>RISES<br/>NEXT.</h1></div>
+      <div className="hero-copy hero-right"><p className="hero-index">LONDON · EVERYWHERE</p><h1>WHAT<br/>RISES<br/>NEXT.</h1></div>
       <div className="orbit-label orbit-ai"><i/>AI</div><div className="orbit-label orbit-web"><i/>WEB</div><div className="orbit-label orbit-apps"><i/>APPS</div><div className="orbit-label orbit-3d"><i/>3D</div>
       <a className="scroll-cue" href="#capabilities">SCROLL TO EXPLORE <ArrowDownRight/></a>
     </section>

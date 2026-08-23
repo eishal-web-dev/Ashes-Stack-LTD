@@ -1,7 +1,56 @@
+import { useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import AdSenseBootstrap from '../ads/AdSenseBootstrap';
 
-const articles: Record<string, { eyebrow: string; title: string; intro: string; sections: { title: string; body: string[] }[] }> = {
+const articles: Record<string, { eyebrow: string; title: string; intro: string; description?: string; keywords?: string; sections: { title: string; body: string[] }[]; faq?: { question: string; answer: string }[] }> = {
+  'shared-ai-memory-chatgpt-claude-gemini': {
+    eyebrow: 'SHARED AI MEMORY · 8 MIN READ',
+    title: 'Shared AI memory: one brain for ChatGPT, Claude and Gemini',
+    description: 'Learn how shared AI memory gives ChatGPT, Claude, Gemini and other AI assistants the same project context, decisions and handoffs through one secure AI brain.',
+    keywords: 'shared AI memory, AI second brain, ChatGPT Claude shared memory, ChatGPT Gemini memory, AI project memory, shared brain for AI, MCP memory server, connect ChatGPT and Claude',
+    intro: 'Using several AI assistants usually means explaining the same project again and again. ChatGPT knows what happened in ChatGPT, Claude knows what happened in Claude, and Gemini keeps its own separate history. A shared AI memory—sometimes called an AI second brain—puts the useful project context in one secure place so every approved AI can continue from the same source of truth.',
+    sections: [
+      { title: 'What is shared AI memory?', body: [
+        'Shared AI memory is a persistent project knowledge layer that sits outside any single chat provider. It stores the information that should survive after a conversation ends: goals, decisions, requirements, preferences, blockers, useful links and handoffs.',
+        'The AI assistants do not directly read each other’s private conversations. Instead, each approved assistant connects to the same project brain, reads the context it needs and saves durable updates. You stay in control of what is stored and which AI client is allowed to access it.'
+      ]},
+      { title: 'Why ChatGPT, Claude and Gemini do not automatically share memory', body: [
+        'ChatGPT, Claude and Gemini are separate products operated by separate companies. Their accounts, chats and memory systems are isolated for privacy and security. Signing into all three does not create a shared workspace between them.',
+        'This is why Claude may say it does not know what you discussed with ChatGPT. Nothing is broken: the context was simply never transferred. Copy-and-paste can transfer it manually, but that becomes slow, inconsistent and easy to forget as a project grows.'
+      ]},
+      { title: 'How an AI second brain works', body: [
+        'A practical AI second brain has a project store, access control and a small set of tools. The project store holds durable context. Access control confirms the user and approved AI client. The tools let an assistant list projects, read context, search memory, remember a decision and create a handoff.',
+        'The flow is simple: create a project, connect an AI client, ask it to read the project, work normally, then save the decisions that matter. When you switch to another compatible AI, it reads the same project and continues without a full explanation.'
+      ]},
+      { title: 'Shared AI memory with MCP', body: [
+        'The Model Context Protocol, or MCP, provides a standard way for AI applications to connect to external tools and data. A remote MCP memory server can expose focused actions such as get project context, search memory, remember and handoff.',
+        'MCP is the connector, not the memory itself. The memory remains in the shared service, while OAuth can let you approve access without sharing your ChatGPT, Claude or Gemini password with that service.'
+      ]},
+      { title: 'What should you save in a shared brain?', body: [
+        'Save information that another AI would need to continue the project correctly tomorrow: the project goal, audience, brand rules, chosen technology, important constraints, completed work, rejected ideas, open questions and the next action.',
+        'Do not treat memory as a transcript landfill. Compact, well-labelled facts and handoffs are easier for an AI to search and less likely to introduce stale or conflicting context. Update a decision when it changes instead of preserving several unclear versions.'
+      ]},
+      { title: 'Example: moving a project from ChatGPT to Claude', body: [
+        'Imagine planning a product in ChatGPT. You decide the audience, feature set and launch order, then save those decisions to the shared brain. Later, you open Claude and ask it to continue the same project. Claude reads the goal and recent decisions before suggesting the next implementation step.',
+        'After Claude completes its part, it saves a handoff describing what changed, what remains blocked and what should happen next. Gemini—or a future AI client—can use that same handoff if it has been connected and approved.'
+      ]},
+      { title: 'Privacy and security checklist', body: [
+        'Use a shared-memory service that explains what its tools can read and write, uses HTTPS, scopes data to the authenticated user and allows access to be revoked. A connector should never ask for another AI provider’s password, browser cookie or one-time code.',
+        'Projects should be private by default. Public sharing should require a separate deliberate action, and a public view should not silently grant write permission. For sensitive work, store the minimum durable context required and review old memories regularly.'
+      ]},
+      { title: 'How Ashes Brain helps', body: [
+        'Ashes Brain is a shared project memory designed for working across supported AI clients. You create one project brain, keep its goals, decisions, memories and handoffs together, then connect compatible AI tools through a remote MCP endpoint with OAuth.',
+        'The aim is simple: tell one AI something important, save it once, and let the next approved AI continue with the same project context. You can start with one project and test the complete workflow before moving important work into it.'
+      ]},
+    ],
+    faq: [
+      { question: 'Can ChatGPT and Claude share memory automatically?', answer: 'Not through their normal separate chat histories. They need a shared external memory service or a manual context handoff that both can access.' },
+      { question: 'Can Gemini read my ChatGPT conversations?', answer: 'No, not automatically. You must intentionally transfer the relevant context or connect both clients to an approved shared project memory.' },
+      { question: 'Is shared AI memory the same as MCP?', answer: 'No. Shared AI memory is the stored project context. MCP is a standard connection method an AI client can use to access tools such as read, search, remember and handoff.' },
+      { question: 'What is an AI second brain?', answer: 'An AI second brain is a persistent, searchable place for goals, decisions and knowledge that can support work across conversations and, when connected, across multiple AI assistants.' },
+      { question: 'Is Ashes Brain free?', answer: 'You can open Ashes Brain and begin with the options currently shown on the Ashes pricing page. Available plans may change as the product develops.' },
+    ],
+  },
   'share-memory-between-chatgpt-and-claude': {
     eyebrow: 'SHARED AI MEMORY',
     title: 'How to share project memory between ChatGPT and Claude',
@@ -77,6 +126,70 @@ export default function GuidePage() {
   const { slug = '' } = useParams();
   const article = articles[slug];
 
+  useEffect(() => {
+    if (!article) return;
+    const url = `https://www.ashesstack.cloud/guides/${slug}`;
+    const description = article.description || article.intro;
+    const previousTitle = document.title;
+    document.title = `${article.title} | Ashes Brain`;
+
+    const setMeta = (selector: string, attribute: 'name' | 'property', key: string, content: string) => {
+      let element = document.head.querySelector<HTMLMetaElement>(selector);
+      if (!element) {
+        element = document.createElement('meta');
+        element.setAttribute(attribute, key);
+        document.head.appendChild(element);
+      }
+      element.content = content;
+    };
+    setMeta('meta[name="description"]', 'name', 'description', description);
+    if (article.keywords) setMeta('meta[name="keywords"]', 'name', 'keywords', article.keywords);
+    setMeta('meta[property="og:title"]', 'property', 'og:title', article.title);
+    setMeta('meta[property="og:description"]', 'property', 'og:description', description);
+    setMeta('meta[property="og:type"]', 'property', 'og:type', 'article');
+    setMeta('meta[property="og:url"]', 'property', 'og:url', url);
+    setMeta('meta[name="twitter:title"]', 'name', 'twitter:title', article.title);
+    setMeta('meta[name="twitter:description"]', 'name', 'twitter:description', description);
+
+    let canonical = document.head.querySelector<HTMLLinkElement>('link[rel="canonical"]');
+    if (!canonical) {
+      canonical = document.createElement('link');
+      canonical.rel = 'canonical';
+      document.head.appendChild(canonical);
+    }
+    canonical.href = url;
+
+    const schema = document.createElement('script');
+    schema.type = 'application/ld+json';
+    schema.dataset.ashesGuide = slug;
+    schema.text = JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'Article',
+      headline: article.title,
+      description,
+      datePublished: '2026-08-23',
+      dateModified: '2026-08-23',
+      mainEntityOfPage: url,
+      author: { '@type': 'Person', name: 'Eishal' },
+      publisher: { '@type': 'Organization', name: 'Ashes Stack', url: 'https://www.ashesstack.cloud/' },
+      ...(article.faq?.length ? {
+        hasPart: {
+          '@type': 'FAQPage',
+          mainEntity: article.faq.map(item => ({
+            '@type': 'Question',
+            name: item.question,
+            acceptedAnswer: { '@type': 'Answer', text: item.answer },
+          })),
+        },
+      } : {}),
+    });
+    document.head.appendChild(schema);
+    return () => {
+      document.title = previousTitle;
+      schema.remove();
+    };
+  }, [article, slug]);
+
   if (!article) {
     return <main style={{ minHeight: '100vh', background: '#080808', color: '#fff', padding: 72, fontFamily: 'Inter,system-ui,sans-serif' }}><h1>Guide not found.</h1><Link to="/guides" style={{ color: '#fff' }}>Back to guides</Link></main>;
   }
@@ -96,6 +209,20 @@ export default function GuidePage() {
             {section.body.map((p) => <p key={p} style={{ color: '#a6a39d', lineHeight: 1.85, fontSize: 16 }}>{p}</p>)}
           </section>
         ))}
+
+
+        {article.faq?.length ? (
+          <section style={{ marginTop: 52 }}>
+            <p style={{ color: '#777', fontSize: 11, letterSpacing: '.16em' }}>FREQUENTLY ASKED QUESTIONS</p>
+            <h2 style={{ fontSize: 32, letterSpacing: '-.03em' }}>Shared AI memory FAQs</h2>
+            {article.faq.map((item) => (
+              <details key={item.question} style={{ borderTop: '1px solid #242424', padding: '18px 0' }}>
+                <summary style={{ cursor: 'pointer', fontWeight: 750, fontSize: 17 }}>{item.question}</summary>
+                <p style={{ color: '#a6a39d', lineHeight: 1.8, fontSize: 15 }}>{item.answer}</p>
+              </details>
+            ))}
+          </section>
+        ) : null}
 
         <aside style={{ marginTop: 56, padding: 24, border: '1px solid #242424', borderRadius: 16, background: '#0d0d0d' }}>
           <span style={{ color: '#777', fontSize: 10, letterSpacing: '.15em' }}>ASHES BRAIN</span>

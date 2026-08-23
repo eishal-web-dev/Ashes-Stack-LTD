@@ -3,6 +3,12 @@ import AdSenseBootstrap from '../ads/AdSenseBootstrap';
 
 const guides = [
   {
+    slug: 'shared-ai-memory-chatgpt-claude-gemini',
+    label: 'AI SECOND BRAIN',
+    title: 'Shared AI memory: one brain for ChatGPT, Claude and Gemini',
+    desc: 'Learn how a shared AI brain keeps project context, decisions and handoffs available across multiple AI assistants without repeating everything.',
+  },
+  {
     slug: 'share-memory-between-chatgpt-and-claude',
     label: 'SHARED AI MEMORY',
     title: 'How to share project memory between ChatGPT and Claude',

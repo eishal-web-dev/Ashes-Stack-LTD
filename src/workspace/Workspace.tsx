@@ -349,7 +349,8 @@ export default function Workspace() {
     <main className="brain-shell">
       {toast && <div className="brain-toast">{toast}</div>}
       <aside className="brain-sidebar">
-        <a href="/" className="brain-brand"><span>A</span> Ashes</a>
+        <a href="/" className="brain-brand"><span>A</span><div>Ashes<small>Shared AI brain</small></div></a>
+        <div className="brain-sidebar-label"><span>Projects</span><b>{projects.length}/{limits.projects}</b></div>
         <div className="brain-create">
           <input value={projectName} onChange={(e) => setProjectName(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && createProject()} placeholder="New project" />
           <button onClick={createProject}>+</button>
@@ -367,7 +368,7 @@ export default function Workspace() {
 
       <section className="brain-main">
         <header className="brain-header">
-          <div><p>SHARED BRAIN</p><h1>{activeProject.name}</h1>
+          <div><div className="brain-eyebrow"><p>SHARED BRAIN</p><span>{syncLabel}</span></div><h1>{activeProject.name}</h1>
             <input className="brain-goal" value={activeProject.goal} onChange={(e) => updateActive({ goal: e.target.value })} aria-label="Project goal" />
           </div>
           <div className="brain-header-actions">
@@ -378,7 +379,7 @@ export default function Workspace() {
         </header>
 
         <section className="brain-launch">
-          <div><p>CONTINUE ANYWHERE</p><h2>One brain. One click.</h2></div>
+          <div><p>CONTINUE ANYWHERE</p><h2>Take this brain to any AI.</h2><small>Copy the full context or open your preferred assistant.</small></div>
           <div className="brain-launch-actions">
             <button className="brain-copy" onClick={copyBrain}>Copy brain <b>{contextPacket.length.toLocaleString()} chars</b></button>
             {AGENTS.map((agent) => <button key={agent} onClick={() => openAgent(agent)}>{agent}<b>↗</b></button>)}
@@ -393,7 +394,7 @@ export default function Workspace() {
           </div>
           <div className="brain-memory-list">
             {activeProject.memory.length === 0 ? <div className="brain-empty">Your synced AI chats and decisions will appear here.</div> : activeProject.memory.map((item) => (
-              <article key={item.id}><div><span>{item.source} · {kindLabel(item.kind)}</span><button onClick={() => removeMemory(item.id)} aria-label="Remove memory">×</button></div><p>{item.text}</p></article>
+              <article key={item.id} className={`memory-${kindLabel(item.kind)}`}><div><span>{item.source} · {kindLabel(item.kind)}</span><button onClick={() => removeMemory(item.id)} aria-label="Remove memory">×</button></div><p>{item.text}</p></article>
             ))}
           </div>
         </section>

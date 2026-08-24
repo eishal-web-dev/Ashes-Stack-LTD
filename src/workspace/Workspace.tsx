@@ -307,6 +307,17 @@ export default function Workspace() {
     setToast(copied ? 'Brain context copied — paste it into any AI' : 'Could not copy brain context');
   }
 
+  async function copyChatCommand(mode: 'save' | 'continue') {
+    if (!activeProject) return;
+    const command = mode === 'save'
+      ? `Save this entire conversation to my Ashes Brain project “${activeProject.name}” (project ID: ${activeProject.id}). Summarize all important facts, decisions, unfinished tasks and next steps, then use the Ashes remember or handoff tool to store it. Confirm when it is saved.`
+      : `Open my Ashes Brain project “${activeProject.name}” (project ID: ${activeProject.id}). Fetch its latest memories and handoff, then continue the newest unfinished task without asking me to repeat the context.`;
+    const copied = await copyText(command);
+    setToast(copied
+      ? mode === 'save' ? 'Save-chat command copied — paste it in your AI' : 'Continue command copied — paste it in your AI'
+      : 'Could not copy command');
+  }
+
   async function openAgent(agent: AgentName) {
     if (!activeProject) return;
     const url = AGENT_LINKS[agent];
@@ -383,6 +394,11 @@ export default function Workspace() {
           <div className="brain-launch-actions">
             <button className="brain-copy" onClick={copyBrain}>Copy brain <b>{contextPacket.length.toLocaleString()} chars</b></button>
             {AGENTS.map((agent) => <button key={agent} onClick={() => openAgent(agent)}>{agent}<b>↗</b></button>)}
+          </div>
+          <div className="brain-quick-sync">
+            <div><span>MOVE A CHAT</span><small>One paste. Ashes handles the tools.</small></div>
+            <button onClick={() => copyChatCommand('save')}><i>↓</i><span>Save this chat<small>From any connected AI</small></span></button>
+            <button onClick={() => copyChatCommand('continue')}><i>↗</i><span>Continue latest chat<small>In another connected AI</small></span></button>
           </div>
         </section>
 

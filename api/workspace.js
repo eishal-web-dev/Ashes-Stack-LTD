@@ -12,6 +12,7 @@ import { deviceFromRequest, recordAnalytics } from "../lib/analytics.js";
 import AnalyticsEvent from "../models/AnalyticsEvent.js";
 import WorkOSProject from "../models/WorkOSProject.js";
 import WorkOSUser from "../models/WorkOSUser.js";
+import { BRAIN_PLANS } from "../lib/lemonBilling.js";
 
 const PUBLIC_ANALYTICS_EVENTS = new Set(["page_view", "link_click"]);
 
@@ -324,8 +325,16 @@ export default async function handler(req, res) {
     await dbConnect();
 
     if (req.method === "GET") {
-      const projects = await WorkOSProject.find({ owner: authUser.id }).sort({ updatedAt: -1 });
-      return res.status(200).json({ projects: projects.map(toClient) });
+      const [projects, brainUser] = await Promise.all([
+        WorkOSProject.find({ owner: authUser.id }).sort({ updatedAt: -1 }),
+        WorkOSUser.findById(authUser.id).select("plan").lean(),
+      ]);
+      const plan = BRAIN_PLANS[brainUser?.plan] || BRAIN_PLANS.free;
+      return res.status(200).json({
+        projects: projects.map(toClient),
+        plan: plan.id,
+        limits: { projects: plan.projectLimit, messagesPerChat: plan.memoryLimit },
+      });
     }
 
     if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
@@ -333,7 +342,25 @@ export default async function handler(req, res) {
     const { action } = req.body || {};
 
     if (action === "sync") {
-      const incoming = Array.isArray(req.body.projects) ? req.body.projects.slice(0, 50) : [];
+      const requested = Array.isArray(req.body.projects) ? req.body.projects : [];
+      const brainUser = await WorkOSUser.findById(authUser.id).select("plan").lean();
+      const plan = BRAIN_PLANS[brainUser?.plan] || BRAIN_PLANS.free;
+      if (requested.length > plan.projectLimit) {
+        return res.status(402).json({
+          error: `${plan.name} allows ${plan.projectLimit} chats. Upgrade to Brain Pro for more.`,
+          code: "PROJECT_LIMIT",
+          upgradeUrl: "/pricing",
+        });
+      }
+      const overMessageLimit = requested.find((project) => Array.isArray(project?.memory) && project.memory.length > plan.memoryLimit);
+      if (overMessageLimit) {
+        return res.status(402).json({
+          error: `${plan.name} allows ${plan.memoryLimit} messages in each chat. Upgrade to Brain Pro for more.`,
+          code: "MESSAGE_LIMIT",
+          upgradeUrl: "/pricing",
+        });
+      }
+      const incoming = requested.slice(0, plan.projectLimit);
       const keepIds = [];
 
       for (const project of incoming) {

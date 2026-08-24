@@ -1,4 +1,4 @@
-import { ArrowUpRight, Box, BrainCircuit, Car, ChefHat, Gamepad2, IceCreamBowl, QrCode, ShieldCheck, ShoppingBag, Sparkles, UtensilsCrossed } from 'lucide-react';
+import { ArrowUpRight, Box, BrainCircuit, Car, ChefHat, IceCreamBowl, QrCode, ShieldCheck, ShoppingBag, Sparkles, UtensilsCrossed } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import Nav from '../components/Nav';
 import Footer from '../components/Footer';
@@ -26,7 +26,6 @@ const projects: Project[] = [
   { name: 'Maqbool Ice Cream', category: 'PRODUCT LANDING PAGE', copy: 'A colorful digital storefront concept focused on product personality, flavor and strong visual merchandising.', url: 'https://maqbool-icecream.vercel.app', accent: '#7edbff', icon: IceCreamBowl },
   { name: 'Piyali Restaurant', category: 'RESTAURANT WEBSITE', copy: 'A premium hospitality concept combining atmospheric layouts, menu discovery and an elegant booking journey.', url: 'https://piyali-website.vercel.app', accent: '#caa46a', icon: ChefHat },
   { name: 'Bell Cliff', category: 'BRAND EXPERIENCE', copy: 'A design-led digital experience built to present a distinctive brand with clarity, polish and responsive motion.', url: 'https://bell-cliff-day07.vercel.app', accent: '#ad77ff', icon: Sparkles },
-  { name: 'DSA Learning Game', category: 'EDTECH GAME', copy: 'A game-based learning experience that turns data-structure practice into a more engaging interactive journey.', url: 'https://dsa-learning-game.vercel.app', accent: '#5ee4ff', icon: Gamepad2 },
   { name: 'Ecommerce Store', category: 'FULL-STACK COMMERCE', copy: 'A complete ecommerce build demonstrating product browsing, customer accounts, cart flows and store interactions.', url: 'https://e-commerce-website-orcin-one.vercel.app', accent: '#ff7c9e', icon: ShoppingBag },
 ];
 

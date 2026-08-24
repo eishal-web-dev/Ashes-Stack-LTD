@@ -96,6 +96,7 @@ async function handleBrainBilling(req, res, action) {
       limits: { projects: plan.projectLimit, memoriesPerProject: plan.memoryLimit },
       billing: {
         provider: user.billing?.provider || "",
+        variantId: user.billing?.variantId || "",
         status: user.billing?.status || "",
         renewsAt: user.billing?.renewsAt || null,
         endsAt: user.billing?.endsAt || null,

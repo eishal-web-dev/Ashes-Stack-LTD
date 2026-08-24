@@ -3,6 +3,7 @@ import Notification from "../models/Notification.js";
 import WorkOSUser from "../models/WorkOSUser.js";
 import { getUserFromReq } from "../lib/auth.js";
 import { getWorkOSUserFromReq } from "../lib/workspaceAuth.js";
+import { createCheckoutSession, createPortalSession } from "../lib/stripeBilling.js";
 import {
   BRAIN_PLANS,
   buildCheckoutUrl,
@@ -100,6 +101,34 @@ async function handleBrainBilling(req, res, action) {
       },
       checkoutConfigured: Boolean(process.env.STRIPE_SECRET_KEY && process.env.STRIPE_PRO_PRICE_ID),
     });
+  }
+
+  if (action === "stripe-checkout") {
+    if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+    if (user.plan === "pro" && user.billing?.customerId) {
+      return res.status(409).json({ error: "Your Pro plan is already active. Use Manage Pro instead." });
+    }
+    try {
+      const checkout = await createCheckoutSession(user);
+      return res.status(200).json({ checkoutUrl: checkout.url });
+    } catch (error) {
+      console.error("Stripe checkout error", error);
+      return res.status(500).json({ error: error instanceof Error ? error.message : "Checkout unavailable" });
+    }
+  }
+
+  if (action === "stripe-portal") {
+    if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+    if (!user.billing?.customerId || user.billing?.provider !== "stripe") {
+      return res.status(400).json({ error: "No Stripe subscription is attached to this Brain account yet." });
+    }
+    try {
+      const portal = await createPortalSession(user.billing.customerId);
+      return res.status(200).json({ portalUrl: portal.url });
+    } catch (error) {
+      console.error("Stripe portal error", error);
+      return res.status(500).json({ error: error instanceof Error ? error.message : "Billing portal unavailable" });
+    }
   }
 
   if (action === "checkout") {

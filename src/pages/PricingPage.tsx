@@ -43,7 +43,7 @@ export default function PricingPage() {
     if (account.plan === 'pro') {
       setBusy(true); setMessage('');
       try {
-        const res = await fetch('/api/stripe-portal', { method: 'POST', credentials: 'include' });
+        const res = await fetch('/api/notifications?billing=stripe-portal', { method: 'POST', credentials: 'include' });
         const data = await res.json() as { portalUrl?: string; error?: string };
         if (!res.ok || !data.portalUrl) throw new Error(data.error || 'Billing portal unavailable');
         window.location.assign(data.portalUrl);
@@ -55,7 +55,7 @@ export default function PricingPage() {
     }
     setBusy(true); setMessage('');
     try {
-      const res = await fetch('/api/stripe-checkout', {
+      const res = await fetch('/api/notifications?billing=stripe-checkout', {
         method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ plan: 'pro' }),
       });

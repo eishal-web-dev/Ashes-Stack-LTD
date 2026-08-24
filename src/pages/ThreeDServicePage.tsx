@@ -67,6 +67,10 @@ export default function ThreeDServicePage() {
 
     <section className="service-work">
       <div className="service-section-head"><p>02 / PROOF OF WORK</p><h2>NOT A MOCKUP.<br/><span>OPEN THE EXPERIENCE.</span></h2></div>
+      <a className="service-video-link" href="https://lnkd.in/p/dWXbmq2i" target="_blank" rel="noreferrer">
+        <span><small>VIDEO SHOWREEL / LINKEDIN</small><strong>WATCH THE 3D WEBSITE BUILDS IN MOTION</strong></span>
+        <b>WATCH VIDEO <ArrowUpRight/></b>
+      </a>
       <div className="service-showcase">
         <a href="https://lizard-anatomy-3d.vercel.app" target="_blank" rel="noreferrer"><small>INTERACTIVE ANATOMY</small><h3>LIZARD<br/>ANATOMY 3D</h3><p>A scroll-driven layered dissection experience built for the browser.</p><b>VIEW LIVE <ArrowUpRight/></b></a>
         <a href="https://www.ashesstack.cloud" target="_blank" rel="noreferrer"><small>STUDIO EXPERIENCE</small><h3>ASHES<br/>STACK</h3><p>Interactive motion, custom graphics and a performance-aware responsive system.</p><b>VIEW LIVE <ArrowUpRight/></b></a>

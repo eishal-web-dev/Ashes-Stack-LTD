@@ -144,19 +144,20 @@ export default function Workspace() {
 
   const contextPacket = useMemo(() => {
     if (!activeProject) return '';
-    const memory = activeProject.memory.slice(0, 24).reverse()
-      .map((item) => `[${kindLabel(item.kind)} · ${item.source}] ${item.text}`).join('\n\n');
-    return [
+    const header = [
       'ASHES SHARED PROJECT BRAIN',
       `Project: ${activeProject.name}`,
       `Goal: ${activeProject.goal || 'No goal set.'}`,
       '',
       'Use the shared project context below. Do not ask the user to repeat information already here. Preserve existing decisions unless the user changes them.',
       '',
-      memory || 'No shared memory yet.',
-      '',
-      'My next instruction: ',
-    ].join('\n').slice(-22000);
+    ].join('\n');
+    const footer = '\n\nMy next instruction: ';
+    const availableMemory = Math.max(0, 22000 - header.length - footer.length);
+    const memory = activeProject.memory.slice(0, 24).reverse()
+      .map((item) => `[${kindLabel(item.kind)} · ${item.source}] ${item.text}`).join('\n\n')
+      .slice(-availableMemory);
+    return `${header}${memory || 'No shared memory yet.'}${footer}`;
   }, [activeProject]);
 
   useEffect(() => {
@@ -301,6 +302,11 @@ export default function Workspace() {
     }
   }
 
+  async function copyBrain() {
+    const copied = await copyText(contextPacket);
+    setToast(copied ? 'Brain context copied — paste it into any AI' : 'Could not copy brain context');
+  }
+
   async function openAgent(agent: AgentName) {
     if (!activeProject) return;
     const url = AGENT_LINKS[agent];
@@ -373,7 +379,10 @@ export default function Workspace() {
 
         <section className="brain-launch">
           <div><p>CONTINUE ANYWHERE</p><h2>One brain. One click.</h2></div>
-          <div>{AGENTS.map((agent) => <button key={agent} onClick={() => openAgent(agent)}>{agent}<b>↗</b></button>)}</div>
+          <div className="brain-launch-actions">
+            <button className="brain-copy" onClick={copyBrain}>Copy brain <b>{contextPacket.length.toLocaleString()} chars</b></button>
+            {AGENTS.map((agent) => <button key={agent} onClick={() => openAgent(agent)}>{agent}<b>↗</b></button>)}
+          </div>
         </section>
 
         <section className="brain-panel brain-memory">

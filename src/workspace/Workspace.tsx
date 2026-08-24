@@ -7,6 +7,7 @@ type WorkspaceProject = { id: string; name: string; goal: string; memory: Memory
 type AgentName = 'ChatGPT' | 'Claude' | 'Codex' | 'Gemini';
 type AuthState = 'checking' | 'guest' | 'signed-in';
 type SyncState = 'local' | 'syncing' | 'synced' | 'error';
+type BrainPlan = 'free' | 'pro' | 'team';
 
 const AGENTS: AgentName[] = ['ChatGPT', 'Claude', 'Codex', 'Gemini'];
 const AGENT_LINKS: Record<AgentName, string> = {
@@ -133,6 +134,8 @@ export default function Workspace() {
   const [authState, setAuthState] = useState<AuthState>('checking');
   const [syncState, setSyncState] = useState<SyncState>('local');
   const [toast, setToast] = useState('');
+  const [plan, setPlan] = useState<BrainPlan>('free');
+  const [limits, setLimits] = useState({ projects: 2, messagesPerChat: 10 });
 
   const activeProject = useMemo(
     () => projects.find((project) => project.id === activeProjectId) ?? projects[0],
@@ -191,7 +194,9 @@ export default function Workspace() {
         if (!cancelled) setAuthState('signed-in');
         const response = await fetch('/api/workspace', { credentials: 'include' });
         if (!response.ok) throw new Error('Cloud unavailable');
-        const data = await response.json() as { projects?: WorkspaceProject[] };
+        const data = await response.json() as { projects?: WorkspaceProject[]; plan?: BrainPlan; limits?: { projects: number; messagesPerChat: number } };
+        if (data.plan) setPlan(data.plan);
+        if (data.limits) setLimits(data.limits);
         const cloudProjects = Array.isArray(data.projects) ? data.projects : [];
         if (cancelled) return;
         if (cloudProjects.length) {
@@ -244,12 +249,22 @@ export default function Workspace() {
 
   function createProject() {
     const name = projectName.trim(); if (!name) return;
+    if (projects.length >= limits.projects) {
+      setToast(`Free limit reached: ${limits.projects} chats. Upgrade to Pro.`);
+      window.setTimeout(() => window.location.assign('/pricing'), 900);
+      return;
+    }
     const project: WorkspaceProject = { id: `project-${Date.now()}`, name, goal: 'One shared context across my AI tools.', memory: [] };
     setProjects((current) => [project, ...current]); setActiveProjectId(project.id); setProjectName('');
   }
 
   function addMemory(kind: MemoryKind = 'memory') {
     const text = draft.trim(); if (!text || !activeProject) return;
+    if (activeProject.memory.length >= limits.messagesPerChat) {
+      setToast(`Limit reached: ${limits.messagesPerChat} messages in this chat. Upgrade to Pro.`);
+      window.setTimeout(() => window.location.assign('/pricing'), 900);
+      return;
+    }
     const item: MemoryItem = { id: `memory-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, text: text.slice(0, 12000), createdAt: Date.now(), source: 'You', kind };
     updateActive({ memory: [item, ...activeProject.memory].slice(0, 250) }); setDraft('');
   }
@@ -339,6 +354,7 @@ export default function Workspace() {
         <div className="brain-sidebar-bottom">
           <span><i className={syncState === 'error' ? 'error' : ''} />{syncLabel}</span>
           {authState === 'guest' && <a href="/workspace/login">Sign in to Brain</a>}
+          <a href="/pricing">{plan === 'free' ? `Free · ${limits.projects} chats · ${limits.messagesPerChat} messages` : `${plan.toUpperCase()} plan`}</a>
           <a href="/">Back home</a>
         </div>
       </aside>

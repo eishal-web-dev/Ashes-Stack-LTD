@@ -104,6 +104,39 @@ async function handleBrainBilling(req, res, action) {
     });
   }
 
+  if (action === "paddle-portal") {
+    if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+    if (!user.billing?.customerId || user.billing?.provider !== "paddle") {
+      return res.status(400).json({ error: "No Paddle subscription is attached to this Brain account yet." });
+    }
+    const apiKey = String(process.env.PADDLE_API_KEY || "");
+    if (!apiKey) return res.status(503).json({ error: "Paddle subscription management is not configured yet." });
+    try {
+      const body = user.billing?.subscriptionId
+        ? { subscription_ids: [user.billing.subscriptionId] }
+        : {};
+      const response = await fetch(`https://sandbox-api.paddle.com/customers/${encodeURIComponent(user.billing.customerId)}/portal-sessions`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+      });
+      const payload = await response.json();
+      if (!response.ok) {
+        const detail = payload?.error?.detail || payload?.error?.type || "Paddle customer portal unavailable";
+        throw new Error(detail);
+      }
+      const portalUrl = payload?.data?.urls?.general?.overview || "";
+      if (!portalUrl) throw new Error("Paddle did not return a customer portal link.");
+      return res.status(200).json({ portalUrl });
+    } catch (error) {
+      console.error("Paddle portal error", error);
+      return res.status(500).json({ error: error instanceof Error ? error.message : "Billing portal unavailable" });
+    }
+  }
+
   if (action === "stripe-checkout") {
     if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
     if (user.plan === "pro" && user.billing?.customerId) {

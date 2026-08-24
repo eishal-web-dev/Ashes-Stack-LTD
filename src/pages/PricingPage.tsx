@@ -90,7 +90,7 @@ export default function PricingPage() {
           <div style={card}>
             <div><span style={{ color: '#888', fontSize: 12, letterSpacing: '.14em' }}>FREE</span><h2 style={{ fontSize: 34, margin: '10px 0 2px' }}>$0</h2><p style={{ color: '#888', marginTop: 4 }}>forever</p></div>
             <div style={{ color: '#b8b4ad', lineHeight: 2, marginTop: 24 }}>
-              <div>✓ 1 shared Brain project</div><div>✓ Up to 50 memories</div><div>✓ MCP connection</div><div>✓ Share Brain links</div>
+              <div>✓ Up to 2 Brain chats</div><div>✓ Up to 10 messages per chat</div><div>✓ MCP connection</div><div>✓ Share Brain links</div>
             </div>
             <Link to="/workspace" style={{ marginTop: 'auto', padding: '14px 18px', border: '1px solid #333', borderRadius: 12, color: '#fff', textDecoration: 'none', textAlign: 'center', fontWeight: 800 }}>USE FREE</Link>
           </div>
@@ -98,7 +98,7 @@ export default function PricingPage() {
           <div style={{ ...card, borderColor: '#6b321b', boxShadow: '0 0 0 1px rgba(255,106,42,.08),0 20px 80px rgba(255,80,20,.08)' }}>
             <div><span style={{ color: '#ff6a2a', fontSize: 12, letterSpacing: '.14em', fontWeight: 900 }}>PRO</span><h2 style={{ fontSize: 34, margin: '10px 0 2px' }}>$12</h2><p style={{ color: '#888', marginTop: 4 }}>per month</p></div>
             <div style={{ color: '#d0ccc4', lineHeight: 2, marginTop: 24 }}>
-              <div>✓ Up to 25 Brain projects</div><div>✓ Up to 250 memories per project</div><div>✓ Shared AI handoffs</div><div>✓ Priority new Brain features</div><div>✓ Manage subscription anytime</div>
+              <div>✓ Up to 25 Brain chats</div><div>✓ Up to 250 messages per chat</div><div>✓ Shared AI handoffs</div><div>✓ Priority new Brain features</div><div>✓ Manage subscription anytime</div>
             </div>
             <button onClick={upgrade} disabled={busy || loading} style={{ marginTop: 'auto', padding: '15px 18px', border: 0, borderRadius: 12, background: '#ff6425', color: '#090909', fontWeight: 950, cursor: 'pointer', opacity: busy || loading ? .65 : 1 }}>
               {busy ? 'OPENING CHECKOUT…' : account?.plan === 'pro' ? 'MANAGE PRO' : 'UPGRADE TO PRO'}

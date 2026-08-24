@@ -29,8 +29,8 @@ declare global {
   interface Window { Paddle?: PaddleCheckout }
 }
 
-const PADDLE_CLIENT_TOKEN = 'test_5444008f0a8675b59a505d80fb9';
-const PADDLE_PRO_PRICE_ID = 'pri_01m0sdw5w3ncydhpw1ch1dgpd4';
+const PADDLE_CLIENT_TOKEN = 'live_f8b13262c350230b6319f964af0';
+const PADDLE_PRO_PRICE_ID = 'pri_01m0sh3kxyft7dq28b8s810e9k';
 
 let paddlePromise: Promise<PaddleCheckout> | null = null;
 
@@ -49,7 +49,7 @@ function loadPaddle() {
     script.addEventListener('load', () => window.Paddle ? resolve(window.Paddle) : reject(new Error('Paddle did not load')));
     script.addEventListener('error', () => reject(new Error('Paddle checkout could not load')));
   }).then((paddle) => {
-    paddle.Environment.set('sandbox');
+    paddle.Environment.set('production');
     paddle.Initialize({ token: PADDLE_CLIENT_TOKEN });
     return paddle;
   });
@@ -154,7 +154,7 @@ export default function PricingPage() {
               <div>✓ Up to 25 Brain chats</div><div>✓ Up to 250 messages per chat</div><div>✓ Shared AI handoffs</div><div>✓ Priority new Brain features</div><div>✓ Manage subscription anytime</div>
             </div>
             <button onClick={upgrade} disabled={busy || loading} style={{ marginTop: 'auto', padding: '15px 18px', border: 0, borderRadius: 12, background: '#ff6425', color: '#090909', fontWeight: 950, cursor: 'pointer', opacity: busy || loading ? .65 : 1 }}>
-              {busy ? 'OPENING CHECKOUT…' : account?.plan === 'pro' && account.billing?.provider === 'paddle' ? 'MANAGE PRO' : account?.plan === 'pro' ? 'CONNECT PADDLE TEST' : 'UPGRADE TO PRO'}
+              {busy ? 'OPENING CHECKOUT…' : account?.plan === 'pro' && account.billing?.provider === 'paddle' ? 'MANAGE PRO' : account?.plan === 'pro' ? 'CONNECT PADDLE' : 'UPGRADE TO PRO'}
             </button>
           </div>
 

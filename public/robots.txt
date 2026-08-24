@@ -2,8 +2,4 @@ User-agent: *
 Allow: /
 Disallow: /admin
 Disallow: /portal
-Disallow: /login
-Disallow: /signup
-Disallow: /api
-
 Sitemap: https://www.ashesstack.cloud/sitemap.xml

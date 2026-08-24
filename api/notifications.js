@@ -1,3 +1,4 @@
+import crypto from "node:crypto";
 import { dbConnect } from "../lib/mongodb.js";
 import Notification from "../models/Notification.js";
 import WorkOSUser from "../models/WorkOSUser.js";
@@ -99,7 +100,7 @@ async function handleBrainBilling(req, res, action) {
         endsAt: user.billing?.endsAt || null,
         portalUrl: user.billing?.portalUrl || "",
       },
-      checkoutConfigured: Boolean(process.env.STRIPE_SECRET_KEY && process.env.STRIPE_PRO_PRICE_ID),
+      checkoutConfigured: true,
     });
   }
 
@@ -142,6 +143,99 @@ async function handleBrainBilling(req, res, action) {
   }
 
   return res.status(404).json({ error: "Unknown billing action" });
+}
+
+
+function verifyPaddleSignature(rawBody, signatureHeader) {
+  const secret = String(process.env.PADDLE_WEBHOOK_SECRET || "");
+  if (!secret || !signatureHeader) return false;
+  const parts = String(signatureHeader).split(";").reduce((all, part) => {
+    const [key, value] = part.split("=");
+    if (key && value) all[key.trim()] = value.trim();
+    return all;
+  }, {});
+  if (!parts.ts || !parts.h1) return false;
+  const expected = crypto.createHmac("sha256", secret).update(`${parts.ts}:${rawBody}`).digest("hex");
+  try {
+    return crypto.timingSafeEqual(Buffer.from(expected, "hex"), Buffer.from(parts.h1, "hex"));
+  } catch {
+    return false;
+  }
+}
+
+function paddleId(value) {
+  return typeof value === "string" ? value : String(value?.id || "");
+}
+
+function paddlePlanForStatus(status) {
+  return ["active", "trialing", "past_due"].includes(String(status)) ? "pro" : "free";
+}
+
+async function updatePaddleSubscription(data, forcedUserId = "") {
+  const userId = String(data?.custom_data?.user_id || forcedUserId || "");
+  const customerId = paddleId(data?.customer_id);
+  const subscriptionId = paddleId(data?.subscription_id || data?.id);
+  const query = /^[a-f0-9]{24}$/i.test(userId)
+    ? { _id: userId }
+    : customerId
+      ? { "billing.customerId": customerId }
+      : { "billing.subscriptionId": subscriptionId };
+  const status = String(data?.status || "active");
+  const itemPriceId = paddleId(data?.items?.[0]?.price?.id || data?.items?.[0]?.price_id);
+  const endsAt = data?.scheduled_change?.effective_at || data?.canceled_at || null;
+
+  await WorkOSUser.updateOne(query, {
+    $set: {
+      plan: paddlePlanForStatus(status),
+      "billing.provider": "paddle",
+      "billing.subscriptionId": subscriptionId,
+      "billing.customerId": customerId,
+      "billing.variantId": itemPriceId,
+      "billing.status": status,
+      "billing.renewsAt": data?.next_billed_at ? new Date(data.next_billed_at) : null,
+      "billing.endsAt": endsAt ? new Date(endsAt) : null,
+      "billing.portalUrl": "",
+      "billing.updatedAt": new Date(),
+    },
+  });
+}
+
+async function handlePaddleWebhook(req, res) {
+  if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+  const rawBody = await readRawBody(req);
+  if (!verifyPaddleSignature(rawBody, req.headers["paddle-signature"])) {
+    return res.status(400).json({ error: "Invalid Paddle signature" });
+  }
+
+  let event;
+  try { event = JSON.parse(rawBody); }
+  catch { return res.status(400).json({ error: "Invalid JSON" }); }
+
+  try {
+    await dbConnect();
+    const data = event?.data || {};
+    if (event?.event_type === "transaction.completed" && data?.subscription_id) {
+      await updatePaddleSubscription({
+        ...data,
+        id: data.subscription_id,
+        status: "active",
+      });
+    } else if ([
+      "subscription.created",
+      "subscription.activated",
+      "subscription.updated",
+      "subscription.resumed",
+      "subscription.paused",
+      "subscription.canceled",
+      "subscription.past_due",
+    ].includes(event?.event_type)) {
+      await updatePaddleSubscription(data);
+    }
+    return res.status(200).json({ received: true });
+  } catch (error) {
+    console.error("Paddle webhook error", error);
+    return res.status(500).json({ error: "Webhook processing failed" });
+  }
 }
 
 
@@ -217,6 +311,8 @@ async function handleStripeWebhook(req, res) {
 }
 
 export default async function handler(req, res) {
+  const paddleAction = String(req.query?.paddle || "");
+  if (paddleAction === "webhook") return handlePaddleWebhook(req, res);
   const stripeAction = String(req.query?.stripe || "");
   if (stripeAction === "webhook") return handleStripeWebhook(req, res);
   const lemonAction = String(req.query?.lemon || "");

@@ -1,44 +1,80 @@
+import { ArrowUpRight, Box, BrainCircuit, Car, ChefHat, Gamepad2, IceCreamBowl, QrCode, ShieldCheck, ShoppingBag, Sparkles, UtensilsCrossed } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import Nav from '../components/Nav';
 import Footer from '../components/Footer';
 import { useSEO } from '../useSEO';
 
-const projects = [
-  { tag: '01 / IMAGE → 3D', name: 'ASHES AI', copy: 'One image in. A product you can spin, explore and sell in 3D — turning flat product photos into interactive 3D experiences.', accent: '#ff54c8' },
-  { tag: '02 / VISION AI', name: 'NAZAR AI', copy: 'A camera-powered watcher for activity, safety and the physical world — real-time computer vision built for practical use.', accent: '#55d9ff' },
-  { tag: '03 / LEGAL AI', name: 'WAKULAW', copy: 'Pakistani legal intelligence with research, reasoning and case support — AI built specifically for local legal workflows.', accent: '#ad77ff' },
+type Project = {
+  name: string;
+  category: string;
+  copy: string;
+  url: string;
+  accent: string;
+  icon: LucideIcon;
+  featured?: boolean;
+};
+
+const projects: Project[] = [
+  { name: 'Porsche 911 Luxury', category: '3D AUTOMOTIVE EXPERIENCE', copy: 'A cinematic, interactive luxury-car experience built around motion, detail and high-end digital storytelling.', url: 'https://porsche-911-luxury.vercel.app', accent: '#ff5d4d', icon: Car, featured: true },
+  { name: 'Lizard Anatomy 3D', category: 'INTERACTIVE EDUCATION', copy: 'A scroll-driven digital dissection that reveals skin, flesh, muscles, organs and bone layer by layer.', url: 'https://lizard-anatomy-3d.vercel.app', accent: '#baff47', icon: Box, featured: true },
+  { name: 'Ashes AI', category: 'AI + 3D COMMERCE', copy: 'Image-to-3D product generation, interactive viewing and tools designed for modern ecommerce workflows.', url: 'https://ashes-ai.vercel.app', accent: '#ff54c8', icon: BrainCircuit, featured: true },
+  { name: 'CuteQR Commerce', category: 'ECOMMERCE AUTOMATION', copy: 'A commerce tool connecting product data, QR experiences and multi-channel selling workflows.', url: 'https://cuteqr-weld.vercel.app', accent: '#55d9ff', icon: QrCode, featured: true },
+  { name: 'HireGuard', category: 'SERVICE MARKETPLACE', copy: 'A polished multi-page security marketplace for discovering guards, comparing services and making enquiries.', url: 'https://hire-a-guard-umc7.vercel.app', accent: '#68e0b7', icon: ShieldCheck },
+  { name: 'MFZ Food Experience', category: '3D RESTAURANT WEBSITE', copy: 'A playful, motion-led restaurant concept with bold product presentation and immersive branded interactions.', url: 'https://webiste-demo-eight.vercel.app', accent: '#ffb25c', icon: UtensilsCrossed },
+  { name: 'Ottimo Restaurant', category: 'RESTAURANT CONCEPT', copy: 'A refined restaurant interface exploring editorial layouts, tactile motion and mobile-first menu discovery.', url: 'https://ai-website-making.vercel.app', accent: '#f1d18a', icon: ChefHat },
+  { name: 'AM PM Cafe', category: '3D FOOD EXPERIENCE', copy: 'A modern cafe landing experience with dimensional food presentation, interaction and bold visual direction.', url: 'https://am-pm-restaurent-pi.vercel.app', accent: '#fb8b58', icon: UtensilsCrossed },
+  { name: 'Maqbool Ice Cream', category: 'PRODUCT LANDING PAGE', copy: 'A colorful digital storefront concept focused on product personality, flavor and strong visual merchandising.', url: 'https://maqbool-icecream.vercel.app', accent: '#7edbff', icon: IceCreamBowl },
+  { name: 'Piyali Restaurant', category: 'RESTAURANT WEBSITE', copy: 'A premium hospitality concept combining atmospheric layouts, menu discovery and an elegant booking journey.', url: 'https://piyali-website.vercel.app', accent: '#caa46a', icon: ChefHat },
+  { name: 'Bell Cliff', category: 'BRAND EXPERIENCE', copy: 'A design-led digital experience built to present a distinctive brand with clarity, polish and responsive motion.', url: 'https://bell-cliff-day07.vercel.app', accent: '#ad77ff', icon: Sparkles },
+  { name: 'DSA Learning Game', category: 'EDTECH GAME', copy: 'A game-based learning experience that turns data-structure practice into a more engaging interactive journey.', url: 'https://dsa-learning-game.vercel.app', accent: '#5ee4ff', icon: Gamepad2 },
+  { name: 'Ecommerce Store', category: 'FULL-STACK COMMERCE', copy: 'A complete ecommerce build demonstrating product browsing, customer accounts, cart flows and store interactions.', url: 'https://e-commerce-website-orcin-one.vercel.app', accent: '#ff7c9e', icon: ShoppingBag },
 ];
 
 export default function WorkPage() {
   useSEO({
-    title: 'Our Work — ASHES AI, NAZAR AI, WakuLAW | Ashes Stack Portfolio',
-    description: 'See what Ashes Stack has built: ASHES AI (3D product experiences), NAZAR AI (computer vision), and WakuLAW (Pakistani legal AI). Real products from our Islamabad software house.',
+    title: 'Ashes Portfolio — AI, 3D Websites, Ecommerce & Digital Products',
+    description: 'Explore live websites and digital products built by Ashes: interactive 3D experiences, AI products, ecommerce systems, restaurant websites and web applications.',
     path: '/work',
   });
 
-  return (
-    <>
-      <Nav />
-      <div className="standalone-page">
-        <div className="page-kicker">03 / SELECTED WORK</div>
-        <h1>BUILT TO WORK.<br/><span>MADE TO BE REMEMBERED.</span></h1>
-        <p className="page-lede">Three products. One standard. A look at what Ashes Stack has actually shipped.</p>
-
-        <div className="page-body">
-          <div className="page-card-grid">
-            {projects.map((p) => (
-              <div className="page-card" key={p.name} style={{ ['--accent' as any]: p.accent }}>
-                <div className="page-card-num">{p.tag}</div>
-                <h3>{p.name}</h3>
-                <p>{p.copy}</p>
-              </div>
-            ))}
-          </div>
-          <p style={{ marginTop: '5vh', color: '#8e8a85', font: '300 .9rem/1.7 Manrope,sans-serif', maxWidth: 560 }}>
-            Have a project in mind? <a href="/contact" style={{ color: '#ff68b7' }}>Get in touch</a> — we'd love to hear what you're building.
-          </p>
+  return <>
+    <Nav />
+    <main className="catalog-page">
+      <header className="catalog-hero">
+        <p className="catalog-kicker">03 / LIVE PROJECT CATALOG</p>
+        <h1>EVERY BUILD.<br/><span>ONE PLACE.</span></h1>
+        <div className="catalog-intro">
+          <p>Explore websites, AI products, 3D experiences and platforms designed and developed by Ashes.</p>
+          <strong><span>{projects.length}</span> LIVE BUILDS</strong>
         </div>
-      </div>
-      <Footer />
-    </>
-  );
+      </header>
+
+      <section className="catalog-grid" aria-label="Ashes project portfolio">
+        {projects.map((project, index) => {
+          const Icon = project.icon;
+          return <a
+            className={`catalog-card${project.featured ? ' catalog-featured' : ''}`}
+            href={project.url}
+            target="_blank"
+            rel="noreferrer"
+            key={project.name}
+            style={{ '--project-accent': project.accent } as React.CSSProperties}
+            aria-label={`Open ${project.name} live website`}
+          >
+            <div className="catalog-card-top"><span>{String(index + 1).padStart(2, '0')}</span><span className="catalog-live"><i/> LIVE</span></div>
+            <div className="catalog-icon"><Icon /></div>
+            <div className="catalog-copy"><small>{project.category}</small><h2>{project.name}</h2><p>{project.copy}</p></div>
+            <div className="catalog-open">OPEN PROJECT <ArrowUpRight /></div>
+          </a>;
+        })}
+      </section>
+
+      <section className="catalog-cta">
+        <p>LIKE WHAT YOU SEE?</p>
+        <h2>LET'S BUILD YOURS NEXT.</h2>
+        <a href="/contact">START A PROJECT <ArrowUpRight /></a>
+      </section>
+    </main>
+    <Footer />
+  </>;
 }

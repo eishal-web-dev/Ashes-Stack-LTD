@@ -110,13 +110,13 @@ async function handleBrainBilling(req, res, action) {
     if (!user.billing?.customerId || user.billing?.provider !== "paddle") {
       return res.status(400).json({ error: "No Paddle subscription is attached to this Brain account yet." });
     }
-    const apiKey = String(process.env.PADDLE_API_KEY || "");
+    const apiKey = String(process.env.PADDLE_API_KEY || "").trim().replace(/^Bearer\s+/i, "");
     if (!apiKey) return res.status(503).json({ error: "Paddle subscription management is not configured yet." });
     try {
       const body = user.billing?.subscriptionId
         ? { subscription_ids: [user.billing.subscriptionId] }
         : {};
-      const response = await fetch(`https://sandbox-api.paddle.com/customers/${encodeURIComponent(user.billing.customerId)}/portal-sessions`, {
+      const response = await fetch(`https://api.paddle.com/customers/${encodeURIComponent(user.billing.customerId)}/portal-sessions`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${apiKey}`,

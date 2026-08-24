@@ -85,8 +85,19 @@ export default function PricingPage() {
       return;
     }
     if (account.plan === 'pro') {
-      if (account.billing?.portalUrl) window.location.assign(account.billing.portalUrl);
-      else setMessage('Your Pro plan is active. Subscription management will appear here after Paddle finishes syncing.');
+      setBusy(true); setMessage('');
+      try {
+        const res = await fetch('/api/notifications?billing=paddle-portal', {
+          method: 'POST',
+          credentials: 'include',
+        });
+        const data = await res.json() as { portalUrl?: string; error?: string };
+        if (!res.ok || !data.portalUrl) throw new Error(data.error || 'Subscription management unavailable');
+        window.location.assign(data.portalUrl);
+      } catch (error) {
+        setMessage(error instanceof Error ? error.message : 'Subscription management unavailable');
+        setBusy(false);
+      }
       return;
     }
 

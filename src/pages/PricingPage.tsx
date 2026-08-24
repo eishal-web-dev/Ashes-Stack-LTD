@@ -41,13 +41,21 @@ export default function PricingPage() {
       return;
     }
     if (account.plan === 'pro') {
-      if (account.billing.portalUrl) window.location.assign(account.billing.portalUrl);
-      else setMessage('Your Pro plan is active. Billing portal will appear after Lemon Squeezy syncs it.');
+      setBusy(true); setMessage('');
+      try {
+        const res = await fetch('/api/stripe-portal', { method: 'POST', credentials: 'include' });
+        const data = await res.json() as { portalUrl?: string; error?: string };
+        if (!res.ok || !data.portalUrl) throw new Error(data.error || 'Billing portal unavailable');
+        window.location.assign(data.portalUrl);
+      } catch (error) {
+        setMessage(error instanceof Error ? error.message : 'Billing portal unavailable');
+        setBusy(false);
+      }
       return;
     }
     setBusy(true); setMessage('');
     try {
-      const res = await fetch('/api/notifications?billing=checkout', {
+      const res = await fetch('/api/stripe-checkout', {
         method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ plan: 'pro' }),
       });
@@ -88,7 +96,7 @@ export default function PricingPage() {
           </div>
 
           <div style={{ ...card, borderColor: '#6b321b', boxShadow: '0 0 0 1px rgba(255,106,42,.08),0 20px 80px rgba(255,80,20,.08)' }}>
-            <div><span style={{ color: '#ff6a2a', fontSize: 12, letterSpacing: '.14em', fontWeight: 900 }}>PRO</span><h2 style={{ fontSize: 34, margin: '10px 0 2px' }}>$9.99</h2><p style={{ color: '#888', marginTop: 4 }}>per month</p></div>
+            <div><span style={{ color: '#ff6a2a', fontSize: 12, letterSpacing: '.14em', fontWeight: 900 }}>PRO</span><h2 style={{ fontSize: 34, margin: '10px 0 2px' }}>$12</h2><p style={{ color: '#888', marginTop: 4 }}>per month</p></div>
             <div style={{ color: '#d0ccc4', lineHeight: 2, marginTop: 24 }}>
               <div>✓ Up to 25 Brain projects</div><div>✓ Up to 250 memories per project</div><div>✓ Shared AI handoffs</div><div>✓ Priority new Brain features</div><div>✓ Manage subscription anytime</div>
             </div>
@@ -110,7 +118,7 @@ export default function PricingPage() {
         {!account && !loading && <p style={{ marginTop: 22, color: '#aaa' }}>Sign in to Ashes Brain before upgrading so the subscription is attached to the correct Brain account.</p>}
 
         <section style={{ marginTop: 72, paddingTop: 28, borderTop: '1px solid #222', color: '#777', lineHeight: 1.7 }}>
-          Payments are processed by Lemon Squeezy. Ashes does not store your card details. Subscription status is synchronized to your Brain account using signed payment webhooks.
+          Payments are securely processed by Stripe. Ashes does not store your card details. Subscription status is synchronized to your Brain account using signed payment webhooks.
         </section>
       </div>
     </main>

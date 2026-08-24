@@ -1,4 +1,16 @@
 {
+  "redirects": [
+    {
+      "source": "/guides/share-memory-between-chatgpt-and-claude",
+      "destination": "/blog/share-context-between-chatgpt-claude-codex",
+      "permanent": true
+    },
+    {
+      "source": "/guides/connect-claude-to-mcp-server",
+      "destination": "/brain/docs/claude",
+      "permanent": true
+    }
+  ],
   "rewrites": [
     { "source": "/mcp", "destination": "/api/mcp-gateway?route=mcp" },
     { "source": "/.well-known/oauth-protected-resource", "destination": "/api/mcp-gateway?route=resource" },

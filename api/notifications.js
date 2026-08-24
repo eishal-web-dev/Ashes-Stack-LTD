@@ -98,7 +98,7 @@ async function handleBrainBilling(req, res, action) {
         endsAt: user.billing?.endsAt || null,
         portalUrl: user.billing?.portalUrl || "",
       },
-      checkoutConfigured: Boolean(checkoutBaseForPlan("pro")),
+      checkoutConfigured: Boolean(process.env.STRIPE_SECRET_KEY && process.env.STRIPE_PRO_PRICE_ID),
     });
   }
 

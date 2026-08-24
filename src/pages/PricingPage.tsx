@@ -8,7 +8,7 @@ type BillingStatus = {
   plan: 'free' | 'pro' | 'team';
   planName: string;
   limits: { projects: number; memoriesPerProject: number };
-  billing: { provider?: string; status?: string; renewsAt?: string | null; endsAt?: string | null; portalUrl?: string };
+  billing: { provider?: string; variantId?: string; status?: string; renewsAt?: string | null; endsAt?: string | null; portalUrl?: string };
   checkoutConfigured: boolean;
 };
 
@@ -84,7 +84,8 @@ export default function PricingPage() {
       window.location.assign('/workspace/login?next=/pricing');
       return;
     }
-    if (account.plan === 'pro' && account.billing?.provider === 'paddle') {
+    const hasLivePaddleSubscription = account.billing?.provider === 'paddle' && account.billing?.variantId === PADDLE_PRO_PRICE_ID;
+    if (account.plan === 'pro' && hasLivePaddleSubscription) {
       setBusy(true); setMessage('');
       try {
         const res = await fetch('/api/notifications?billing=paddle-portal', {
@@ -154,7 +155,7 @@ export default function PricingPage() {
               <div>✓ Up to 25 Brain chats</div><div>✓ Up to 250 messages per chat</div><div>✓ Shared AI handoffs</div><div>✓ Priority new Brain features</div><div>✓ Manage subscription anytime</div>
             </div>
             <button onClick={upgrade} disabled={busy || loading} style={{ marginTop: 'auto', padding: '15px 18px', border: 0, borderRadius: 12, background: '#ff6425', color: '#090909', fontWeight: 950, cursor: 'pointer', opacity: busy || loading ? .65 : 1 }}>
-              {busy ? 'OPENING CHECKOUT…' : account?.plan === 'pro' && account.billing?.provider === 'paddle' ? 'MANAGE PRO' : account?.plan === 'pro' ? 'CONNECT PADDLE' : 'UPGRADE TO PRO'}
+              {busy ? 'OPENING CHECKOUT…' : account?.plan === 'pro' && account.billing?.provider === 'paddle' && account.billing?.variantId === PADDLE_PRO_PRICE_ID ? 'MANAGE PRO' : account?.plan === 'pro' ? 'CONNECT PADDLE LIVE' : 'UPGRADE TO PRO'}
             </button>
           </div>
 

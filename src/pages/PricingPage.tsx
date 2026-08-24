@@ -12,6 +12,50 @@ type BillingStatus = {
   checkoutConfigured: boolean;
 };
 
+type PaddleCheckout = {
+  Environment: { set(environment: 'sandbox' | 'production'): void };
+  Initialize(options: { token: string }): void;
+  Checkout: {
+    open(options: {
+      items: Array<{ priceId: string; quantity: number }>;
+      customer?: { email: string };
+      customData?: Record<string, string>;
+      settings?: { displayMode?: 'overlay'; theme?: 'dark' | 'light'; successUrl?: string };
+    }): void;
+  };
+};
+
+declare global {
+  interface Window { Paddle?: PaddleCheckout }
+}
+
+const PADDLE_CLIENT_TOKEN = 'test_5444008f0a8675b59a505d80fb9';
+const PADDLE_PRO_PRICE_ID = 'pri_01m0sdw5w3ncydhpw1ch1dgpd4';
+
+let paddlePromise: Promise<PaddleCheckout> | null = null;
+
+function loadPaddle() {
+  if (window.Paddle) return Promise.resolve(window.Paddle);
+  if (paddlePromise) return paddlePromise;
+  paddlePromise = new Promise((resolve, reject) => {
+    const existing = document.querySelector<HTMLScriptElement>('script[data-ashes-paddle]');
+    const script = existing || document.createElement('script');
+    if (!existing) {
+      script.src = 'https://cdn.paddle.com/paddle/v2/paddle.js';
+      script.async = true;
+      script.dataset.ashesPaddle = 'true';
+      document.head.appendChild(script);
+    }
+    script.addEventListener('load', () => window.Paddle ? resolve(window.Paddle) : reject(new Error('Paddle did not load')));
+    script.addEventListener('error', () => reject(new Error('Paddle checkout could not load')));
+  }).then((paddle) => {
+    paddle.Environment.set('sandbox');
+    paddle.Initialize({ token: PADDLE_CLIENT_TOKEN });
+    return paddle;
+  });
+  return paddlePromise;
+}
+
 const card: React.CSSProperties = {
   border: '1px solid #242424', borderRadius: 24, background: '#0d0d0d', padding: 28,
   display: 'flex', flexDirection: 'column', minHeight: 390,
@@ -41,29 +85,27 @@ export default function PricingPage() {
       return;
     }
     if (account.plan === 'pro') {
-      setBusy(true); setMessage('');
-      try {
-        const res = await fetch('/api/notifications?billing=stripe-portal', { method: 'POST', credentials: 'include' });
-        const data = await res.json() as { portalUrl?: string; error?: string };
-        if (!res.ok || !data.portalUrl) throw new Error(data.error || 'Billing portal unavailable');
-        window.location.assign(data.portalUrl);
-      } catch (error) {
-        setMessage(error instanceof Error ? error.message : 'Billing portal unavailable');
-        setBusy(false);
-      }
+      if (account.billing?.portalUrl) window.location.assign(account.billing.portalUrl);
+      else setMessage('Your Pro plan is active. Subscription management will appear here after Paddle finishes syncing.');
       return;
     }
+
     setBusy(true); setMessage('');
     try {
-      const res = await fetch('/api/notifications?billing=stripe-checkout', {
-        method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plan: 'pro' }),
+      const paddle = await loadPaddle();
+      paddle.Checkout.open({
+        items: [{ priceId: PADDLE_PRO_PRICE_ID, quantity: 1 }],
+        customer: { email: account.email },
+        customData: { user_id: account.id, plan: 'pro' },
+        settings: {
+          displayMode: 'overlay',
+          theme: 'dark',
+          successUrl: `${window.location.origin}/workspace?payment=success`,
+        },
       });
-      const data = await res.json() as { checkoutUrl?: string; error?: string };
-      if (!res.ok || !data.checkoutUrl) throw new Error(data.error || 'Checkout unavailable');
-      window.location.assign(data.checkoutUrl);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Checkout unavailable');
+    } finally {
       setBusy(false);
     }
   }
@@ -118,7 +160,7 @@ export default function PricingPage() {
         {!account && !loading && <p style={{ marginTop: 22, color: '#aaa' }}>Sign in to Ashes Brain before upgrading so the subscription is attached to the correct Brain account.</p>}
 
         <section style={{ marginTop: 72, paddingTop: 28, borderTop: '1px solid #222', color: '#777', lineHeight: 1.7 }}>
-          Payments are securely processed by Stripe. Ashes does not store your card details. Subscription status is synchronized to your Brain account using signed payment webhooks.
+          Payments are securely processed by Paddle. Ashes does not store your card details. Paddle acts as merchant of record and handles payment processing and applicable sales tax.
         </section>
       </div>
     </main>

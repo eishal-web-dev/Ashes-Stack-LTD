@@ -16,10 +16,11 @@ export default function Footer() {
         <Link to="/reviews">REVIEWS</Link>
         <Link to="/privacy">PRIVACY</Link>
         <Link to="/terms">TERMS</Link>
+        <Link to="/refund">REFUNDS</Link>
         <PwaInstallButton />
         <a href="#top">BACK TO TOP ↑</a>
       </nav>
-      <small>© 2026 ASHES · LONDON, UNITED KINGDOM</small>
+      <small>© 2026 ASHES STACK</small>
     </footer>
   );
 }

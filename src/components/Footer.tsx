@@ -12,6 +12,7 @@ export default function Footer() {
         <a href="https://www.tiktok.com/@eishal_4a?_r=1&_t=ZS-98ygYWaw3L3" target="_blank" rel="noreferrer">TIKTOK</a>
         <Link to="/workspace">BRAIN</Link>
         <Link to="/pricing">PRICING</Link>
+        <Link to="/hire/3d-websites">HIRE ASHES</Link>
         <Link to="/blog">BLOG</Link>
         <Link to="/guides">GUIDES</Link>
         <Link to="/reviews">REVIEWS</Link>

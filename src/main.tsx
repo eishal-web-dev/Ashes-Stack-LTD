@@ -42,6 +42,7 @@ const ReviewsPage = lazy(() => import('./pages/ReviewsPage'));
 const PrivacyPage = lazy(() => import('./pages/PrivacyPage'));
 const TermsPage = lazy(() => import('./pages/TermsPage'));
 const BrainDocsPage = lazy(() => import('./pages/BrainDocsPage'));
+const BrainConnectPage = lazy(() => import('./pages/BrainConnectPage'));
 const GuidesPage = lazy(() => import('./pages/GuidesPage'));
 const GuidePage = lazy(() => import('./pages/GuidePage'));
 const PricingPage = lazy(() => import('./pages/PricingPage'));
@@ -75,6 +76,7 @@ createRoot(document.getElementById('root')!).render(
           <Route path="/privacy" element={<PrivacyPage/>} />
           <Route path="/terms" element={<TermsPage/>} />
           <Route path="/brain/docs" element={<BrainDocsPage/>} />
+          <Route path="/brain/docs/:client" element={<BrainConnectPage/>} />
           <Route path="/guides" element={<GuidesPage/>} />
           <Route path="/guides/:slug" element={<GuidePage/>} />
           <Route path="/pricing" element={<PricingPage/>} />

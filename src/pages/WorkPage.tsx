@@ -1,4 +1,4 @@
-import { ArrowUpRight, Box, BrainCircuit, Car, ChefHat, IceCreamBowl, QrCode, ShieldCheck, ShoppingBag, Sparkles, UtensilsCrossed } from 'lucide-react';
+import { ArrowUpRight, Box, BrainCircuit, Car, ChefHat, IceCreamBowl, MessageCircle, QrCode, ShieldCheck, ShoppingBag, Sparkles, UtensilsCrossed } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import Nav from '../components/Nav';
 import Footer from '../components/Footer';
@@ -18,6 +18,7 @@ const projects: Project[] = [
   { name: 'Porsche 911 Luxury', category: '3D AUTOMOTIVE EXPERIENCE', copy: 'A cinematic, interactive luxury-car experience built around motion, detail and high-end digital storytelling.', url: 'https://porsche-911-luxury.vercel.app', accent: '#ff5d4d', icon: Car, featured: true },
   { name: 'Lizard Anatomy 3D', category: 'INTERACTIVE EDUCATION', copy: 'A scroll-driven digital dissection that reveals skin, flesh, muscles, organs and bone layer by layer.', url: 'https://lizard-anatomy-3d.vercel.app', accent: '#baff47', icon: Box, featured: true },
   { name: 'Ashes AI', category: 'AI + 3D COMMERCE', copy: 'Image-to-3D product generation, interactive viewing and tools designed for modern ecommerce workflows.', url: 'https://ashes-ai.vercel.app', accent: '#ff54c8', icon: BrainCircuit, featured: true },
+  { name: 'SayIt', category: 'AI COMMUNICATION PRODUCT', copy: 'An AI reply assistant that turns messages or screenshots into polished replies for WhatsApp, email, clients, support and everyday conversations.', url: 'https://aireply-dusky.vercel.app', accent: '#9c7cff', icon: MessageCircle, featured: true },
   { name: 'CuteQR Commerce', category: 'ECOMMERCE AUTOMATION', copy: 'A commerce tool connecting product data, QR experiences and multi-channel selling workflows.', url: 'https://cuteqr-weld.vercel.app', accent: '#55d9ff', icon: QrCode, featured: true },
   { name: 'HireGuard', category: 'SERVICE MARKETPLACE', copy: 'A polished multi-page security marketplace for discovering guards, comparing services and making enquiries.', url: 'https://hire-a-guard-umc7.vercel.app', accent: '#68e0b7', icon: ShieldCheck },
   { name: 'MFZ Food Experience', category: '3D RESTAURANT WEBSITE', copy: 'A playful, motion-led restaurant concept with bold product presentation and immersive branded interactions.', url: 'https://webiste-demo-eight.vercel.app', accent: '#ffb25c', icon: UtensilsCrossed },
@@ -31,8 +32,8 @@ const projects: Project[] = [
 
 export default function WorkPage() {
   useSEO({
-    title: 'Ashes Portfolio — AI, 3D Websites, Ecommerce & Digital Products',
-    description: 'Explore live websites and digital products built by Ashes: interactive 3D experiences, AI products, ecommerce systems, restaurant websites and web applications.',
+    title: 'Ashes Portfolio — AI Products, 3D Websites, Ecommerce & Digital Tools',
+    description: 'Explore live products and digital experiences built by Ashes, including SayIt AI replies, Ashes AI, CuteQR, interactive 3D websites, ecommerce systems and web applications.',
     path: '/work',
   });
 

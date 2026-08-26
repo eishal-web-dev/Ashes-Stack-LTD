@@ -5,6 +5,7 @@ const WorkOSUserSchema = new mongoose.Schema(
     name: { type: String, required: true, trim: true, maxlength: 120 },
     email: { type: String, required: true, unique: true, lowercase: true, trim: true, index: true },
     password: { type: String, required: true },
+    avatar: { type: String, default: "", trim: true, maxlength: 1000 },
     plan: { type: String, enum: ["free", "pro", "team"], default: "free", index: true },
     billing: {
       provider: { type: String, default: "lemonsqueezy" },

@@ -2,7 +2,8 @@ import { Menu, UserCircle, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 
-type AccountUser = { id: string; name?: string; email?: string } | null;
+type AccountUser = { id: string; name?: string; email?: string; avatar?: string } | null;
+const GMAIL_PROFILE_PHOTO = 'https://lh3.googleusercontent.com/a/ACg8ocL3EfRIwDi7jAweXxfI-v6c57yLfbn9_IacTh-WASbRDJZ6BkN6=s96-c';
 
 export default function Nav(){
   const [open,setOpen]=useState(false);
@@ -22,6 +23,8 @@ export default function Nav(){
     return()=>{cancelled=true};
   },[]);
 
+  const profilePhoto = user?.avatar || (user?.email?.toLowerCase()==='eishal.cecos@gmail.com' ? GMAIL_PROFILE_PHOTO : '');
+
   return <header className="nav">
     <div className="nav-brand">
       <Link to="/" aria-label="Ashes home"><img src="/ashes-logo-transparent.webp" alt="ASHES"/></Link>
@@ -32,7 +35,7 @@ export default function Nav(){
     </nav>
     {authChecked && user ? (
       <Link className="nav-cta nav-profile" to="/workspace" aria-label="Open your Ashes profile" title={user.name || user.email || 'Your Ashes profile'}>
-        <UserCircle size={22}/>
+        {profilePhoto ? <img src={profilePhoto} alt="Your profile" style={{width:28,height:28,borderRadius:'50%',objectFit:'cover',display:'block'}}/> : <UserCircle size={22}/>} 
       </Link>
     ) : (
       <Link className="nav-cta" to="/login">Sign in <span>+</span></Link>

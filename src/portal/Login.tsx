@@ -38,9 +38,9 @@ export default function Login() {
     <div className="portal-shell">
       <div className="portal-narrow">
         <div className="portal-card">
-          <div className="portal-eyebrow">ASHES CLIENT PORTAL</div>
-          <h1 className="portal-h1">Sign in</h1>
-          <p className="portal-sub">{safeNext() ? 'Sign in to approve your Ashes AI connection.' : 'Access your project, documents and invoices.'}</p>
+          <div className="portal-eyebrow">ASHES CLIENT / TEAM / ADMIN PORTAL</div>
+          <h1 className="portal-h1">Portal sign in</h1>
+          <p className="portal-sub">Access client projects, documents, invoices, team tools or admin controls.</p>
           {error && <div className="portal-error">{error}</div>}
           <form onSubmit={onSubmit}>
             <div className="portal-field">
@@ -52,15 +52,18 @@ export default function Login() {
               <input type="password" required value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
             </div>
             <button className="pill-btn solid" disabled={loading} style={{ width: '100%', justifyContent: 'center' }}>
-              {loading ? 'Signing in…' : 'Sign in'}
+              {loading ? 'Signing in…' : 'Sign in to portal'}
             </button>
           </form>
           {!safeNext() && <GoogleSignInButton onError={setError} />}
           <p style={{ fontSize: '.68rem', marginTop: 20, color: '#8c8982' }}>
-            Don't have an account? <Link className="portal-link" to="/signup">Create one</Link>
+            Need a portal account? <Link className="portal-link" to="/portal/signup">Create portal account</Link>
+          </p>
+          <p style={{ fontSize: '.68rem', marginTop: 10, color: '#8c8982' }}>
+            Just using Ashes Brain or Ashes products? <Link className="portal-link" to="/login">Use normal Ashes sign in</Link>
           </p>
           <p style={{ fontSize: '.68rem', marginTop: 8 }}>
-            <Link className="portal-link" to="/">← Back to ashes.studio</Link>
+            <Link className="portal-link" to="/">← Back to Ashes</Link>
           </p>
         </div>
       </div>

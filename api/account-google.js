@@ -79,6 +79,7 @@ async function handleGoogle(req, res) {
 
     const email = payload.email.toLowerCase().trim();
     const name = String(payload.name || email.split("@")[0]).trim().slice(0, 120);
+    const avatar = String(payload.picture || "").trim().slice(0, 1000);
 
     await dbConnect();
     let user = await WorkOSUser.findOne({ email });
@@ -89,12 +90,15 @@ async function handleGoogle(req, res) {
       user = await WorkOSUser.create({
         name,
         email,
+        avatar,
         password: await bcrypt.hash(randomPassword, 10),
       });
       created = true;
-    } else if (!user.name && name) {
-      user.name = name;
-      await user.save();
+    } else {
+      let changed = false;
+      if (!user.name && name) { user.name = name; changed = true; }
+      if (avatar && user.avatar !== avatar) { user.avatar = avatar; changed = true; }
+      if (changed) await user.save();
     }
 
     const token = signWorkOSSession({ id: user._id.toString(), name: user.name, email: user.email });
@@ -106,7 +110,7 @@ async function handleGoogle(req, res) {
       source: "Google / Ashes Account",
     });
 
-    return res.status(200).json({ id: user._id, name: user.name, email: user.email, account: "workos", created });
+    return res.status(200).json({ id: user._id, name: user.name, email: user.email, avatar: user.avatar || "", account: "workos", created });
   } catch (error) {
     return res.status(401).json({ error: "Could not verify Google account." });
   }

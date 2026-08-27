@@ -51,6 +51,68 @@ function Ranking({ title, rows, empty = 'No data yet.' }: { title: string; rows:
   </div>;
 }
 
+function ActivityChart({ daily }: { daily: Daily[] }) {
+  const width = 760;
+  const height = 245;
+  const pad = { top: 24, right: 18, bottom: 42, left: 18 };
+  const chartWidth = width - pad.left - pad.right;
+  const chartHeight = height - pad.top - pad.bottom;
+  const peak = Math.max(1, ...daily.flatMap((day) => [day.pageViews, day.mcpCalls]));
+  const x = (index: number) => pad.left + (index / Math.max(1, daily.length - 1)) * chartWidth;
+  const y = (value: number) => pad.top + chartHeight - (value / peak) * chartHeight;
+  const pagePoints = daily.map((day, index) => x(index) + ',' + y(day.pageViews)).join(' ');
+  const mcpPoints = daily.map((day, index) => x(index) + ',' + y(day.mcpCalls)).join(' ');
+  const labelStep = daily.length > 45 ? 10 : daily.length > 14 ? 5 : 1;
+  const hasData = daily.some((day) => day.pageViews || day.mcpCalls || day.signups || day.shareViews);
+
+  if (!hasData) {
+    return <div className="portal-empty" style={{ minHeight: 220, display: 'grid', placeItems: 'center' }}>Activity will appear here as people use Ashes.</div>;
+  }
+
+  return <div style={{ overflowX: 'auto' }}>
+    <svg viewBox={'0 0 ' + width + ' ' + height} role="img" aria-label="Daily page views and AI activity trend" style={{ display: 'block', width: '100%', minWidth: 620 }}>
+      <defs>
+        <linearGradient id="analyticsArea" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#ad77ff" stopOpacity=".28" />
+          <stop offset="100%" stopColor="#ad77ff" stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      {[0, .5, 1].map((ratio) => {
+        const lineY = pad.top + chartHeight * ratio;
+        return <line key={ratio} x1={pad.left} y1={lineY} x2={width - pad.right} y2={lineY} stroke="rgba(214,209,198,.10)" />;
+      })}
+      <polygon points={pad.left + ',' + (pad.top + chartHeight) + ' ' + pagePoints + ' ' + (width - pad.right) + ',' + (pad.top + chartHeight)} fill="url(#analyticsArea)" />
+      <polyline points={pagePoints} fill="none" stroke="#ad77ff" strokeWidth="3" strokeLinejoin="round" strokeLinecap="round" />
+      <polyline points={mcpPoints} fill="none" stroke="#55d9ff" strokeWidth="3" strokeLinejoin="round" strokeLinecap="round" />
+      {daily.map((day, index) => <g key={day.date}>
+        <title>{day.date + ': ' + day.pageViews + ' views, ' + day.mcpCalls + ' AI actions, ' + day.signups + ' signups'}</title>
+        {(day.signups > 0 || day.shareViews > 0) && <circle cx={x(index)} cy={y(Math.max(day.pageViews, day.mcpCalls)) - 8} r="4" fill="#d8ff62" />}
+        {index % labelStep === 0 && <text x={x(index)} y={height - 15} textAnchor="middle" fill="#69665f" fontSize="10">{day.label}</text>}
+      </g>)}
+    </svg>
+  </div>;
+}
+
+function Funnel({ steps }: { steps: { label: string; value: number; color: string }[] }) {
+  const first = Math.max(1, steps[0]?.value || 1);
+  return <div style={{ display: 'grid', gap: 12, marginTop: 20 }}>
+    {steps.map((step, index) => {
+      const width = Math.max(12, (step.value / first) * 100);
+      const previous = index === 0 ? null : steps[index - 1].value;
+      const conversion = previous && previous > 0 ? Math.round((step.value / previous) * 100) : null;
+      return <div key={step.label}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 14, alignItems: 'baseline', marginBottom: 7 }}>
+          <span style={{ color: '#aaa69e', fontSize: '.64rem', textTransform: 'uppercase', letterSpacing: '.07em', fontWeight: 700 }}>{index + 1}. {step.label}</span>
+          <span><b style={{ color: '#f0eee8' }}>{num(step.value)}</b>{conversion !== null && <small style={{ color: '#77736c', marginLeft: 9 }}>{conversion}% from previous</small>}</span>
+        </div>
+        <div style={{ height: 12, borderRadius: 99, background: 'rgba(214,209,198,.06)', overflow: 'hidden' }}>
+          <div style={{ width: width + '%', height: '100%', borderRadius: 99, background: step.color, boxShadow: '0 0 22px ' + step.color + '33' }} />
+        </div>
+      </div>;
+    })}
+  </div>;
+}
+
 export default function AdminAnalytics() {
   const navigate = useNavigate();
   const [user, setUser] = useState<Me | null>(null);
@@ -76,11 +138,15 @@ export default function AdminAnalytics() {
     }).catch(() => navigate('/login'));
   }, [navigate]);
 
-  const peak = useMemo(() => Math.max(1, ...(data?.daily || []).map((d) => Math.max(d.pageViews, d.mcpCalls))), [data]);
+  useMemo(() => data?.daily || [], [data]);
 
   if (loading || !data) return <AdminLayout user={user}><BlobLoaderCentered /></AdminLayout>;
   const s = data.summary;
   const trackingDate = data.trackingStartedAt ? new Date(data.trackingStartedAt).toLocaleString() : 'now';
+  const visitToSignup = s.visits > 0 ? Math.round((s.brainSignups / s.visits) * 100) : 0;
+  const signupToConnection = s.brainSignups > 0 ? Math.round((s.aiConnections / s.brainSignups) * 100) : 0;
+  const actionsPerConnectedUser = s.connectedBrainUsers > 0 ? Math.round((s.mcpCalls / s.connectedBrainUsers) * 10) / 10 : 0;
+  const pagesPerVisit = s.visits > 0 ? Math.round((s.pageViews / s.visits) * 10) / 10 : 0;
 
   return <AdminLayout user={user}>
     <div className="portal-page-head">
@@ -107,26 +173,58 @@ export default function AdminAnalytics() {
       <Metric label="Total Brain users" value={num(s.totalBrainUsers)} sub={`${num(s.activeBrainUsers)} active in this period`} />
     </div>
 
-    <div className="portal-card" style={{ marginBottom: 20 }}>
-      <div className="portal-eyebrow">PRODUCT FUNNEL</div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,minmax(0,1fr))', gap: 10, marginTop: 14 }}>
-        {[['VISITS', s.visits], ['BRAIN SIGNUPS', s.brainSignups], ['AI APPROVALS', s.aiConnections], ['MCP ACTIONS', s.mcpCalls]].map(([label, value], i) => <div key={String(label)} style={{ border: '1px solid #242424', borderRadius: 12, padding: 15, background: '#0c0c0c' }}><div style={{ color: '#777', fontSize: '.58rem', letterSpacing: '.09em' }}>{i + 1}. {label}</div><b style={{ display: 'block', fontSize: '1.45rem', marginTop: 5 }}>{num(Number(value))}</b></div>)}
+    <div className="portal-card" style={{ padding: 0, overflow: 'hidden', marginBottom: 20 }}>
+      <div style={{ padding: '20px 22px 14px' }}>
+        <div className="portal-eyebrow">KEY RATIOS</div>
+        <h2 className="portal-h2" style={{ margin: '7px 0 0' }}>What the numbers mean</h2>
       </div>
-    </div>
-
-    <div className="portal-card" style={{ marginBottom: 20 }}>
-      <h2 className="portal-h2">Daily activity</h2>
-      <p className="portal-sub">Page views are the tall bar; MCP activity is the bright inner bar. Signups and shared-link views are shown below each day.</p>
-      <div style={{ display: 'flex', alignItems: 'flex-end', gap: 7, height: 190, marginTop: 20, overflowX: 'auto', paddingBottom: 4 }}>
-        {data.daily.map((day) => <div key={day.date} title={`${day.date}: ${day.pageViews} page views, ${day.mcpCalls} MCP calls, ${day.signups} signups`} style={{ flex: '1 0 24px', minWidth: 24, height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', alignItems: 'center', gap: 5 }}>
-          <div style={{ width: '100%', maxWidth: 34, height: `${Math.max(5, (day.pageViews / peak) * 120)}px`, background: 'rgba(173,119,255,.35)', border: '1px solid rgba(173,119,255,.5)', borderRadius: '6px 6px 2px 2px', display: 'flex', alignItems: 'flex-end', overflow: 'hidden' }}><div style={{ width: '100%', height: `${Math.min(100, (day.mcpCalls / Math.max(1, day.pageViews, day.mcpCalls)) * 100)}%`, background: '#55d9ff' }} /></div>
-          <div style={{ color: '#aaa', fontSize: '.54rem', whiteSpace: 'nowrap' }}>{day.signups ? `+${day.signups} user` : day.shareViews ? `${day.shareViews} share` : '·'}</div>
-          <div style={{ color: '#666', fontSize: '.52rem', transform: 'rotate(-35deg)', transformOrigin: 'center', whiteSpace: 'nowrap', marginTop: 5 }}>{day.label}</div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(155px,1fr))', borderTop: '1px solid rgba(214,209,198,.1)' }}>
+        {[
+          ['Pages / visit', String(pagesPerVisit), 'How deeply visitors explore'],
+          ['Visit → signup', visitToSignup + '%', 'Traffic becoming Brain users'],
+          ['Signup → AI', signupToConnection + '%', 'Users approving an AI client'],
+          ['Actions / user', String(actionsPerConnectedUser), 'AI tool usage per connected user'],
+        ].map(([label, value, help], index) => <div key={label} style={{ padding: '20px 22px', borderRight: index < 3 ? '1px solid rgba(214,209,198,.1)' : undefined }}>
+          <div style={{ color: '#77736c', fontSize: '.58rem', textTransform: 'uppercase', letterSpacing: '.08em', fontWeight: 700 }}>{label}</div>
+          <div style={{ color: index === 1 ? '#d8ff62' : index === 2 ? '#55d9ff' : '#eceae4', fontSize: '1.45rem', fontWeight: 800, marginTop: 7 }}>{value}</div>
+          <div style={{ color: '#66625b', fontSize: '.62rem', lineHeight: 1.45, marginTop: 5 }}>{help}</div>
         </div>)}
       </div>
     </div>
 
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,minmax(0,1fr))', gap: 16, marginBottom: 20 }}>
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(100%,330px),1fr))', gap: 16, marginBottom: 20 }}>
+      <div className="portal-card" style={{ margin: 0 }}>
+        <div className="portal-eyebrow">PRODUCT FUNNEL</div>
+        <h2 className="portal-h2" style={{ margin: '7px 0 3px' }}>From visitor to real AI usage</h2>
+        <p className="portal-sub" style={{ marginTop: 0 }}>See where people continue and where they drop off.</p>
+        <Funnel steps={[
+          { label: 'Visits', value: s.visits, color: '#ad77ff' },
+          { label: 'Brain signups', value: s.brainSignups, color: '#8d9dff' },
+          { label: 'AI approvals', value: s.aiConnections, color: '#55d9ff' },
+        ]} />
+        <div style={{ marginTop: 18, paddingTop: 15, borderTop: '1px solid rgba(214,209,198,.1)', display: 'flex', justifyContent: 'space-between', gap: 12 }}>
+          <span style={{ color: '#77736c', fontSize: '.66rem' }}>Actions completed after connection</span>
+          <b style={{ color: '#d8ff62' }}>{num(s.mcpCalls)}</b>
+        </div>
+      </div>
+
+      <div className="portal-card" style={{ margin: 0, overflow: 'hidden' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 14, flexWrap: 'wrap' }}>
+          <div>
+            <div className="portal-eyebrow">ACTIVITY TREND</div>
+            <h2 className="portal-h2" style={{ margin: '7px 0 3px' }}>Traffic and AI usage</h2>
+          </div>
+          <div style={{ display: 'flex', gap: 13, color: '#88847d', fontSize: '.62rem' }}>
+            <span><i style={{ display: 'inline-block', width: 8, height: 8, borderRadius: 99, background: '#ad77ff', marginRight: 5 }} />Views</span>
+            <span><i style={{ display: 'inline-block', width: 8, height: 8, borderRadius: 99, background: '#55d9ff', marginRight: 5 }} />AI actions</span>
+            <span><i style={{ display: 'inline-block', width: 8, height: 8, borderRadius: 99, background: '#d8ff62', marginRight: 5 }} />Conversion</span>
+          </div>
+        </div>
+        <ActivityChart daily={data.daily} />
+      </div>
+    </div>
+
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(100%,320px),1fr))', gap: 16, marginBottom: 20 }}>
       <Ranking title="Top pages" rows={data.topPages} />
       <Ranking title="Traffic sources" rows={data.topSources} />
       <Ranking title="Most-clicked links" rows={data.topLinks} />
@@ -151,7 +249,7 @@ export default function AdminAnalytics() {
     <div className="portal-card">
       <h2 className="portal-h2">Recent product activity</h2>
       <div style={{ display: 'grid', gap: 8, marginTop: 14 }}>
-        {data.recentEvents.length === 0 ? <p className="portal-sub">No tracked product events yet.</p> : data.recentEvents.map((event, index) => <div key={`${event.createdAt}-${index}`} style={{ display: 'grid', gridTemplateColumns: '160px 1fr auto', gap: 12, alignItems: 'center', borderBottom: '1px solid #1d1d1d', padding: '10px 0', fontSize: '.68rem' }}>
+        {data.recentEvents.length === 0 ? <p className="portal-sub">No tracked product events yet.</p> : data.recentEvents.map((event, index) => <div key={`${event.createdAt}-${index}`} style={{ display: 'grid', gridTemplateColumns: 'minmax(125px,.8fr) minmax(140px,1.5fr) auto', gap: 12, alignItems: 'center', borderBottom: '1px solid #1d1d1d', padding: '10px 0', fontSize: '.68rem' }}>
           <b>{event.event.replaceAll('_', ' ')}</b>
           <span style={{ color: '#888', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{event.path || event.source || String(event.meta?.tool || '') || 'Ashes'}</span>
           <span style={{ color: '#666', whiteSpace: 'nowrap' }}>{new Date(event.createdAt).toLocaleString()}</span>

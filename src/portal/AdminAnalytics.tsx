@@ -31,16 +31,28 @@ function num(value: number) { return value.toLocaleString(); }
 function pct(value: number | null) { return value === null ? '—' : `${value}%`; }
 
 function Metric({ label, value, sub }: { label: string; value: string; sub: string }) {
-  return <div className="portal-card" style={{ margin: 0, padding: 18 }}>
-    <div style={{ color: '#8c8982', fontSize: '.64rem', letterSpacing: '.08em', textTransform: 'uppercase' }}>{label}</div>
-    <div style={{ fontSize: '1.75rem', fontWeight: 800, letterSpacing: '-.04em', marginTop: 6 }}>{value}</div>
-    <div style={{ color: '#777', fontSize: '.66rem', marginTop: 5, lineHeight: 1.5 }}>{sub}</div>
+  const cool = ['Visits', 'Page views', 'AI approvals', 'MCP actions', 'Total Brain users'].includes(label);
+  const color = cool ? '#55d9ff' : '#d8ff62';
+  return <div className="portal-card" style={{
+    margin: 0,
+    padding: 20,
+    position: 'relative',
+    overflow: 'hidden',
+    borderColor: cool ? 'rgba(85,217,255,.18)' : 'rgba(216,255,98,.16)',
+    background: 'linear-gradient(145deg,rgba(255,255,255,.035),rgba(255,255,255,.008))',
+    boxShadow: 'inset 0 1px 0 rgba(255,255,255,.035)',
+  }}>
+    <div style={{ position: 'absolute', width: 90, height: 90, borderRadius: '50%', right: -40, top: -42, background: color, opacity: .08, filter: 'blur(22px)' }} />
+    <div style={{ color: '#8c8982', fontSize: '.6rem', letterSpacing: '.11em', textTransform: 'uppercase', fontWeight: 700 }}>{label}</div>
+    <div style={{ fontSize: '1.9rem', fontWeight: 800, letterSpacing: '-.05em', marginTop: 8, color: '#f5f3ed' }}>{value}</div>
+    <div style={{ color: '#6f6c66', fontSize: '.64rem', marginTop: 6, lineHeight: 1.5 }}>{sub}</div>
+    <div style={{ width: 28, height: 2, borderRadius: 99, background: color, marginTop: 16, boxShadow: '0 0 14px ' + color }} />
   </div>;
 }
 
 function Ranking({ title, rows, empty = 'No data yet.' }: { title: string; rows: Row[]; empty?: string }) {
   const max = Math.max(1, ...rows.map((r) => r.count));
-  return <div className="portal-card" style={{ margin: 0 }}>
+  return <div className="portal-card" style={{ margin: 0, background: 'linear-gradient(145deg,rgba(255,255,255,.028),rgba(255,255,255,.006))', borderColor: 'rgba(214,209,198,.11)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,.025)' }}>
     <h2 className="portal-h2">{title}</h2>
     {rows.length === 0 ? <p className="portal-sub">{empty}</p> : <div style={{ display: 'grid', gap: 12, marginTop: 16 }}>
       {rows.map((row) => <div key={`${title}-${row.label}`}>
@@ -147,19 +159,82 @@ export default function AdminAnalytics() {
   const pagesPerVisit = s.visits > 0 ? Math.round((s.pageViews / s.visits) * 10) / 10 : 0;
 
   return <AdminLayout user={user}>
-    <div className="portal-page-head">
-      <div className="portal-eyebrow">ASHES ANALYTICS</div>
-      <h1 className="portal-h1">Traffic → Brain → AI usage</h1>
-      <p className="portal-sub">First-party product analytics. No raw IP addresses are stored. “Visits” are privacy-friendly browser sessions, so they are a better measure than pretending we can identify a person across every device.</p>
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 16 }}>
-        {[7, 30, 90].map((range) => <button key={range} className={days === range ? 'pill-btn solid' : 'pill-btn'} onClick={() => { setDays(range); load(range); }}>{range} days</button>)}
+    <section style={{
+      position: 'relative',
+      overflow: 'hidden',
+      padding: '28px',
+      marginBottom: 20,
+      borderRadius: 18,
+      border: '1px solid rgba(216,255,98,.16)',
+      background: 'radial-gradient(circle at 85% 12%,rgba(173,119,255,.19),transparent 33%), radial-gradient(circle at 10% 90%,rgba(85,217,255,.12),transparent 32%), linear-gradient(145deg,#111113,#09090a)',
+      boxShadow: '0 28px 80px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.05)',
+    }}>
+      <div style={{ position: 'absolute', inset: 0, opacity: .16, backgroundImage: 'linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px)', backgroundSize: '42px 42px', pointerEvents: 'none' }} />
+      <div style={{ position: 'relative' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 18, alignItems: 'center', flexWrap: 'wrap', marginBottom: 30 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#d8ff62', boxShadow: '0 0 14px #d8ff62' }} />
+            <span style={{ color: '#d8ff62', fontSize: '.58rem', letterSpacing: '.14em', fontWeight: 800 }}>LIVE INTELLIGENCE</span>
+            <span style={{ color: '#55524d', fontSize: '.58rem', letterSpacing: '.08em' }}>PRIVATE · FIRST-PARTY</span>
+          </div>
+          <div style={{ display: 'flex', gap: 7, padding: 4, borderRadius: 99, border: '1px solid rgba(214,209,198,.12)', background: 'rgba(0,0,0,.22)' }}>
+            {[7, 30, 90].map((range) => <button key={range} onClick={() => { setDays(range); load(range); }} style={{
+              border: 0,
+              borderRadius: 99,
+              padding: '8px 12px',
+              cursor: 'pointer',
+              fontSize: '.62rem',
+              fontWeight: 800,
+              color: days === range ? '#080809' : '#77736c',
+              background: days === range ? '#eceae4' : 'transparent',
+            }}>{range}D</button>)}
+          </div>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(100%,310px),1fr))', gap: 28, alignItems: 'end' }}>
+          <div>
+            <div style={{ color: '#8c8982', fontSize: '.62rem', letterSpacing: '.11em', fontWeight: 700, marginBottom: 10 }}>ASHES · OWNER VIEW</div>
+            <h1 style={{ margin: 0, maxWidth: 610, color: '#f3f1eb', fontSize: 'clamp(2rem,5vw,4rem)', letterSpacing: '-.065em', lineHeight: .96, fontWeight: 800 }}>
+              Growth command<br /><span style={{ color: '#d8ff62' }}>center.</span>
+            </h1>
+            <p style={{ maxWidth: 560, color: '#7f7b74', fontSize: '.72rem', lineHeight: 1.7, margin: '18px 0 0' }}>
+              One private view of attention, acquisition, activation and real AI usage across Ashes.
+            </p>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1.15fr 1fr', gap: 10 }}>
+            <div style={{ gridRow: 'span 2', padding: 20, borderRadius: 15, border: '1px solid rgba(216,255,98,.18)', background: 'rgba(216,255,98,.045)' }}>
+              <div style={{ color: '#77736c', fontSize: '.56rem', letterSpacing: '.1em', fontWeight: 700 }}>VISITS · {days} DAYS</div>
+              <div style={{ fontSize: 'clamp(2rem,4vw,3.25rem)', letterSpacing: '-.06em', fontWeight: 800, color: '#f3f1eb', marginTop: 9 }}>{num(s.visits)}</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 7, color: '#d8ff62', fontSize: '.62rem', marginTop: 12 }}>
+                <span style={{ width: 22, height: 2, background: '#d8ff62', boxShadow: '0 0 12px #d8ff62' }} /> {pct(s.signupConversionRate)} convert
+              </div>
+            </div>
+            <div style={{ padding: '14px 16px', borderRadius: 15, border: '1px solid rgba(85,217,255,.14)', background: 'rgba(85,217,255,.035)' }}>
+              <div style={{ color: '#6f6c66', fontSize: '.54rem', letterSpacing: '.08em' }}>ACTIVE USERS</div>
+              <b style={{ display: 'block', color: '#55d9ff', fontSize: '1.2rem', marginTop: 5 }}>{num(s.activeBrainUsers)}</b>
+            </div>
+            <div style={{ padding: '14px 16px', borderRadius: 15, border: '1px solid rgba(173,119,255,.16)', background: 'rgba(173,119,255,.04)' }}>
+              <div style={{ color: '#6f6c66', fontSize: '.54rem', letterSpacing: '.08em' }}>AI ACTIONS</div>
+              <b style={{ display: 'block', color: '#ad77ff', fontSize: '1.2rem', marginTop: 5 }}>{num(s.mcpCalls)}</b>
+            </div>
+          </div>
+        </div>
+
+        <div style={{ marginTop: 26, paddingTop: 15, borderTop: '1px solid rgba(214,209,198,.09)', display: 'flex', justifyContent: 'space-between', gap: 14, flexWrap: 'wrap', color: '#5f5c57', fontSize: '.58rem' }}>
+          <span>TRACKING SINCE {trackingDate.toUpperCase()}</span>
+          <span>NO RAW IP ADDRESSES STORED</span>
+        </div>
       </div>
-    </div>
+    </section>
 
-    <div className="portal-card" style={{ borderColor: 'rgba(85,217,255,.28)', marginBottom: 20 }}>
-      <div style={{ fontSize: '.7rem', lineHeight: 1.65, color: '#aaa' }}><b style={{ color: '#f3f3ef' }}>Tracking started {trackingDate}.</b> Historical website visits from before this tracker went live cannot be reconstructed, so this dashboard is accurate from that point forward.</div>
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'end', gap: 16, margin: '30px 0 14px', flexWrap: 'wrap' }}>
+      <div>
+        <div className="portal-eyebrow">PORTFOLIO SIGNALS</div>
+        <h2 className="portal-h2" style={{ margin: '7px 0 0', fontSize: '1.15rem' }}>The numbers that move the business</h2>
+      </div>
+      <span style={{ color: '#5f5c57', fontSize: '.6rem', letterSpacing: '.08em' }}>CURRENT WINDOW · {days} DAYS</span>
     </div>
-
     <div className="portal-btn-grid" style={{ marginBottom: 20 }}>
       <Metric label="Visits" value={num(s.visits)} sub="Distinct browser sessions" />
       <Metric label="Page views" value={num(s.pageViews)} sub="Public site + Ashes Brain pages" />
@@ -173,8 +248,8 @@ export default function AdminAnalytics() {
 
     <div className="portal-card" style={{ padding: 0, overflow: 'hidden', marginBottom: 20 }}>
       <div style={{ padding: '20px 22px 14px' }}>
-        <div className="portal-eyebrow">KEY RATIOS</div>
-        <h2 className="portal-h2" style={{ margin: '7px 0 0' }}>What the numbers mean</h2>
+        <div className="portal-eyebrow">EXECUTIVE RATIOS</div>
+        <h2 className="portal-h2" style={{ margin: '7px 0 0' }}>Efficiency, not vanity</h2>
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(155px,1fr))', borderTop: '1px solid rgba(214,209,198,.1)' }}>
         {[

@@ -66,7 +66,7 @@ function FinancialCharts({ months, expenses, marketing }: {
   const strongestMonth = months.reduce((best, month) => month.net > best.net ? month : best, months[0]);
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.65fr) minmax(250px, .85fr)', gap: 16, marginBottom: 20 }}>
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 310px), 1fr))', gap: 16, marginBottom: 20 }}>
       <div className="portal-card" style={{ margin: 0, overflow: 'hidden' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 14, alignItems: 'flex-start', marginBottom: 18, flexWrap: 'wrap' }}>
           <div>
@@ -172,6 +172,8 @@ export default function AdminFinance() {
   const [incomeForm, setIncomeForm] = useState({ category: 'income', amount: '', note: '', date: new Date().toISOString().slice(0, 10), paid: true });
   const [savingIncome, setSavingIncome] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [transactionFilter, setTransactionFilter] = useState<'all' | 'income' | 'cost' | 'pending'>('all');
+  const [transactionQuery, setTransactionQuery] = useState('');
 
   async function loadAll() {
     const [d, l, s] = await Promise.all([
@@ -253,8 +255,16 @@ export default function AdminFinance() {
   const moneyOut = data.totalCashOut;
   const isProfit = data.netProfit >= 0;
   const paidEntries = ledger.filter((e) => e.paid);
-  const unpaidEntries = ledger.filter((e) => !e.paid);
   const financeMonths = monthlyFinance(data, ledger);
+  const currentMonth = financeMonths[financeMonths.length - 1];
+  const filteredEntries = [...ledger]
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    .filter((entry) => {
+      if (transactionFilter === 'income' && entry.category !== 'income') return false;
+      if (transactionFilter === 'cost' && entry.category === 'income') return false;
+      if (transactionFilter === 'pending' && entry.paid) return false;
+      return (entry.note || entry.category).toLowerCase().includes(transactionQuery.toLowerCase());
+    });
 
   return (
     <AdminLayout user={user}>
@@ -262,9 +272,7 @@ export default function AdminFinance() {
         <div className="portal-eyebrow">FINANCE</div>
         <h1 className="portal-h1">Money in, money out</h1>
         <p className="portal-sub">
-          Simple rule: revenue comes from paid invoices automatically. Below, log anything you spend —
-          it only counts against your profit once you mark it <b>Paid</b>. Still owe it? Leave it unpaid; it'll
-          show under "Owed" instead, and you flip it to paid the moment you actually pay it.
+          A clear view of what came in, what went out, what is still pending, and where your cash is going.
         </p>
       </div>
 
@@ -321,6 +329,29 @@ export default function AdminFinance() {
         expenses={data.totalExpenses}
         marketing={data.totalMarketing}
       />
+
+      <div className="portal-card" style={{ padding: 0, overflow: 'hidden' }}>
+        <div style={{ padding: '20px 22px 14px' }}>
+          <div className="portal-eyebrow">THIS MONTH</div>
+          <h2 className="portal-h2" style={{ margin: '6px 0 0' }}>At a glance</h2>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', borderTop: '1px solid rgba(214,209,198,.1)' }}>
+          {[
+            { label: 'Received', value: currentMonth.income, color: '#d8ff62', hint: 'Income recorded this month' },
+            { label: 'Spent', value: currentMonth.out, color: '#ff8fa3', hint: 'Paid costs this month' },
+            { label: 'Net movement', value: currentMonth.net, color: currentMonth.net >= 0 ? '#66ebf2' : '#ff8fa3', hint: 'Received minus spent' },
+            { label: 'Still pending', value: data.accountsPayable + data.pendingIncome, color: '#ffb766', hint: 'Money awaiting settlement' },
+          ].map((item, index) => (
+            <div key={item.label} style={{ padding: '20px 22px', borderRight: index < 3 ? '1px solid rgba(214,209,198,.1)' : undefined }}>
+              <div style={{ fontSize: '.58rem', color: '#77736c', textTransform: 'uppercase', letterSpacing: '.08em', fontWeight: 700 }}>{item.label}</div>
+              <div style={{ color: item.color, fontSize: '1.25rem', fontWeight: 800, marginTop: 8 }}>
+                {item.label === 'Net movement' && item.value < 0 ? '−' : ''}{pkr(Math.abs(item.value))}
+              </div>
+              <div style={{ color: '#66625b', fontSize: '.62rem', marginTop: 5 }}>{item.hint}</div>
+            </div>
+          ))}
+        </div>
+      </div>
 
       <div className="portal-card" style={{ borderColor: 'rgba(216,255,98,.3)' }}>
         <h2 className="portal-h2" style={{ color: '#d8ff62' }}>Log money in</h2>
@@ -403,54 +434,89 @@ export default function AdminFinance() {
       </div>
 
       <div className="portal-card">
-        <h2 className="portal-h2">Settled — already counted above</h2>
-        {paidEntries.length === 0 ? (
-          <div className="portal-empty">Nothing logged yet.</div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16, flexWrap: 'wrap', marginBottom: 18 }}>
+          <div>
+            <div className="portal-eyebrow">LEDGER</div>
+            <h2 className="portal-h2" style={{ margin: '6px 0 4px' }}>Transactions</h2>
+            <div style={{ color: '#77736c', fontSize: '.68rem' }}>{ledger.length} total entries · newest first</div>
+          </div>
+          <input
+            aria-label="Search transactions"
+            value={transactionQuery}
+            onChange={(e) => setTransactionQuery(e.target.value)}
+            placeholder="Search transactions…"
+            style={{ minWidth: 220, padding: '10px 12px', borderRadius: 9, background: '#0a0a0b', border: '1px solid rgba(214,209,198,.16)', color: '#eceae4' }}
+          />
+        </div>
+
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 18 }}>
+          {([
+            ['all', 'All'],
+            ['income', 'Money in'],
+            ['cost', 'Money out'],
+            ['pending', 'Pending'],
+          ] as const).map(([value, label]) => (
+            <button
+              key={value}
+              type="button"
+              className="pill-btn tiny"
+              onClick={() => setTransactionFilter(value)}
+              style={transactionFilter === value ? { background: '#eceae4', color: '#0a0a0b', borderColor: '#eceae4' } : undefined}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {filteredEntries.length === 0 ? (
+          <div className="portal-empty">No transactions match this view.</div>
         ) : (
-          <table className="portal-table">
-            <thead><tr><th>What</th><th>Type</th><th>Date</th><th>Amount</th><th></th></tr></thead>
-            <tbody>
-              {paidEntries.map((e) => (
-                <tr key={e._id}>
-                  <td>{e.note || '—'}</td>
-                  <td style={{ textTransform: 'capitalize' }}>{e.category}</td>
-                  <td>{new Date(e.date).toLocaleDateString('en-GB')}</td>
-                  <td style={{ color: e.category === 'income' ? '#d8ff62' : '#ff8fa3', fontWeight: 700 }}>
-                    {e.category === 'income' ? '+' : '−'}{pkr(e.amount)}
-                  </td>
-                  <td style={{ display: 'flex', gap: 8 }}>
-                    <button className="pill-btn tiny" onClick={() => togglePaid(e._id, e.paid)}>{e.category === 'income' ? 'Mark not received' : 'Mark unpaid'}</button>
-                    <button className="pill-btn tiny" style={{ color: '#ff8fa3', borderColor: 'rgba(255,73,108,.4)' }} onClick={() => deleteEntry(e._id)}>Delete</button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div style={{ overflowX: 'auto' }}>
+            <table className="portal-table">
+              <thead><tr><th>Transaction</th><th>Status</th><th>Date</th><th>Amount</th><th></th></tr></thead>
+              <tbody>
+                {filteredEntries.map((entry) => {
+                  const isIncome = entry.category === 'income';
+                  return (
+                    <tr key={entry._id}>
+                      <td>
+                        <div style={{ color: '#eceae4', fontWeight: 700 }}>{entry.note || 'Untitled transaction'}</div>
+                        <div style={{ color: '#66625b', fontSize: '.61rem', textTransform: 'capitalize', marginTop: 3 }}>{entry.category}</div>
+                      </td>
+                      <td>
+                        <span style={{
+                          display: 'inline-flex',
+                          padding: '4px 8px',
+                          borderRadius: 99,
+                          fontSize: '.58rem',
+                          fontWeight: 800,
+                          color: entry.paid ? (isIncome ? '#d8ff62' : '#66ebf2') : '#ffb766',
+                          background: entry.paid ? (isIncome ? 'rgba(216,255,98,.08)' : 'rgba(102,235,242,.08)') : 'rgba(255,183,102,.08)',
+                          border: '1px solid currentColor',
+                        }}>
+                          {entry.paid ? (isIncome ? 'RECEIVED' : 'PAID') : 'PENDING'}
+                        </span>
+                      </td>
+                      <td>{new Date(entry.date).toLocaleDateString('en-GB')}</td>
+                      <td style={{ color: isIncome ? '#d8ff62' : '#ff8fa3', fontWeight: 800 }}>
+                        {isIncome ? '+' : '−'}{pkr(entry.amount)}
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                          <button className="pill-btn tiny" onClick={() => togglePaid(entry._id, entry.paid)}>
+                            {entry.paid ? (isIncome ? 'Mark pending' : 'Mark unpaid') : (isIncome ? 'Mark received' : 'Mark paid')}
+                          </button>
+                          <button className="pill-btn tiny" style={{ color: '#ff8fa3', borderColor: 'rgba(255,73,108,.4)' }} onClick={() => deleteEntry(entry._id)}>Delete</button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
-
-      {unpaidEntries.length > 0 && (
-        <div className="portal-card" style={{ borderColor: 'rgba(255,183,102,.3)' }}>
-          <h2 className="portal-h2" style={{ color: '#ffb766' }}>Pending — not counted yet</h2>
-          <table className="portal-table">
-            <thead><tr><th>What</th><th>Type</th><th>Date</th><th>Amount</th><th></th></tr></thead>
-            <tbody>
-              {unpaidEntries.map((e) => (
-                <tr key={e._id}>
-                  <td>{e.note || '—'}</td>
-                  <td style={{ textTransform: 'capitalize' }}>{e.category}</td>
-                  <td>{new Date(e.date).toLocaleDateString('en-GB')}</td>
-                  <td style={{ fontWeight: 700 }}>{e.category === 'income' ? '+' : '−'}{pkr(e.amount)}</td>
-                  <td style={{ display: 'flex', gap: 8 }}>
-                    <button className="pill-btn tiny solid" onClick={() => togglePaid(e._id, e.paid)}>✓ {e.category === 'income' ? 'Mark received' : 'Mark paid'}</button>
-                    <button className="pill-btn tiny" style={{ color: '#ff8fa3', borderColor: 'rgba(255,73,108,.4)' }} onClick={() => deleteEntry(e._id)}>Delete</button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
     </AdminLayout>
   );
 }

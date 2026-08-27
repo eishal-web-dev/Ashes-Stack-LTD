@@ -254,7 +254,6 @@ export default function AdminFinance() {
   const moneyIn = data.totalRevenue;
   const moneyOut = data.totalCashOut;
   const isProfit = data.netProfit >= 0;
-  const paidEntries = ledger.filter((e) => e.paid);
   const financeMonths = monthlyFinance(data, ledger);
   const currentMonth = financeMonths[financeMonths.length - 1];
   const filteredEntries = [...ledger]

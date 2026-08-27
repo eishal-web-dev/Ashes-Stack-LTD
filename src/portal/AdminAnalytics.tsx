@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getMe, Me } from './api';
 import AdminLayout from './AdminLayout';
@@ -137,8 +137,6 @@ export default function AdminAnalytics() {
       await load(30);
     }).catch(() => navigate('/login'));
   }, [navigate]);
-
-  useMemo(() => data?.daily || [], [data]);
 
   if (loading || !data) return <AdminLayout user={user}><BlobLoaderCentered /></AdminLayout>;
   const s = data.summary;

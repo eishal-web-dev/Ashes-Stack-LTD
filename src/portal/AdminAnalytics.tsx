@@ -125,6 +125,61 @@ function Funnel({ steps }: { steps: { label: string; value: number; color: strin
   </div>;
 }
 
+function DistributionChart({ eyebrow, title, rows, totalLabel }: { eyebrow: string; title: string; rows: Row[]; totalLabel: string }) {
+  const colors = ['#d8ff62', '#55d9ff', '#ad77ff', '#ffb766', '#ff6f91'];
+  const visible = rows.slice(0, 5);
+  const total = visible.reduce((sum, row) => sum + row.count, 0);
+  let cursor = 0;
+  const stops = visible.map((row, index) => {
+    const start = cursor;
+    cursor += total ? (row.count / total) * 100 : 0;
+    return colors[index] + ' ' + start + '% ' + cursor + '%';
+  });
+  const gradient = total ? 'conic-gradient(' + stops.join(',') + ')' : 'rgba(255,255,255,.05)';
+
+  return <div className="portal-card" style={{
+    margin: 0,
+    background: 'radial-gradient(circle at 50% 40%,rgba(173,119,255,.07),transparent 48%),linear-gradient(145deg,rgba(255,255,255,.028),rgba(255,255,255,.006))',
+    borderColor: 'rgba(214,209,198,.11)',
+    overflow: 'hidden',
+  }}>
+    <div className="portal-eyebrow">{eyebrow}</div>
+    <h2 className="portal-h2" style={{ margin: '7px 0 0' }}>{title}</h2>
+    {total === 0 ? <div className="portal-empty" style={{ minHeight: 260, display: 'grid', placeItems: 'center' }}>Not enough data yet.</div> : (
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(150px,.85fr) minmax(170px,1.15fr)', gap: 24, alignItems: 'center', marginTop: 24 }}>
+        <div style={{
+          width: 'min(170px,100%)',
+          aspectRatio: '1',
+          borderRadius: '50%',
+          background: gradient,
+          padding: 16,
+          margin: '0 auto',
+          boxShadow: '0 0 44px rgba(173,119,255,.10)',
+        }}>
+          <div style={{ width: '100%', height: '100%', borderRadius: '50%', background: '#101012', display: 'grid', placeItems: 'center', textAlign: 'center', boxShadow: 'inset 0 0 24px rgba(0,0,0,.35)' }}>
+            <div>
+              <div style={{ color: '#77736c', fontSize: '.54rem', letterSpacing: '.1em', textTransform: 'uppercase' }}>{totalLabel}</div>
+              <b style={{ display: 'block', color: '#f3f1eb', fontSize: '1.35rem', marginTop: 5 }}>{num(total)}</b>
+            </div>
+          </div>
+        </div>
+        <div style={{ display: 'grid', gap: 13 }}>
+          {visible.map((row, index) => {
+            const percent = Math.round((row.count / total) * 100);
+            return <div key={row.label}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, fontSize: '.66rem', marginBottom: 6 }}>
+                <span style={{ color: '#aaa69e', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}><i style={{ display: 'inline-block', width: 7, height: 7, borderRadius: 99, background: colors[index], marginRight: 7, boxShadow: '0 0 10px ' + colors[index] }} />{row.label}</span>
+                <b style={{ color: colors[index] }}>{percent}%</b>
+              </div>
+              <div style={{ height: 4, borderRadius: 99, background: 'rgba(255,255,255,.05)', overflow: 'hidden' }}><div style={{ width: percent + '%', height: '100%', background: colors[index] }} /></div>
+            </div>;
+          })}
+        </div>
+      </div>
+    )}
+  </div>;
+}
+
 export default function AdminAnalytics() {
   const navigate = useNavigate();
   const [user, setUser] = useState<Me | null>(null);
@@ -295,6 +350,18 @@ export default function AdminAnalytics() {
         </div>
         <ActivityChart daily={data.daily} />
       </div>
+    </div>
+
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'end', gap: 16, margin: '30px 0 14px', flexWrap: 'wrap' }}>
+      <div>
+        <div className="portal-eyebrow">AUDIENCE INTELLIGENCE</div>
+        <h2 className="portal-h2" style={{ margin: '7px 0 0', fontSize: '1.15rem' }}>Who arrives and how they enter</h2>
+      </div>
+      <span style={{ color: '#5f5c57', fontSize: '.6rem', letterSpacing: '.08em' }}>LIVE DISTRIBUTION</span>
+    </div>
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(100%,360px),1fr))', gap: 16, marginBottom: 20 }}>
+      <DistributionChart eyebrow="ACQUISITION" title="Traffic source mix" rows={data.topSources} totalLabel="VISITS" />
+      <DistributionChart eyebrow="AUDIENCE" title="Device distribution" rows={data.topDevices} totalLabel="SESSIONS" />
     </div>
 
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(100%,320px),1fr))', gap: 16, marginBottom: 20 }}>

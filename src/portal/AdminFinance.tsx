@@ -9,9 +9,157 @@ type DashboardSlice = {
   totalRevenue: number; totalExpenses: number; totalMarketing: number;
   totalCashOut: number; netProfit: number; accountsPayable: number; cashOnHand: number;
   manualIncome: number; pendingIncome: number;
+  monthlyEarnings: { key: string; label: string; amount: number }[];
 };
 
 function pkr(n: number) { return `PKR ${Math.round(n).toLocaleString()}`; }
+
+
+type FinanceMonth = { key: string; label: string; income: number; out: number; net: number };
+
+function monthlyFinance(data: DashboardSlice, ledger: LedgerEntry[]): FinanceMonth[] {
+  const invoiceIncome = new Map(data.monthlyEarnings.map((month) => [month.key, month.amount]));
+  const months: FinanceMonth[] = [];
+  const now = new Date();
+
+  for (let offset = 5; offset >= 0; offset -= 1) {
+    const date = new Date(now.getFullYear(), now.getMonth() - offset, 1);
+    const key = date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0');
+    const entries = ledger.filter((entry) => entry.paid && entry.date.slice(0, 7) === key);
+    const directIncome = entries
+      .filter((entry) => entry.category === 'income')
+      .reduce((sum, entry) => sum + entry.amount, 0);
+    const out = entries
+      .filter((entry) => entry.category !== 'income')
+      .reduce((sum, entry) => sum + entry.amount, 0);
+    const income = (invoiceIncome.get(key) || 0) + directIncome;
+
+    months.push({
+      key,
+      label: date.toLocaleString('en-GB', { month: 'short' }),
+      income,
+      out,
+      net: income - out,
+    });
+  }
+
+  return months;
+}
+
+function FinancialCharts({ months, expenses, marketing }: {
+  months: FinanceMonth[];
+  expenses: number;
+  marketing: number;
+}) {
+  const maxValue = Math.max(1, ...months.flatMap((month) => [month.income, month.out]));
+  const plotTop = 18;
+  const plotHeight = 150;
+  const baseline = plotTop + plotHeight;
+  const barWidth = 18;
+  const groupWidth = 100;
+  const hasTrendData = months.some((month) => month.income > 0 || month.out > 0);
+  const spendTotal = expenses + marketing;
+  const categories = [
+    { label: 'Operations', value: expenses, color: '#66ebf2' },
+    { label: 'Marketing', value: marketing, color: '#ffb766' },
+  ];
+  const strongestMonth = months.reduce((best, month) => month.net > best.net ? month : best, months[0]);
+
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.65fr) minmax(250px, .85fr)', gap: 16, marginBottom: 20 }}>
+      <div className="portal-card" style={{ margin: 0, overflow: 'hidden' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 14, alignItems: 'flex-start', marginBottom: 18, flexWrap: 'wrap' }}>
+          <div>
+            <div className="portal-eyebrow">6-MONTH VIEW</div>
+            <h2 className="portal-h2" style={{ margin: '6px 0 4px' }}>Cash flow trend</h2>
+            <div style={{ color: '#77736c', fontSize: '.68rem' }}>Received income compared with money actually paid out.</div>
+          </div>
+          <div style={{ display: 'flex', gap: 14, fontSize: '.66rem', color: '#9b978f' }}>
+            <span><i style={{ display: 'inline-block', width: 8, height: 8, borderRadius: 2, background: '#d8ff62', marginRight: 6 }} />Money in</span>
+            <span><i style={{ display: 'inline-block', width: 8, height: 8, borderRadius: 2, background: '#ff496c', marginRight: 6 }} />Money out</span>
+          </div>
+        </div>
+        {hasTrendData ? (
+          <>
+            <svg viewBox="0 0 620 215" role="img" aria-label="Money in and money out for the last six months" style={{ display: 'block', width: '100%', minHeight: 210 }}>
+              {[0, .5, 1].map((ratio) => {
+                const y = plotTop + plotHeight * ratio;
+                return <line key={ratio} x1="12" y1={y} x2="608" y2={y} stroke="rgba(214,209,198,.10)" strokeWidth="1" />;
+              })}
+              {months.map((month, index) => {
+                const x = 38 + index * groupWidth;
+                const incomeHeight = (month.income / maxValue) * plotHeight;
+                const outHeight = (month.out / maxValue) * plotHeight;
+                return (
+                  <g key={month.key}>
+                    <rect x={x} y={baseline - incomeHeight} width={barWidth} height={incomeHeight} rx="5" fill="#d8ff62" />
+                    <rect x={x + 23} y={baseline - outHeight} width={barWidth} height={outHeight} rx="5" fill="#ff496c" />
+                    <text x={x + 20} y="195" textAnchor="middle" fill="#8c8982" fontSize="11" fontWeight="700">{month.label}</text>
+                  </g>
+                );
+              })}
+            </svg>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 14, borderTop: '1px solid rgba(214,209,198,.1)', paddingTop: 14, flexWrap: 'wrap' }}>
+              <span style={{ color: '#77736c', fontSize: '.68rem' }}>Best net month</span>
+              <strong style={{ color: strongestMonth.net >= 0 ? '#d8ff62' : '#ff8fa3', fontSize: '.75rem' }}>
+                {strongestMonth.label}: {strongestMonth.net >= 0 ? '+' : '−'}{pkr(Math.abs(strongestMonth.net))}
+              </strong>
+            </div>
+          </>
+        ) : (
+          <div className="portal-empty" style={{ minHeight: 210, display: 'grid', placeItems: 'center' }}>
+            Add income or costs to start your monthly graph.
+          </div>
+        )}
+      </div>
+
+      <div className="portal-card" style={{ margin: 0 }}>
+        <div className="portal-eyebrow">SPENDING MIX</div>
+        <h2 className="portal-h2" style={{ margin: '6px 0 4px' }}>Where money went</h2>
+        <div style={{ color: '#77736c', fontSize: '.68rem', marginBottom: 26 }}>Only settled costs are included.</div>
+        {spendTotal > 0 ? (
+          <>
+            <div style={{
+              width: 132,
+              height: 132,
+              borderRadius: '50%',
+              margin: '0 auto 26px',
+              background: 'conic-gradient(#66ebf2 0 ' + ((expenses / spendTotal) * 100) + '%, #ffb766 0 100%)',
+              display: 'grid',
+              placeItems: 'center',
+              boxShadow: '0 0 38px rgba(102,235,242,.08)',
+            }}>
+              <div style={{ width: 88, height: 88, borderRadius: '50%', background: '#111113', display: 'grid', placeItems: 'center', textAlign: 'center' }}>
+                <div>
+                  <div style={{ fontSize: '.56rem', color: '#77736c', textTransform: 'uppercase', letterSpacing: '.08em' }}>Total</div>
+                  <strong style={{ color: '#eceae4', fontSize: '.72rem' }}>{pkr(spendTotal)}</strong>
+                </div>
+              </div>
+            </div>
+            {categories.map((category) => {
+              const percent = spendTotal ? Math.round((category.value / spendTotal) * 100) : 0;
+              return (
+                <div key={category.label} style={{ marginTop: 16 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, fontSize: '.68rem', marginBottom: 7 }}>
+                    <span style={{ color: '#a19e97' }}>{category.label}</span>
+                    <strong style={{ color: category.color }}>{percent}%</strong>
+                  </div>
+                  <div style={{ height: 7, borderRadius: 99, background: 'rgba(214,209,198,.08)', overflow: 'hidden' }}>
+                    <div style={{ width: percent + '%', height: '100%', borderRadius: 99, background: category.color }} />
+                  </div>
+                </div>
+              );
+            })}
+          </>
+        ) : (
+          <div className="portal-empty" style={{ minHeight: 210, display: 'grid', placeItems: 'center', textAlign: 'center' }}>
+            Mark costs as paid to see the breakdown.
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 export default function AdminFinance() {
   const navigate = useNavigate();
@@ -106,6 +254,7 @@ export default function AdminFinance() {
   const isProfit = data.netProfit >= 0;
   const paidEntries = ledger.filter((e) => e.paid);
   const unpaidEntries = ledger.filter((e) => !e.paid);
+  const financeMonths = monthlyFinance(data, ledger);
 
   return (
     <AdminLayout user={user}>
@@ -166,6 +315,12 @@ export default function AdminFinance() {
           />
         </div>
       </div>
+
+      <FinancialCharts
+        months={financeMonths}
+        expenses={data.totalExpenses}
+        marketing={data.totalMarketing}
+      />
 
       <div className="portal-card" style={{ borderColor: 'rgba(216,255,98,.3)' }}>
         <h2 className="portal-h2" style={{ color: '#d8ff62' }}>Log money in</h2>

@@ -40,7 +40,7 @@ export default function Nav(){
       <span>AVAILABLE FOR PROJECTS</span>
     </div>
     <nav className={open?'open':''}>
-      {[['Work','/work'],['Hire Ashes','/hire/3d-websites'],['Brain','/workspace'],['Blog','/blog'],['Guides','/guides'],['About','/about'],['Contact','/contact']].map(([a,b])=><Link key={a} to={b} onClick={()=>setOpen(false)}>{a}</Link>)}
+      {[['Work','/work'],['Hire Ashes','/hire/3d-websites'],['Brain','/workspace'],['Connect','/connect'],['Blog','/blog'],['Guides','/guides'],['About','/about'],['Contact','/contact']].map(([a,b])=><Link key={a} to={b} onClick={()=>setOpen(false)}>{a}</Link>)}
     </nav>
     {authChecked && user ? (
       <div style={{display:'flex',alignItems:'center',gap:8}}>

@@ -19,6 +19,7 @@ export default function WorkspaceLogin() {
 
   function safeNext() {
     const next = searchParams.get('next') || '';
+    if (next === '/connect') return next;
     if (next.startsWith('/oauth/authorize?')) return next;
     if (next.startsWith('/api/account-google?sso=issue&return=')) return next;
     return '';

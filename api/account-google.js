@@ -13,7 +13,7 @@ import { recordAnalytics } from "../lib/analytics.js";
 
 const client = process.env.GOOGLE_CLIENT_ID ? new OAuth2Client(process.env.GOOGLE_CLIENT_ID) : null;
 const SAYIT_CALLBACK = "https://aireply-dusky.vercel.app/auth/ashes/callback";
-const CONNECT_CALLBACK = "https://ashes-connect.vercel.app/auth/ashes/callback";
+const CONNECT_CALLBACK = "https://ashes-connect-app-ash-d0707d97.vercel.app/auth/ashes/callback";
 
 function allowedReturnUrl(value) {
   return [SAYIT_CALLBACK, CONNECT_CALLBACK].includes(value) ? value : "";

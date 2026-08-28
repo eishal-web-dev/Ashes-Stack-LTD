@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
-const CONNECT_CALLBACK = 'https://ashes-connect.vercel.app/auth/ashes/callback';
+const CONNECT_CALLBACK = 'https://ashes-connect-app-ash-d0707d97.vercel.app/auth/ashes/callback';
 
 export default function ConnectPage() {
   useEffect(() => {

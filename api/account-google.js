@@ -14,7 +14,7 @@ import { recordAnalytics } from "../lib/analytics.js";
 const client = process.env.GOOGLE_CLIENT_ID ? new OAuth2Client(process.env.GOOGLE_CLIENT_ID) : null;
 const SAYIT_CALLBACK = "https://aireply-dusky.vercel.app/auth/ashes/callback";
 const CONNECT_CALLBACK = "https://ashes-connect-app-ash-d0707d97.vercel.app/auth/ashes/callback";
-const ROBOLAB_CALLBACK = "https://robotsimulation.vercel.app/workspace";
+const ROBOLAB_CALLBACK = "https://robotsimulation.vercel.app/auth/ashes/callback";
 const SSO_ROOT_SECRET = process.env.WORKOS_JWT_SECRET || `${process.env.JWT_SECRET || "dev-secret-change-me"}:ashes-work-os`;
 
 function allowedReturnUrl(value) {
@@ -76,9 +76,6 @@ async function handleSsoConsume(req, res) {
     email: record.email,
   };
 
-  // RoboLab keeps its existing Supabase project/RLS layer. A deterministic,
-  // app-specific high-entropy password lets the verified Ashes identity open
-  // the same RoboLab account on every device without exposing any Ashes secret.
   if (code.startsWith("robolab.")) {
     payload.appPassword = robolabPassword(record.userId);
   }

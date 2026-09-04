@@ -15,9 +15,18 @@ const client = process.env.GOOGLE_CLIENT_ID ? new OAuth2Client(process.env.GOOGL
 const SAYIT_CALLBACK = "https://aireply-dusky.vercel.app/auth/ashes/callback";
 const CONNECT_CALLBACK = "https://ashes-connect-app-ash-d0707d97.vercel.app/auth/ashes/callback";
 const ROBOLAB_CALLBACK = "https://robotsimulation.vercel.app/workspace";
+const SSO_ROOT_SECRET = process.env.WORKOS_JWT_SECRET || `${process.env.JWT_SECRET || "dev-secret-change-me"}:ashes-work-os`;
 
 function allowedReturnUrl(value) {
   return [SAYIT_CALLBACK, CONNECT_CALLBACK, ROBOLAB_CALLBACK].includes(value) ? value : "";
+}
+
+function robolabPassword(userId) {
+  const digest = crypto
+    .createHmac("sha256", SSO_ROOT_SECRET)
+    .update(`robolab:${String(userId)}`)
+    .digest("base64url");
+  return `Rl!${digest}`;
 }
 
 async function handleSsoIssue(req, res) {
@@ -34,7 +43,8 @@ async function handleSsoIssue(req, res) {
 
   await dbConnect();
   await WorkOSSsoCode.deleteMany({ expiresAt: { $lte: new Date() } });
-  const code = crypto.randomBytes(32).toString("hex");
+  const prefix = returnUrl === ROBOLAB_CALLBACK ? "robolab." : "";
+  const code = `${prefix}${crypto.randomBytes(32).toString("hex")}`;
   await WorkOSSsoCode.create({
     code,
     userId: session.id,
@@ -60,11 +70,20 @@ async function handleSsoConsume(req, res) {
   });
   if (!record) return res.status(401).json({ error: "Invalid or expired SSO code" });
 
-  return res.status(200).json({
+  const payload = {
     id: record.userId.toString(),
     name: record.name,
     email: record.email,
-  });
+  };
+
+  // RoboLab keeps its existing Supabase project/RLS layer. A deterministic,
+  // app-specific high-entropy password lets the verified Ashes identity open
+  // the same RoboLab account on every device without exposing any Ashes secret.
+  if (code.startsWith("robolab.")) {
+    payload.appPassword = robolabPassword(record.userId);
+  }
+
+  return res.status(200).json(payload);
 }
 
 async function handleGoogle(req, res) {

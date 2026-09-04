@@ -3,12 +3,16 @@ import { useNavigate } from 'react-router-dom';
 import { getMe, Me } from './api';
 import AdminLayout from './AdminLayout';
 import { BlobLoaderCentered } from '../components/BlobLoader';
+import { DOC_TYPES, buildMeta } from './docConfig';
 import './admin-team-responsive.css';
 
 type TeamMember = { _id: string; name: string; email: string; taskCounts: { todo: number; in_progress: number; done: number } };
 type TaskRow = { _id: string; title: string; status: string; assignedTo: { _id: string; name: string }; createdAt: string };
 type ClientRow = { _id: string; name: string; company?: string };
 type AccountRow = { _id: string; name: string; email: string; role: string };
+type DocRow = { _id: string; title: string; type: string; status: string; createdAt: string };
+
+const OFFER_CONFIG = DOC_TYPES.find((d) => d.type === 'offer_letter')!;
 
 async function fetchArray<T>(url: string, label: string): Promise<T[]> {
   const controller = new AbortController();
@@ -42,6 +46,42 @@ export default function AdminTeam() {
   const [showAssign, setShowAssign] = useState(false);
   const [form, setForm] = useState({ title: '', description: '', assignedTo: '', relatedClient: '', dueDate: '' });
   const [saving, setSaving] = useState(false);
+
+  const [showOffer, setShowOffer] = useState(false);
+  const [offerTeamId, setOfferTeamId] = useState('');
+  const [offerValues, setOfferValues] = useState<Record<string, string>>({});
+  const [offerSending, setOfferSending] = useState(false);
+  const [offerMessage, setOfferMessage] = useState('');
+  const [offerDocs, setOfferDocs] = useState<DocRow[]>([]);
+
+  async function loadOfferDocs(teamId: string) {
+    if (!teamId) { setOfferDocs([]); return; }
+    const d = await fetchArray<DocRow>(`/api/documents?clientId=${teamId}`, 'Documents').catch(() => []);
+    setOfferDocs(d);
+  }
+
+  async function sendOfferLetter(e: FormEvent) {
+    e.preventDefault();
+    if (!offerTeamId) return;
+    setOfferSending(true);
+    setOfferMessage('');
+    const meta = buildMeta(OFFER_CONFIG.fields, offerValues);
+    const res = await fetch('/api/admin/send-document', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ clientId: offerTeamId, type: 'offer_letter', meta }),
+    });
+    const data = await res.json();
+    setOfferSending(false);
+    if (!res.ok) {
+      setOfferMessage(`Error: ${data.error}`);
+    } else {
+      const memberName = team.find((t) => t._id === offerTeamId)?.name || 'them';
+      setOfferMessage(`${data.title} sent to ${memberName}'s portal${data.emailSent ? ' and emailed to them.' : '.'}`);
+      setOfferValues({});
+      loadOfferDocs(offerTeamId);
+    }
+  }
 
   async function loadAll() {
     const requests = await Promise.allSettled([
@@ -192,11 +232,94 @@ export default function AdminTeam() {
                     <td>{t.taskCounts.todo}</td>
                     <td>{t.taskCounts.in_progress}</td>
                     <td>{t.taskCounts.done}</td>
-                    <td><button className="pill-btn tiny solid" onClick={() => { setForm({ ...form, assignedTo: t._id }); setShowAssign(true); }}>Assign task</button></td>
+                    <td style={{ display: 'flex', gap: 6 }}>
+                      <button className="pill-btn tiny solid" onClick={() => { setForm({ ...form, assignedTo: t._id }); setShowAssign(true); }}>Assign task</button>
+                      <button className="pill-btn tiny" onClick={() => { setOfferTeamId(t._id); setShowOffer(true); loadOfferDocs(t._id); }}>Send offer</button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
+          </div>
+        )}
+      </div>
+
+      <div className="portal-card">
+        <div className="admin-team-toolbar" style={{ marginBottom: showOffer ? 20 : 0 }}>
+          <div>
+            <h2 className="portal-h2" style={{ margin: 0 }}>Send an offer letter</h2>
+            <p className="portal-sub" style={{ margin: '4px 0 0' }}>Job, internship, or anything else — fill in the details, they get a real PDF in their portal to download.</p>
+          </div>
+          <button className="pill-btn" onClick={() => setShowOffer((v) => !v)}>{showOffer ? 'Cancel' : '+ New offer letter'}</button>
+        </div>
+
+        {showOffer && (
+          <div style={{ marginTop: 16 }}>
+            {team.length === 0 ? (
+              <div className="portal-empty">No team members yet — add one from the Clients page first.</div>
+            ) : (
+              <form onSubmit={sendOfferLetter}>
+                <div className="portal-field" style={{ marginBottom: 4 }}>
+                  <label>Send to</label>
+                  <select
+                    required
+                    value={offerTeamId}
+                    onChange={(e) => { setOfferTeamId(e.target.value); setOfferMessage(''); loadOfferDocs(e.target.value); }}
+                  >
+                    <option value="">Select a team member…</option>
+                    {team.map((t) => <option key={t._id} value={t._id}>{t.name} · {t.email}</option>)}
+                  </select>
+                </div>
+
+                <div className="portal-grid-2">
+                  {OFFER_CONFIG.fields.map((f) => (
+                    <div className="portal-field" key={f.key} style={f.type === 'paragraph' ? { gridColumn: '1 / -1' } : undefined}>
+                      <label>{f.label}</label>
+                      {f.type === 'paragraph' ? (
+                        <textarea
+                          rows={3}
+                          value={offerValues[f.key] ?? ''}
+                          onChange={(e) => setOfferValues({ ...offerValues, [f.key]: e.target.value })}
+                          placeholder={f.placeholder}
+                          style={{
+                            width: '100%', padding: '12px 14px', borderRadius: 10,
+                            background: '#0a0a0b', border: '1px solid rgba(214,209,198,.2)', color: '#eceae4',
+                            font: '400 .8rem "Courier New", monospace', resize: 'vertical',
+                          }}
+                        />
+                      ) : (
+                        <input
+                          type={f.type === 'date' ? 'date' : 'text'}
+                          placeholder={f.placeholder}
+                          value={offerValues[f.key] ?? ''}
+                          onChange={(e) => setOfferValues({ ...offerValues, [f.key]: e.target.value })}
+                        />
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                {offerMessage && <div className={offerMessage.startsWith('Error') ? 'portal-error' : 'portal-success'}>{offerMessage}</div>}
+
+                <button className="pill-btn solid" disabled={offerSending}>
+                  {offerSending ? 'Sending…' : 'Send offer letter'}
+                </button>
+
+                {offerTeamId && offerDocs.length > 0 && (
+                  <div style={{ marginTop: 22, borderTop: '1px solid rgba(214,209,198,.14)', paddingTop: 16 }}>
+                    <p className="portal-sub" style={{ marginTop: 0 }}>Already sent to this person:</p>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      {offerDocs.map((d) => (
+                        <div key={d._id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '.75rem' }}>
+                          <span>{d.title} <span style={{ color: '#8c8982' }}>· {new Date(d.createdAt).toLocaleDateString('en-GB')}</span></span>
+                          <a className="pill-btn tiny" href={`/api/documents/${d._id}/download`} target="_blank" rel="noreferrer">Download</a>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </form>
+            )}
           </div>
         )}
       </div>

@@ -15,6 +15,22 @@ export type DocTypeConfig = {
   fields: FieldDef[];
 };
 
+export function buildMeta(fields: FieldDef[], values: Record<string, string>): Record<string, unknown> {
+  const meta: Record<string, unknown> = {};
+  for (const f of fields) {
+    const v = values[f.key];
+    if (v === undefined || v === '') continue;
+    if (f.type === 'lines') {
+      meta[f.key] = v.split('\n').map((l) => l.trim()).filter(Boolean);
+    } else if (f.type === 'number') {
+      meta[f.key] = Number(v);
+    } else {
+      meta[f.key] = v;
+    }
+  }
+  return meta;
+}
+
 export const DOC_TYPES: DocTypeConfig[] = [
   {
     type: 'welcome',
@@ -83,6 +99,22 @@ export const DOC_TYPES: DocTypeConfig[] = [
     fields: [
       { key: 'message', label: 'Message', type: 'paragraph' },
       { key: 'questions', label: 'Questions (one line per bullet)', type: 'lines' },
+    ],
+  },
+  {
+    type: 'offer_letter',
+    label: 'Offer Letter',
+    description: 'Job, internship, or any other offer — sent straight to their portal as a downloadable PDF.',
+    fields: [
+      { key: 'position', label: 'Position / role', type: 'text', placeholder: 'e.g. Frontend Developer Intern' },
+      { key: 'offerType', label: 'Offer type', type: 'text', placeholder: 'e.g. Internship, Full-Time Job, Contract' },
+      { key: 'startDate', label: 'Start date', type: 'date' },
+      { key: 'duration', label: 'Duration (optional, e.g. for internships)', type: 'text', placeholder: 'e.g. 3 months' },
+      { key: 'compensation', label: 'Compensation', type: 'text', placeholder: 'e.g. PKR 40,000/month, or Unpaid' },
+      { key: 'location', label: 'Location', type: 'text', placeholder: 'e.g. Remote, Onsite, Hybrid' },
+      { key: 'reportsTo', label: 'Reports to (optional)', type: 'text', placeholder: 'e.g. Project Lead' },
+      { key: 'responseDeadline', label: 'Please respond by (optional)', type: 'date' },
+      { key: 'additionalTerms', label: 'Additional terms (optional)', type: 'paragraph', placeholder: 'Probation period, working hours, confidentiality, anything else you want stated' },
     ],
   },
 ];

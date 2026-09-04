@@ -4,10 +4,10 @@ import { getUserFromReq } from "../../../lib/auth.js";
 import { logActivity } from "../../../lib/logActivity.js";
 
 async function doDownload(req, res, doc, authUser) {
-  if (authUser.role === "client" && doc.client.toString() !== authUser.id) {
+  if (authUser.role !== "admin" && doc.client.toString() !== authUser.id) {
     return res.status(403).json({ error: "Forbidden" });
   }
-  if (doc.status === "sent" && authUser.role === "client") {
+  if (doc.status === "sent" && authUser.role !== "admin") {
     doc.status = "downloaded";
     await doc.save();
     await logActivity(doc.client, "document_downloaded", { type: doc.type, title: doc.title }, authUser.id);

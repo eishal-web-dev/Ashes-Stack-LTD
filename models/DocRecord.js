@@ -13,6 +13,7 @@ const DocRecordSchema = new mongoose.Schema(
         "monthly_report",
         "fulfillment",
         "feedback_request",
+        "offer_letter",
         "custom_file",
       ],
       required: true,

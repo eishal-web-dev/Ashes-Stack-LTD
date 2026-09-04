@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { getMe, Me } from './api';
-import { DOC_TYPES, FieldDef } from './docConfig';
+import { DOC_TYPES, FieldDef, buildMeta } from './docConfig';
 import { BlobLoaderCentered } from '../components/BlobLoader';
 import AdminLayout from './AdminLayout';
 
@@ -26,22 +26,6 @@ const ACTION_LABELS: Record<string, string> = {
   payment_marked_unpaid: 'Invoice marked unpaid',
   review_submitted: 'Left a review',
 };
-
-function buildMeta(fields: FieldDef[], values: Record<string, string>): Record<string, unknown> {
-  const meta: Record<string, unknown> = {};
-  for (const f of fields) {
-    const v = values[f.key];
-    if (v === undefined || v === '') continue;
-    if (f.type === 'lines') {
-      meta[f.key] = v.split('\n').map((l) => l.trim()).filter(Boolean);
-    } else if (f.type === 'number') {
-      meta[f.key] = Number(v);
-    } else {
-      meta[f.key] = v;
-    }
-  }
-  return meta;
-}
 
 export default function AdminClientDetail() {
   const { id } = useParams();

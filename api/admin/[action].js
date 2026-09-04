@@ -20,6 +20,7 @@ const TITLES = {
   monthly_report: "Monthly Progress Report",
   fulfillment: "Fulfillment & Handover Confirmation",
   feedback_request: "Feedback Request",
+  offer_letter: "Offer Letter",
 };
 
 const MAX_BASE64_LENGTH = 6_000_000; // ~4.3MB of actual file data
@@ -79,32 +80,52 @@ async function doSendDocument(req, res, authUser) {
   const client = await User.findById(clientId);
   if (!client) return res.status(404).json({ error: "Client not found" });
 
-  const pdfBytes = await generateDocPdf(type, client, meta || {});
+  const docMeta = { ...(meta || {}) };
+  if (type === "offer_letter" && !docMeta.issuedByName) {
+    docMeta.issuedByName = authUser.name;
+  }
+
+  const pdfBytes = await generateDocPdf(type, client, docMeta);
   const pdfBase64 = Buffer.from(pdfBytes).toString("base64");
+
+  const title = type === "offer_letter" && docMeta.position
+    ? `Offer Letter — ${docMeta.position}`
+    : (TITLES[type] || type);
 
   const doc = await DocRecord.create({
     client: client._id,
     type,
-    title: TITLES[type] || type,
-    meta: meta || {},
+    title,
+    meta: docMeta,
     pdfBase64,
     sentBy: authUser.id,
   });
 
-  const emailResult = await sendMail({
-    to: client.email,
-    subject: `New document from ASHES: ${doc.title}`,
-    html: `<p>Hi ${client.name},</p>
+  const isOffer = type === "offer_letter";
+  const emailSubject = isOffer
+    ? `Your offer from ASHES STACK: ${doc.title}`
+    : `New document from ASHES: ${doc.title}`;
+  const emailBody = isOffer
+    ? `<p>Hi ${client.name},</p>
+      <p>Congratulations! We've sent you <b>${doc.title}</b> — it's attached to this email as a PDF, and always available to download from
+      <a href="https://ashes-stack.vercel.app/portal">your portal</a>.</p>
+      <p>— ASHES STACK</p>`
+    : `<p>Hi ${client.name},</p>
       <p>A new document — <b>${doc.title}</b> — has been added to your ASHES Client Portal.</p>
       <p>It's attached to this email as a PDF, and always available at
       <a href="https://ashes-stack.vercel.app/portal">your portal</a>.</p>
-      <p>— ASHES</p>`,
+      <p>— ASHES</p>`;
+
+  const emailResult = await sendMail({
+    to: client.email,
+    subject: emailSubject,
+    html: emailBody,
     attachments: [{ filename: `${doc.title.replace(/[^a-z0-9]/gi, "_")}.pdf`, content: Buffer.from(pdfBase64, "base64") }],
   });
 
   res.status(201).json({ id: doc._id, title: doc.title, type: doc.type, createdAt: doc.createdAt, emailSent: emailResult.sent });
   await logActivity(client._id, "document_sent", { type: doc.type, title: doc.title, emailSent: emailResult.sent }, authUser.id);
-  await notify(client._id, { type: "document_sent", title: "New document", message: doc.title, link: "/portal" });
+  await notify(client._id, { type: "document_sent", title: isOffer ? "New offer letter" : "New document", message: doc.title, link: client.role === "team" ? "/team" : "/portal" });
 }
 
 async function doCreateUser(req, res, authUser) {

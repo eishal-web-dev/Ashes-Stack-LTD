@@ -9,7 +9,7 @@ export default async function handler(req, res) {
 
   if (req.method === "GET") {
     let filter = {};
-    if (authUser.role === "client") {
+    if (authUser.role === "client" || authUser.role === "team") {
       filter.client = authUser.id;
     } else if (req.query.clientId) {
       filter.client = req.query.clientId;

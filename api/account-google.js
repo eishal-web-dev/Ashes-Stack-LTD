@@ -7,6 +7,7 @@ import WorkOSSsoCode from "../models/WorkOSSsoCode.js";
 import {
   getWorkOSUserFromReq,
   setWorkOSCookie,
+  signRoboLabSession,
   signWorkOSSession,
 } from "../lib/workspaceAuth.js";
 import { recordAnalytics } from "../lib/analytics.js";
@@ -78,6 +79,12 @@ async function handleSsoConsume(req, res) {
 
   if (code.startsWith("robolab.")) {
     payload.appPassword = robolabPassword(record.userId);
+    payload.robolabToken = signRoboLabSession({
+      id: record.userId.toString(),
+      name: record.name || "",
+      email: record.email,
+    });
+    payload.expiresAt = Date.now() + 7 * 24 * 60 * 60 * 1000;
   }
 
   return res.status(200).json(payload);

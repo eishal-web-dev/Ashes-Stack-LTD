@@ -14,9 +14,10 @@ import { recordAnalytics } from "../lib/analytics.js";
 const client = process.env.GOOGLE_CLIENT_ID ? new OAuth2Client(process.env.GOOGLE_CLIENT_ID) : null;
 const SAYIT_CALLBACK = "https://aireply-dusky.vercel.app/auth/ashes/callback";
 const CONNECT_CALLBACK = "https://ashes-connect-app-ash-d0707d97.vercel.app/auth/ashes/callback";
+const ROBOLAB_CALLBACK = "https://circuit-bot-forge.lovable.app/workspace";
 
 function allowedReturnUrl(value) {
-  return [SAYIT_CALLBACK, CONNECT_CALLBACK].includes(value) ? value : "";
+  return [SAYIT_CALLBACK, CONNECT_CALLBACK, ROBOLAB_CALLBACK].includes(value) ? value : "";
 }
 
 async function handleSsoIssue(req, res) {

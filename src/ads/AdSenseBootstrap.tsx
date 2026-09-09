@@ -5,7 +5,7 @@ const ADSENSE_CLIENT = 'ca-pub-9749846832027432';
 export default function AdSenseBootstrap() {
   useEffect(() => {
     const id = 'ashes-adsense-script';
-    if (document.getElementById(id)) return;
+    if (document.querySelector(`script[src*="adsbygoogle.js?client=${ADSENSE_CLIENT}"]`)) return;
     const script = document.createElement('script');
     script.id = id;
     script.async = true;

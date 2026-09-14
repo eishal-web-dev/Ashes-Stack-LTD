@@ -16,7 +16,7 @@ type Article = {
 const articles: Record<string, Article> = {
   'convert-product-image-to-3d-model': {
     commerce: true,
-    eyebrow: 'IMAGE TO 3D · 7 MIN READ',
+    eyebrow: 'IMAGE TO 3D · 3 MIN READ',
     title: 'How to convert a product image into a 3D model for ecommerce',
     description: 'Learn how product image-to-3D works, what makes a store-ready 3D model, and how to add an interactive 3D product viewer to an ecommerce store.',
     keywords: 'convert product image to 3D, image to 3D model, product photo to 3D, ecommerce 3D model, AI 3D product generator, interactive product viewer',
@@ -36,7 +36,7 @@ const articles: Record<string, Article> = {
   },
   '3d-product-viewer-for-shopify': {
     commerce: true,
-    eyebrow: 'SHOPIFY 3D · 6 MIN READ',
+    eyebrow: 'SHOPIFY 3D · 3 MIN READ',
     title: '3D product viewer for Shopify: what merchants need to know',
     description: 'A practical guide to adding a fast interactive 3D product viewer to Shopify, preparing GLB assets, protecting page speed and measuring shopper engagement.',
     keywords: '3D product viewer Shopify, Shopify 3D models, add 3D model to Shopify, interactive 3D Shopify products, Shopify product media GLB',
@@ -56,7 +56,7 @@ const articles: Record<string, Article> = {
   },
   '3d-product-photography-vs-interactive-3d': {
     commerce: true,
-    eyebrow: 'ECOMMERCE VISUALS · 5 MIN READ',
+    eyebrow: 'ECOMMERCE VISUALS · 3 MIN READ',
     title: 'Product photography vs interactive 3D: which should your store use?',
     description: 'Compare ecommerce product photography with interactive 3D models, including cost, speed, shopper experience and the best hybrid product-page strategy.',
     keywords: '3D product photography, interactive 3D ecommerce, product photography vs 3D, 360 product viewer, ecommerce product visuals',
@@ -75,7 +75,7 @@ const articles: Record<string, Article> = {
   },
   'how-3d-commerce-helps-furniture-stores': {
     commerce: true,
-    eyebrow: 'FURNITURE 3D · 6 MIN READ',
+    eyebrow: 'FURNITURE 3D · 3 MIN READ',
     title: 'How interactive 3D helps furniture stores sell online',
     description: 'Learn why furniture ecommerce benefits from interactive 3D products, what merchants should model first and how to launch a fast store-ready 3D pilot.',
     keywords: '3D furniture ecommerce, furniture 3D product viewer, interactive furniture model, furniture visualization online, 3D commerce furniture stores',
@@ -93,7 +93,7 @@ const articles: Record<string, Article> = {
     ]
   },
   'shared-ai-memory-chatgpt-claude-gemini': {
-    eyebrow: 'SHARED AI MEMORY · 8 MIN READ',
+    eyebrow: 'SHARED AI MEMORY · 2 MIN READ',
     title: 'Shared AI memory: one brain for ChatGPT, Claude and Gemini',
     description: 'Learn how shared AI memory gives ChatGPT, Claude and Gemini the same approved project context through one secure AI brain.',
     keywords: 'shared AI memory, AI second brain, ChatGPT Claude shared memory, MCP memory server',

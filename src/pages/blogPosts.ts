@@ -18,7 +18,7 @@ export const blogPosts: BlogPost[] = [
     title: 'AI CCTV for worker monitoring, automatic reports and WhatsApp alerts',
     description: 'Learn how a custom AI CCTV system can detect workplace events, create activity reports, alert admins on WhatsApp and connect to a secure admin portal.',
     keywords: ['AI CCTV worker monitoring', 'CCTV AI employee monitoring', 'AI camera WhatsApp alerts', 'automatic worker activity reports', 'smart CCTV admin portal'],
-    published: '2026-08-24', readTime: '8 min read',
+    published: '2026-08-24', readTime: '2 min read',
     intro: 'Ordinary CCTV records video for someone to review later. An AI-assisted CCTV system can watch for defined operational events, create searchable activity records and notify an authorized manager when something requires attention. Ashes builds custom computer-vision systems that connect cameras, reports, WhatsApp notifications and an admin portal around a business’s real workflow.',
     sections: [
       { heading: 'What an AI CCTV system can monitor', paragraphs: ['The system can be configured around specific, visible events such as whether a work zone is occupied, whether required safety equipment appears to be present, when a queue becomes unusually long or when a restricted area is entered.', 'The objective should be operational awareness—not vague surveillance. Every event needs a clear business purpose, a defined response and a confidence threshold that reduces unnecessary alerts.'] },
@@ -39,7 +39,7 @@ export const blogPosts: BlogPost[] = [
     title: 'WhatsApp AI chatbot with an admin portal for your business',
     description: 'See how a custom WhatsApp AI assistant can answer customers, qualify leads, send updates and hand conversations to staff through one admin portal.',
     keywords: ['WhatsApp AI chatbot for business', 'WhatsApp chatbot admin portal', 'AI WhatsApp customer support', 'WhatsApp automation system', 'custom WhatsApp AI'],
-    published: '2026-08-24', readTime: '7 min read',
+    published: '2026-08-24', readTime: '2 min read',
     intro: 'Customers already use WhatsApp to ask about prices, availability, bookings and order status. A custom WhatsApp AI assistant can handle repeat questions immediately while keeping staff in control through an admin portal.',
     sections: [
       { heading: 'What a business WhatsApp AI can do', paragraphs: ['The assistant can answer from approved business information, collect lead details, guide a customer through services, send booking or order updates and route complex cases to a person.', 'It should not invent prices, policies or availability. Reliable systems use controlled data sources and clear fallback rules when the answer is uncertain.'] },
@@ -58,7 +58,7 @@ export const blogPosts: BlogPost[] = [
     title: '3D website design for brands that want to be remembered',
     description: 'Discover how Ashes builds fast, cinematic 3D websites with interactive products, motion, premium graphics and conversion-focused development.',
     keywords: ['3D website design', 'interactive 3D website development', '3D website for brands', 'WebGL product website', 'premium animated website design'],
-    published: '2026-08-24', readTime: '6 min read',
+    published: '2026-08-24', readTime: '2 min read',
     intro: 'A strong 3D website is not a normal landing page with a spinning object added at the end. The product, motion, typography and interaction should work together to explain the brand and lead the visitor toward an action.',
     sections: [
       { heading: 'What makes a 3D website effective', paragraphs: ['The best experience gives the visitor something useful to inspect or understand: a product from every angle, a layered technical story, a spatial portfolio or a scroll-driven reveal.', 'Motion should support the message. If an effect delays the page or hides the call to action, it is decoration rather than design.'] },
@@ -78,7 +78,7 @@ export const blogPosts: BlogPost[] = [
     title: 'Custom AI admin portals for reports, teams and business automation',
     description: 'Learn how a custom AI admin portal can combine reports, users, WhatsApp alerts, operations and business data in one secure dashboard.',
     keywords: ['custom AI admin portal', 'business automation dashboard', 'AI reporting portal', 'admin dashboard development', 'operations management software'],
-    published: '2026-08-24', readTime: '6 min read',
+    published: '2026-08-24', readTime: '2 min read',
     intro: 'Businesses often run operations through spreadsheets, chat messages and several disconnected dashboards. A custom admin portal brings the important actions and information into one system designed around the people who actually use it.',
     sections: [
       { heading: 'What belongs in an admin portal', paragraphs: ['The portal can manage users, customers, locations, tasks, reports, alerts, approvals and system settings. The exact modules should follow the company’s workflow rather than a generic dashboard template.', 'Each role sees only what it needs. An owner may view company-wide reporting while a site manager sees a single location.'] },
@@ -97,7 +97,7 @@ export const blogPosts: BlogPost[] = [
     title: 'What does Ashes AI build? AI systems, 3D websites and connected software',
     description: 'Ashes designs custom AI systems, smart CCTV workflows, WhatsApp assistants, admin portals and premium interactive 3D websites.',
     keywords: ['Ashes AI', 'custom AI development company', 'AI automation development', '3D website agency', 'CCTV AI development'],
-    published: '2026-08-24', readTime: '5 min read',
+    published: '2026-08-24', readTime: '2 min read',
     intro: 'Ashes is a design-led software studio that turns ambitious ideas into connected, production-ready digital products. The work sits where AI engineering, full-stack development and memorable visual design meet.',
     sections: [
       { heading: 'Custom AI systems', paragraphs: ['Ashes builds AI features around a real workflow rather than adding a generic chatbot to a website. Projects can include knowledge assistants, document workflows, computer vision, reporting and operational automation.', 'The system is designed with a clear source of data, permissions, fallbacks and a human review path.'] },
@@ -117,7 +117,7 @@ export const blogPosts: BlogPost[] = [
     title: 'How to share project context between ChatGPT, Claude and Codex',
     description: 'Stop repeating your project to every AI. Learn how shared AI memory keeps ChatGPT, Claude and Codex working from the same approved context.',
     keywords: ['share context between ChatGPT and Claude', 'ChatGPT Claude Codex shared memory', 'shared AI memory', 'AI project context'],
-    published: '2026-08-24', readTime: '7 min read',
+    published: '2026-08-24', readTime: '2 min read',
     intro: 'ChatGPT, Claude and Codex are powerful, but each conversation usually starts inside its own silo. The practical solution is not to merge private chat histories. It is to keep the durable parts of your project—goals, decisions, constraints and next steps—in one shared project brain that approved AI tools can read.',
     sections: [
       { heading: 'Why your AI tools do not automatically share context', paragraphs: ['Each AI product has separate accounts, permissions and conversation storage. Claude cannot simply inspect a private ChatGPT conversation, and Codex should not receive everything you have ever discussed.', 'That separation is good for privacy, but painful for ongoing work. Copying entire transcripts creates noise. A short, structured source of truth works better.'] },
@@ -136,7 +136,7 @@ export const blogPosts: BlogPost[] = [
     title: 'How to connect Codex, Claude Code and Cursor to the same project context',
     description: 'A practical workflow for keeping Codex, Claude Code and Cursor aligned on one codebase without explaining the project again and again.',
     keywords: ['connect Codex Claude Code Cursor', 'shared context coding agents', 'AI coding agent memory', 'Codex Claude same project'],
-    published: '2026-08-24', readTime: '6 min read',
+    published: '2026-08-24', readTime: '2 min read',
     intro: 'Using multiple coding agents can speed up development, but only when they agree on the current state of the project. If every tool receives a different explanation, you get repeated work, conflicting architecture and fixes that undo earlier decisions.',
     sections: [
       { heading: 'The real problem is not the model', paragraphs: ['Most coding-agent confusion comes from missing context: what has already shipped, which files matter, which tradeoffs were accepted and what must not change.', 'A repository contains code, but it rarely explains the business goal, rejected options or the reason behind a decision. That is the gap a project brain fills.'] },
@@ -155,7 +155,7 @@ export const blogPosts: BlogPost[] = [
     title: 'What is the best AI memory tool for developers?',
     description: 'Compare the features that matter in an AI memory tool for developers: shared project context, MCP support, handoffs, permissions and useful limits.',
     keywords: ['best AI memory tool for developers', 'AI second brain developers', 'persistent AI memory', 'MCP memory tool'],
-    published: '2026-08-24', readTime: '7 min read',
+    published: '2026-08-24', readTime: '2 min read',
     intro: 'The best AI memory tool is not the one that stores the most text. It is the one that helps your next AI session begin with the right context, without exposing information that should stay private.',
     sections: [
       { heading: 'Look for project-based memory', paragraphs: ['Developer work is organized around products, repositories and clients. Memory should be separated by project so an ecommerce decision never leaks into an unrelated legal-AI build.', 'A useful project record includes goals, stack, constraints, decisions, blockers and handoffs—not only a list of old messages.'] },
@@ -174,7 +174,7 @@ export const blogPosts: BlogPost[] = [
     title: 'How to stop explaining your project to every AI assistant',
     description: 'Use a reusable AI project brief and shared memory so every new ChatGPT, Claude, Gemini or Codex session starts with the right context.',
     keywords: ['stop explaining project to AI', 'reusable AI project context', 'AI project brief', 'persistent context ChatGPT Claude'],
-    published: '2026-08-24', readTime: '5 min read',
+    published: '2026-08-24', readTime: '2 min read',
     intro: 'If your first ten messages are always a history lesson, you are using expensive attention on setup instead of progress. A reusable project brief fixes the immediate problem; shared project memory makes the fix durable.',
     sections: [
       { heading: 'Write context for the next action', paragraphs: ['Long transcripts feel complete but often hide the information that matters. Start with the objective, current state, hard constraints, recent decisions and one clear next action.', 'Include links or identifiers for evidence such as a repository, deployment or issue. Do not ask an AI to trust an old summary when it can verify the current code.'] },
@@ -193,7 +193,7 @@ export const blogPosts: BlogPost[] = [
     title: 'MCP shared memory explained: how AI assistants use one project brain',
     description: 'Understand how an MCP memory server lets approved AI assistants read and update shared project context without sharing private provider passwords.',
     keywords: ['MCP shared memory', 'MCP memory server', 'Model Context Protocol memory', 'AI shared project brain'],
-    published: '2026-08-24', readTime: '8 min read',
+    published: '2026-08-24', readTime: '2 min read',
     intro: 'The Model Context Protocol, or MCP, gives compatible AI applications a standard way to discover and call tools. When those tools connect to a project-memory service, several approved assistants can work from the same source of truth.',
     sections: [
       { heading: 'MCP is the connection, not the memory', paragraphs: ['An MCP server describes tools an AI client can use. A memory server might offer actions such as list projects, read context, search memories, save a decision and create a handoff.', 'The database and permission system hold the memory. MCP provides a consistent interface for compatible clients.'] },

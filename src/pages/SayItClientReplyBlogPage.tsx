@@ -16,7 +16,7 @@ export default function SayItClientReplyBlogPage() {
   return <><Nav/><main className="blog-post"><article>
     <Link className="blog-back" to="/blog"><ArrowLeft/> ALL ARTICLES</Link>
     <header>
-      <div className="blog-post-meta"><span>SAYIT</span><time dateTime="2026-08-26">26 AUGUST 2026</time><span>6 min read</span></div>
+      <div className="blog-post-meta"><span>SAYIT</span><time dateTime="2026-08-26">26 AUGUST 2026</time><span>2 min read</span></div>
       <h1>What should I say to a client?</h1>
       <p>When a client sends an awkward, vague or difficult message, the hardest part is often deciding how to reply without sounding rude, desperate or unprofessional. Here are practical reply patterns you can adapt, plus a faster option when the situation is too specific for a template.</p>
     </header>

@@ -14,6 +14,7 @@ export function useSEO({ title, description, path }: SEOProps) {
     setMeta('description', description); setMeta('og:title', title, 'property'); setMeta('og:description', description, 'property');
     setMeta('og:url', `${SITE}${path}`, 'property'); setMeta('og:type', 'website', 'property'); setMeta('twitter:card', 'summary_large_image');
     setMeta('twitter:title', title); setMeta('twitter:description', description);
+    setMeta('robots', 'index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1');
     let canonical = document.querySelector<HTMLLinkElement>('link[rel="canonical"]');
     if (!canonical) { canonical = document.createElement('link'); canonical.setAttribute('rel', 'canonical'); document.head.appendChild(canonical); }
     canonical.setAttribute('href', `${SITE}${path}`);

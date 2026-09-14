@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom';
+import { useSEO } from '../useSEO';
 
 export default function PrivacyPage() {
+  useSEO({ title: 'Privacy Policy | Ashes Stack', description: 'How Ashes Stack and Ashes Brain collect, use, protect and share account, project-memory and website data.', path: '/privacy' });
   return (
     <main style={{ minHeight: '100vh', background: '#080808', color: '#f3f3ef', padding: '72px 24px', fontFamily: 'Inter,system-ui,sans-serif' }}>
       <article style={{ maxWidth: 780, margin: '0 auto' }}>
@@ -28,7 +30,7 @@ export default function PrivacyPage() {
         <p>Authentication cookies are HTTP-only and secure in production. Passwords are stored as hashes rather than plaintext. We retain account and Brain data while the service needs it to provide the product, subject to deletion and retention features as they are added. No internet service can guarantee absolute security, so avoid placing secrets, passwords or highly sensitive personal information in project memory.</p>
 
         <h2>Your choices</h2>
-        <p>You control what is saved to your Brain and when a project is shared. You can remove individual memories and delete projects from Work OS. For account or privacy requests, contact <a href="mailto:hello@ashes.studio" style={{ color: '#fff' }}>hello@ashes.studio</a>.</p>
+        <p>You control what is saved to your Brain and when a project is shared. You can remove individual memories and delete projects from Work OS. For account or privacy requests, contact <a href="mailto:contact@ashesstack.cloud" style={{ color: '#fff' }}>contact@ashesstack.cloud</a>.</p>
 
         <h2>Changes</h2>
         <p>We may update this policy as Ashes Brain gains new integrations or features. The updated date at the top of this page will change when the policy changes materially.</p>

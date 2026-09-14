@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom';
+import { useSEO } from '../useSEO';
 
 export default function TermsPage() {
+  useSEO({ title: 'Terms of Use | Ashes Stack', description: 'Terms governing Ashes Brain accounts, project memory, AI connections, public sharing, acceptable use and service availability.', path: '/terms' });
   return (
     <main style={{ minHeight: '100vh', background: '#080808', color: '#f3f3ef', padding: '72px 24px', fontFamily: 'Inter,system-ui,sans-serif' }}>
       <article style={{ maxWidth: 780, margin: '0 auto' }}>
@@ -31,7 +33,7 @@ export default function TermsPage() {
         <p>The service is provided on an as-available basis. We work to keep it reliable, but we do not promise uninterrupted availability or that every third-party connector will remain compatible at all times.</p>
 
         <h2>Contact</h2>
-        <p>Questions about these terms can be sent to <a href="mailto:hello@ashes.studio" style={{ color: '#fff' }}>hello@ashes.studio</a>.</p>
+        <p>Questions about these terms can be sent to <a href="mailto:contact@ashesstack.cloud" style={{ color: '#fff' }}>contact@ashesstack.cloud</a>.</p>
 
         <div style={{ borderTop: '1px solid #222', marginTop: 48, paddingTop: 22, display: 'flex', gap: 18, flexWrap: 'wrap' }}>
           <Link to="/privacy" style={{ color: '#fff' }}>Privacy</Link><Link to="/workspace" style={{ color: '#fff' }}>Ashes Brain</Link><Link to="/" style={{ color: '#fff' }}>Home</Link>

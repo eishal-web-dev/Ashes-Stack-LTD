@@ -5,7 +5,7 @@ export default function Footer() {
   return (
     <footer>
       <div className="footer-brand"><span>ASHES</span><p>Software that refuses<br/>to be forgettable.</p></div>
-      <div className="footer-contact"><span>START SOMETHING</span><a href="mailto:hello@ashes.studio">hello@ashes.studio ↗</a></div>
+      <div className="footer-contact"><span>START SOMETHING</span><a href="mailto:contact@ashesstack.cloud">contact@ashesstack.cloud ↗</a></div>
       <nav>
         <a href="https://www.instagram.com/ashes.stack?igsh=djliMm9nMTd0NHVi" target="_blank" rel="noreferrer">INSTAGRAM</a>
         <a href="https://www.linkedin.com/in/eishal-9679a42b9?utm_source=share_via&utm_content=profile&utm_medium=member_android" target="_blank" rel="noreferrer">LINKEDIN</a>

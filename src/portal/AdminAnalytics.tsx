@@ -390,7 +390,7 @@ export default function AdminAnalytics() {
       <h2 className="portal-h2">Recent product activity</h2>
       <div style={{ display: 'grid', gap: 8, marginTop: 14 }}>
         {data.recentEvents.length === 0 ? <p className="portal-sub">No tracked product events yet.</p> : data.recentEvents.map((event, index) => <div key={`${event.createdAt}-${index}`} style={{ display: 'grid', gridTemplateColumns: 'minmax(125px,.8fr) minmax(140px,1.5fr) auto', gap: 12, alignItems: 'center', borderBottom: '1px solid #1d1d1d', padding: '10px 0', fontSize: '.68rem' }}>
-          <b>{event.event.replaceAll('_', ' ')}</b>
+          <b>{event.event.split('_').join(' ')}</b>
           <span style={{ color: '#888', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{event.path || event.source || String(event.meta?.tool || '') || 'Ashes'}</span>
           <span style={{ color: '#666', whiteSpace: 'nowrap' }}>{new Date(event.createdAt).toLocaleString()}</span>
         </div>)}

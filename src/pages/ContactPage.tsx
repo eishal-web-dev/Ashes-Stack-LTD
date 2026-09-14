@@ -4,7 +4,7 @@ import { useSEO } from '../useSEO';
 
 export default function ContactPage() {
   useSEO({
-    title: 'Contact Ashes Stack — Software House in London, United Kingdom',
+    title: 'Contact Ashes Stack — Web, AI & 3D Software Studio',
     description: 'Get in touch with Ashes Stack. Email, WhatsApp, Instagram, LinkedIn and TikTok — reach Eishal and the team to start a web design, AI, or 3D website project.',
     path: '/contact',
   });
@@ -22,9 +22,9 @@ export default function ContactPage() {
 
         <div className="page-body">
           <div className="contact-methods">
-            <a className="contact-method" href="mailto:hello@ashes.studio">
+            <a className="contact-method" href="mailto:contact@ashesstack.cloud">
               <b>EMAIL</b>
-              <span>hello@ashes.studio</span>
+              <span>contact@ashesstack.cloud</span>
               <small>Best for project briefs</small>
             </a>
             <a className="contact-method" href="https://wa.me/923305315817?text=Hi%2C%20I%20found%20you%20through%20Ashes." target="_blank" rel="noreferrer">

@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { useSEO } from '../useSEO';
 
 const tools = [
   ['list_projects', 'Lists the authenticated user’s Ashes Brain projects.'],
@@ -17,6 +18,11 @@ const connectionGuides = [
 ];
 
 export default function BrainDocsPage() {
+  useSEO({
+    title: 'Ashes Brain Documentation — Connect ChatGPT, Claude & Codex',
+    description: 'Connect supported AI clients to Ashes Brain through MCP, then share approved project goals, decisions, memories and handoffs securely.',
+    path: '/brain/docs',
+  });
   return (
     <main style={{ minHeight: '100vh', background: '#080808', color: '#f3f3ef', padding: '72px 24px', fontFamily: 'Inter,system-ui,sans-serif' }}>
       <article style={{ maxWidth: 960, margin: '0 auto' }}>

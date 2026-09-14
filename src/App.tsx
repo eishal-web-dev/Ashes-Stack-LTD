@@ -2,6 +2,7 @@ import { ArrowDownRight, ArrowUpRight, Box, Braces, BrainCircuit, Camera, Scale,
 import { useEffect, useRef, useState } from 'react';
 import Nav from './components/Nav';
 import Footer from './components/Footer';
+import { useSEO } from './useSEO';
 
 const powers=[
   {number:'01',title:'AI\nSYSTEMS',copy:'Intelligent systems that learn, reason and adapt.',icon:BrainCircuit,accent:'#55d9ff',mode:'ai'},
@@ -21,7 +22,7 @@ function SignalNetwork(){
   const canvasRef=useRef<HTMLCanvasElement>(null);
   useEffect(()=>{
     const canvas=canvasRef.current;if(!canvas)return;
-    const context=canvas.getContext('2d',{alpha:true});if(!context)return;
+    const context=canvas.getContext('2d',{alpha:true})!;if(!context)return;
     const colors=['#66ebf2','#ff62c7','#d8ff62','#ff875c','#ad77ff'];
     let width=0,height=0,frame=0,last=0,pageVisible=!document.hidden,heroVisible=true,left=0,top=0;
     const pointer={x:-9999,y:-9999};
@@ -62,12 +63,18 @@ function SignalNetwork(){
   return <canvas ref={canvasRef} className="signal-network" aria-hidden="true"/>
 }
 
-export default function App(){const [power,setPower]=useState(0);return <>
+export default function App(){
+  useSEO({
+    title: 'Ashes Stack | AI, Full-Stack & 3D Software Studio',
+    description: 'Ashes Stack is a design-led software studio founded by Eishal in Islamabad, building web applications, AI systems and immersive 3D experiences for clients worldwide.',
+    path: '/',
+  });
+  const [power,setPower]=useState(0);return <>
   <div className="grain"/><SignalNetwork/><Nav/>
   <main>
     <section id="top" className="hero"><div className="radar radar-a"/><div className="radar radar-b"/><div className="energy-aura" aria-hidden="true"/><Phoenix className="hero-phoenix" variant="vr" priority/><div className="hero-energy"/>
       <div className="hero-copy hero-left"><p className="hero-index">01 / DESIGN-LED SOFTWARE</p><h1>WE<br/>BUILD</h1><p className="hero-intro">Digital products engineered<br/>to move people and business.</p><a href="#capabilities">EXPLORE ASHES <ArrowDownRight/></a></div>
-      <div className="hero-copy hero-right"><p className="hero-index">LONDON, UNITED KINGDOM</p><h1>WHAT<br/>RISES<br/>NEXT.</h1></div>
+      <div className="hero-copy hero-right"><p className="hero-index">ISLAMABAD, PAKISTAN · WORLDWIDE</p><h1>WHAT<br/>RISES<br/>NEXT.</h1></div>
       <div className="orbit-label orbit-ai"><i/>AI</div><div className="orbit-label orbit-web"><i/>WEB</div><div className="orbit-label orbit-apps"><i/>APPS</div><div className="orbit-label orbit-3d"><i/>3D</div>
       <a className="scroll-cue" href="#capabilities">SCROLL TO EXPLORE <ArrowDownRight/></a>
     </section>
@@ -88,8 +95,8 @@ export default function App(){const [power,setPower]=useState(0);return <>
 
     <section id="process" className="process"><Reveal><p className="kicker">OUR PROCESS</p><h2>FROM FIRST PRINCIPLE<br/>TO FINAL PIXEL.</h2></Reveal><div className="process-world"><div className="process-core"/><div className="process-grid">{['VIBE CHECK','MAKE IT\nMAKE SENSE','BUILD\nTHE THING','SHIP &\nEVOLVE'].map((x,i)=><div key={x}><span>0{i+1}</span><b>{x.split('\n').map(v=><em key={v}>{v}</em>)}</b><small>{['Discover','Design','Engineer','Improve'][i]}</small></div>)}</div></div></section>
 
-    <section id="studio" className="about"><Reveal><p className="kicker">ABOUT ASHES</p><h2>ASHES IS A DESIGN-LED<br/>SOFTWARE HOUSE FOR<br/>BRANDS THAT REFUSE<br/>TO BE BORING.</h2><p className="about-lede">Ashes is a design-led software house based in London, United Kingdom, building websites, web applications, and AI-powered products for startups and growing brands. We specialize in custom web design, full-stack development, product engineering, and AI integration — turning ambitious ideas into fast, polished, production-ready software.</p><div className="about-tags"><span>Web Design</span><span>Full-Stack Development</span><span>Product Engineering</span><span>AI Integration</span><span>London, United Kingdom</span></div></Reveal></section>
+    <section id="studio" className="about"><Reveal><p className="kicker">ABOUT ASHES</p><h2>ASHES IS A DESIGN-LED<br/>SOFTWARE HOUSE FOR<br/>BRANDS THAT REFUSE<br/>TO BE BORING.</h2><p className="about-lede">Ashes is a design-led software studio founded in Islamabad, Pakistan, building websites, web applications and AI-powered products for clients worldwide. We specialize in custom web design, full-stack development, product engineering and AI integration—turning ambitious ideas into fast, polished, production-ready software.</p><div className="about-tags"><span>Web Design</span><span>Full-Stack Development</span><span>Product Engineering</span><span>AI Integration</span><span>Islamabad · Worldwide</span></div></Reveal></section>
 
-    <section className="cta"><div className="cta-energy" aria-hidden="true"/><div><p className="kicker">START SOMETHING UNIGNORABLE.</p><h2>GOT A WILD IDEA?<br/>GOOD. WE LIKE THOSE.</h2><a href="mailto:hello@ashes.studio">LET'S BUILD IT <ArrowUpRight/></a></div></section>
+    <section className="cta"><div className="cta-energy" aria-hidden="true"/><div><p className="kicker">START SOMETHING UNIGNORABLE.</p><h2>GOT A WILD IDEA?<br/>GOOD. WE LIKE THOSE.</h2><a href="mailto:contact@ashesstack.cloud">LET'S BUILD IT <ArrowUpRight/></a></div></section>
   </main><Footer/>
   </>}

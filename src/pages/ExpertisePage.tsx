@@ -13,7 +13,7 @@ const powers = [
 export default function ExpertisePage() {
   useSEO({
     title: 'Expertise — AI, Web, Mobile & 3D Development | Ashes Stack',
-    description: 'Ashes Stack specializes in AI systems, full-stack web development, mobile apps, and immersive 3D websites. See what our software house builds for clients in Islamabad and beyond.',
+    description: 'Ashes Stack specializes in AI systems, full-stack web development, mobile apps and immersive 3D websites for clients in Pakistan and worldwide.',
     path: '/expertise',
   });
 
@@ -31,7 +31,7 @@ export default function ExpertisePage() {
         <div className="page-body">
           <div className="page-card-grid">
             {powers.map((p) => (
-              <div className="page-card" key={p.number} style={{ ['--accent' as any]: p.accent }}>
+              <div className="page-card" key={p.number} style={{ '--accent': p.accent } as React.CSSProperties}>
                 <div className="page-card-icon"><p.icon size={20} /></div>
                 <div className="page-card-num">{p.number} / {p.title.toUpperCase()}</div>
                 <h3>{p.title}</h3>

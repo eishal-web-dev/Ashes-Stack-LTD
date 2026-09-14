@@ -37,7 +37,7 @@ export default function SayItBlogPage(){
   return <><Nav/><main className="blog-post"><article>
     <Link className="blog-back" to="/blog"><ArrowLeft/> ALL ARTICLES</Link>
     <header>
-      <div className="blog-post-meta"><span>CLIENT REPLIES</span><time dateTime="2026-08-25">25 AUGUST 2026</time><span>8 min read</span></div>
+      <div className="blog-post-meta"><span>CLIENT REPLIES</span><time dateTime="2026-08-25">25 AUGUST 2026</time><span>3 min read</span></div>
       <h1>What should I say to a client? Replies for the messages freelancers hate answering</h1>
       <p>A client says your price is too high. They ask for another revision. They disappear for a week and suddenly want the project tomorrow. The difficult part is usually not knowing what you want to say — it is finding wording that is clear, calm and professional. This guide gives you practical replies, plus a faster option when the message is too specific for a template.</p>
     </header>

@@ -434,7 +434,7 @@ export function CTASection() {
         </p>
         <div className="flex flex-col sm:flex-row gap-3 justify-center pointer-events-auto">
           <a
-            href="mailto:hello@ashes.studio"
+            href="mailto:contact@ashesstack.cloud"
             className="px-8 py-3.5 bg-ash-50 text-ash-950 font-mono text-sm tracking-ultra-wide rounded-full hover:bg-coral-500 hover:text-ash-50 transition-colors"
           >
             START A PROJECT

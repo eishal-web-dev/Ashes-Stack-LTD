@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useSEO } from '../useSEO';
 
 type BillingStatus = {
   id: string;
@@ -18,6 +19,11 @@ const card: React.CSSProperties = {
 };
 
 export default function PricingPage() {
+  useSEO({
+    title: 'Ashes Brain Pricing — Free and Pro Shared AI Memory',
+    description: 'Compare Ashes Brain Free and Pro plans for shared project context, AI handoffs and MCP connections. Start free with no card required.',
+    path: '/pricing',
+  });
   const [account, setAccount] = useState<BillingStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);

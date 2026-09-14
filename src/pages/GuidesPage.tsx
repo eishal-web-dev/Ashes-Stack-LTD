@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import AdSenseBootstrap from '../ads/AdSenseBootstrap';
+import { useSEO } from '../useSEO';
 
 const guides = [
   { slug: 'convert-product-image-to-3d-model', label: 'IMAGE → 3D', title: 'How to convert a product image into a 3D model for ecommerce', desc: 'From source photos and reconstruction to a lightweight GLB and interactive store viewer.' },
@@ -13,6 +14,11 @@ const guides = [
 ];
 
 export default function GuidesPage() {
+  useSEO({
+    title: 'Ashes Guides — Product 3D, Ecommerce & Shared AI Memory',
+    description: 'Practical guides from Ashes Stack about image-to-3D, ecommerce product viewers, Shopify, furniture 3D, shared AI memory and MCP.',
+    path: '/guides',
+  });
   return (
     <main style={{ minHeight: '100vh', background: '#080808', color: '#f4f3ef', fontFamily: 'Inter,system-ui,sans-serif' }}>
       <AdSenseBootstrap />

@@ -11,7 +11,9 @@ export default function Login() {
 
   function safeNext() {
     const next = searchParams.get('next') || '';
-    return next.startsWith('/oauth/authorize?') ? next : '';
+    if (next.startsWith('/oauth/authorize?')) return next;
+    if (next.startsWith('/api/account-google?sso=issue&return=')) return next;
+    return '';
   }
 
   async function onSubmit(e: FormEvent) {

@@ -19,7 +19,7 @@ const client = process.env.GOOGLE_CLIENT_ID ? new OAuth2Client(process.env.GOOGL
 const SAYIT_CALLBACK = "https://aireply-dusky.vercel.app/auth/ashes/callback";
 const CONNECT_CALLBACK = "https://ashes-connect-app-ash-d0707d97.vercel.app/auth/ashes/callback";
 const ROBOLAB_CALLBACK = "https://robotsimulation.vercel.app/auth/ashes/callback";
-const ASSETS_CALLBACK = "https://ashes-ai.vercel.app/auth/ashes/callback";
+const ASSETS_CALLBACK = "https://ashes-assets.vercel.app/auth/ashes/callback";
 const ROBOLAB_ORIGIN = "https://robotsimulation.vercel.app";
 const SSO_ROOT_SECRET = process.env.WORKOS_JWT_SECRET || `${process.env.JWT_SECRET || "dev-secret-change-me"}:ashes-work-os`;
 

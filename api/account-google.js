@@ -14,6 +14,7 @@ import {
   verifyRoboLabSession,
 } from "../lib/workspaceAuth.js";
 import { recordAnalytics } from "../lib/analytics.js";
+import { getUserFromReq } from "../lib/auth.js";
 
 const client = process.env.GOOGLE_CLIENT_ID ? new OAuth2Client(process.env.GOOGLE_CLIENT_ID) : null;
 const SAYIT_CALLBACK = "https://aireply-dusky.vercel.app/auth/ashes/callback";
@@ -144,7 +145,7 @@ async function handleSsoIssue(req, res) {
   const returnUrl = allowedReturnUrl(String(req.query?.return || ""));
   if (!returnUrl) return res.status(400).json({ error: "Invalid return URL" });
 
-  const session = getWorkOSUserFromReq(req);
+  const session = getWorkOSUserFromReq(req) || getUserFromReq(req);
   if (!session) {
     const next = `/api/account-google?sso=issue&return=${encodeURIComponent(returnUrl)}`;
     return res.redirect(302, `/login?next=${encodeURIComponent(next)}`);

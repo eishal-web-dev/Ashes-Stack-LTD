@@ -130,7 +130,7 @@ export default function WorkspaceLogin() {
 
           <div style={{ marginTop: 22, paddingTop: 18, borderTop: '1px solid rgba(255,255,255,.1)' }}>
             <p style={{ fontSize: '.68rem', color: '#8c8982', lineHeight: 1.6 }}>Working with Ashes as a client, team member or administrator?</p>
-            <Link className="portal-link" to="/portal/login">Open Client / Team / Admin Portal →</Link>
+            <Link className="portal-link" to={`/portal/login${safeNext() ? `?next=${encodeURIComponent(safeNext())}` : ""}`}>Open Client / Team / Admin Portal →</Link>
           </div>
           <p style={{ fontSize: '.68rem', marginTop: 12 }}><Link className="portal-link" to="/">← Back to Ashes</Link></p>
         </div>

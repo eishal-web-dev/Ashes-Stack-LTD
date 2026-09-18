@@ -9,6 +9,8 @@ export type BlogPost = {
   intro: string;
   sections: { heading: string; paragraphs: string[]; steps?: string[] }[];
   faq: { question: string; answer: string }[];
+  showcase?: { image: string; alt: string; caption: string; href: string }[];
+  cta?: { label: string; href: string };
 };
 
 export const blogPosts: BlogPost[] = [
@@ -205,7 +207,61 @@ export const blogPosts: BlogPost[] = [
       { question: 'Does MCP let one AI read every other AI chat?', answer: 'No. MCP exposes only the tools and data a server intentionally provides and the user authorizes.' },
       { question: 'Can an MCP memory server write data?', answer: 'Yes, if it exposes a write tool and the user is authorized. Good systems keep read and write capabilities explicit and scoped.' }
     ]
-  }
+  },
+  {
+    slug: 'free-3d-assets-for-roblox-unity-unreal',
+    category: 'Free 3D assets',
+    title: 'Get free game-ready 3D assets from Ashes Assets',
+    description: 'Download free GLB models for Roblox, Unity, Unreal Engine and the web from the Ashes Assets marketplace, or turn one image into a new 3D asset.',
+    keywords: ['free 3D assets', 'free GLB models', 'Roblox 3D assets', 'Unity assets', 'Unreal Engine models', 'Ashes Assets marketplace'],
+    published: '2026-09-18',
+    readTime: '3 min read',
+    intro: 'Ashes Stack now gives creators a faster way to find and download free 3D assets. Ashes Assets is our marketplace for game-ready GLB models built for Roblox, Unity, Unreal Engine and web experiences. Browse the marketplace, open an asset, check its licence and supported platforms, then download it for your next project.',
+    showcase: [
+      {
+        image: 'https://image.thum.io/get/width/1200/crop/720/noanimate/https://ashes-assets.vercel.app/marketplace',
+        alt: 'Ashes Assets marketplace showing downloadable 3D models',
+        caption: 'Browse free and premium GLB models in the Ashes Assets marketplace.',
+        href: 'https://ashes-assets.vercel.app/marketplace'
+      },
+      {
+        image: 'https://image.thum.io/get/width/1200/crop/720/noanimate/https://ashes-assets.vercel.app/generate',
+        alt: 'Ashes Assets image-to-3D generator',
+        caption: 'Upload one image and generate a downloadable 3D GLB.',
+        href: 'https://ashes-assets.vercel.app/generate'
+      }
+    ],
+    cta: { label: 'EXPLORE FREE 3D ASSETS', href: 'https://ashes-assets.vercel.app/marketplace' },
+    sections: [
+      {
+        heading: 'Free 3D assets for games and interactive projects',
+        paragraphs: ['The Ashes Assets marketplace includes models that creators can offer for free. Free listings clearly show their price, licence and supported platforms before you download.', 'You can use the marketplace to discover helmets, props, vehicles, buildings, characters and other assets for prototypes, games, virtual worlds, product experiences and 3D websites. Always follow the licence shown on the individual listing.']
+      },
+      {
+        heading: 'Built for Roblox, Unity, Unreal Engine and the web',
+        paragraphs: ['GLB is a compact 3D format that can carry mesh, material and texture data in one file. Ashes Assets listings show which platforms the creator designed the model for, including Roblox, Unity, Unreal Engine, web projects and general GLB workflows.', 'Before using any model, check scale, polygon count, textures, rigging and animation requirements inside your chosen editor or engine.']
+      },
+      {
+        heading: 'Turn one image into a downloadable 3D model',
+        paragraphs: ['If the model you need is not already in the marketplace, open Image to 3D and upload a clear product or object image. Ashes Assets processes the image into a GLB that you can preview and download.', 'A centered object, simple background and clear lighting usually give the generator a better starting point. Review the final geometry and materials before using the model in production.']
+      },
+      {
+        heading: 'How to get a free asset',
+        paragraphs: ['Visit Ashes Assets, sign in through Ashes Stack, open the marketplace and select an asset marked Free. Review its licence and supported platforms, then use the download option on the listing.'],
+        steps: ['Open the Ashes Assets marketplace.', 'Choose a listing marked Free.', 'Read the asset licence and platform information.', 'Sign in with your Ashes Stack account if requested.', 'Download the GLB and import it into your project.']
+      },
+      {
+        heading: 'Creators can publish assets too',
+        paragraphs: ['Ashes Assets is also being built for creators who want to publish original GLB models. Approved sellers can upload a preview image, GLB file, description, category, licence, platforms and price.', 'Only upload work you created or have permission to distribute. Buyers receive the usage rights stated in the listing licence; copyright ownership does not transfer unless the listing explicitly says so.']
+      }
+    ],
+    faq: [
+      { question: 'Are all Ashes Assets models free?', answer: 'No. The marketplace can contain both free and paid assets. A free listing is clearly marked before download.' },
+      { question: 'What file format do I receive?', answer: 'Listings focus on downloadable GLB files. Check each listing for any additional format or platform information.' },
+      { question: 'Can I use a free model in a commercial game?', answer: 'Only when the licence on that specific listing allows commercial use. Always review the licence before publishing your project.' },
+      { question: 'Where can I browse the assets?', answer: 'Visit https://ashes-assets.vercel.app/marketplace to browse the current marketplace.' }
+    ]
+  },
 ];
 
 export const getBlogPost = (slug: string) => blogPosts.find(post => post.slug === slug);

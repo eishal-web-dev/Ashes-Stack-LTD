@@ -160,6 +160,7 @@ async function handleSsoIssue(req, res) {
     userId: session.id,
     name: session.name || "",
     email: session.email,
+    role: session.role || "user",
     expiresAt: new Date(Date.now() + 5 * 60 * 1000),
   });
 
@@ -184,6 +185,7 @@ async function handleSsoConsume(req, res) {
     id: record.userId.toString(),
     name: record.name,
     email: record.email,
+    role: record.role || "user",
   };
 
   if (code.startsWith("robolab.")) {

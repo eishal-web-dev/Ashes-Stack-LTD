@@ -13,7 +13,7 @@ export default function BlogPostPage() {
 
   useEffect(() => {
     if (!post) return;
-    document.title = `${post.title} | Ashes Brain`;
+    document.title = `${post.title} | Ashes Stack`;
     const setMeta = (selector: string, attr: 'name'|'property', key: string, value: string) => {
       let el = document.head.querySelector<HTMLMetaElement>(selector);
       if (!el) { el = document.createElement('meta'); el.setAttribute(attr, key); document.head.appendChild(el); }
@@ -36,17 +36,19 @@ export default function BlogPostPage() {
   }, [post]);
 
   if (!post) return <Navigate to="/blog" replace/>;
+  const published = new Intl.DateTimeFormat('en-GB',{day:'2-digit',month:'long',year:'numeric',timeZone:'UTC'}).format(new Date(`${post.published}T00:00:00Z`));
 
   return <><Nav/><main className="blog-post">
     <article>
       <Link className="blog-back" to="/blog"><ArrowLeft/> ALL ARTICLES</Link>
-      <header><div className="blog-post-meta"><span>{post.category}</span><time dateTime={post.published}>24 AUGUST 2026</time><span>{post.readTime}</span></div><h1>{post.title}</h1><p>{post.intro}</p></header>
-      <div className="blog-post-layout"><aside><span>IN THIS GUIDE</span>{post.sections.map((section,index)=><a key={section.heading} href={`#section-${index+1}`}>{String(index+1).padStart(2,'0')} {section.heading}</a>)}<Link to="/workspace">TRY ASHES BRAIN <ArrowUpRight/></Link></aside>
+      <header><div className="blog-post-meta"><span>{post.category}</span><time dateTime={post.published}>{published}</time><span>{post.readTime}</span></div><h1>{post.title}</h1><p>{post.intro}</p>{post.cta&&<a className="blog-primary-cta" href={post.cta.href} target="_blank" rel="noreferrer">{post.cta.label} <ArrowUpRight/></a>}</header>
+      {post.showcase&&<section className="blog-showcase" aria-label="Ashes Assets marketplace previews">{post.showcase.map(item=><a key={item.href} href={item.href} target="_blank" rel="noreferrer"><img src={item.image} alt={item.alt} loading="lazy"/><span>{item.caption}</span><b>OPEN ASHES ASSETS <ArrowUpRight/></b></a>)}</section>}
+      <div className="blog-post-layout"><aside><span>IN THIS GUIDE</span>{post.sections.map((section,index)=><a key={section.heading} href={`#section-${index+1}`}>{String(index+1).padStart(2,'0')} {section.heading}</a>)}{post.cta?<a href={post.cta.href} target="_blank" rel="noreferrer">{post.cta.label} <ArrowUpRight/></a>:<Link to="/workspace">TRY ASHES BRAIN <ArrowUpRight/></Link>}</aside>
         <div className="blog-content">{post.sections.map((section,index)=><section id={`section-${index+1}`} key={section.heading}><span>{String(index+1).padStart(2,'0')}</span><h2>{section.heading}</h2>{section.paragraphs.map(paragraph=><p key={paragraph}>{paragraph}</p>)}{section.steps&&<ol>{section.steps.map(step=><li key={step}>{step}</li>)}</ol>}</section>)}
           <section className="blog-faq"><span>FAQ</span><h2>Frequently asked questions</h2>{post.faq.map(item=><details key={item.question}><summary>{item.question}</summary><p>{item.answer}</p></details>)}</section>
         </div>
       </div>
     </article>
-    <section className="blog-post-cta"><p>STOP STARTING FROM ZERO.</p><h2>Save the project once.<br/>Continue from any AI.</h2><div><Link to="/workspace">START FREE</Link><Link to="/brain/docs">CONNECT YOUR AI</Link></div></section>
+    {post.cta?<section className="blog-post-cta"><p>FREE 3D ASSETS FOR YOUR NEXT BUILD.</p><h2>Browse. Download.<br/>Start creating.</h2><div><a href={post.cta.href} target="_blank" rel="noreferrer">EXPLORE ASHES ASSETS</a><a href="https://ashes-assets.vercel.app/generate" target="_blank" rel="noreferrer">GENERATE A 3D MODEL</a></div></section>:<section className="blog-post-cta"><p>STOP STARTING FROM ZERO.</p><h2>Save the project once.<br/>Continue from any AI.</h2><div><Link to="/workspace">START FREE</Link><Link to="/brain/docs">CONNECT YOUR AI</Link></div></section>}
   </main><Footer/></>;
 }

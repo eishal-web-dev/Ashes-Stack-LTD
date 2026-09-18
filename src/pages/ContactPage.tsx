@@ -5,7 +5,7 @@ import { useSEO } from '../useSEO';
 export default function ContactPage() {
   useSEO({
     title: 'Contact Ashes Stack — Web, AI & 3D Software Studio',
-    description: 'Get in touch with Ashes Stack. Email, WhatsApp, Instagram, LinkedIn and TikTok — reach Eishal and the team to start a web design, AI, or 3D website project.',
+    description: 'Get in touch with Ashes Stack. Email, WhatsApp, Instagram, LinkedIn and TikTok — reach the Ashes Stack team to start a web design, AI, or 3D website project.',
     path: '/contact',
   });
 
@@ -27,10 +27,10 @@ export default function ContactPage() {
               <span>contact@ashesstack.cloud</span>
               <small>Best for project briefs</small>
             </a>
-            <a className="contact-method" href="https://wa.me/923305315817?text=Hi%2C%20I%20found%20you%20through%20Ashes." target="_blank" rel="noreferrer">
+            <a className="contact-method" href="https://wa.me/447411512262?text=Hi%2C%20I%20found%20you%20through%20Ashes%20Stack." target="_blank" rel="noreferrer">
               <b>WHATSAPP</b>
-              <span>0330 5315817</span>
-              <small>Fastest response</small>
+              <span>+44 7411 512262</span>
+              <small>Company WhatsApp · fastest response</small>
             </a>
             <a className="contact-method" href="https://www.instagram.com/ashes.stack?igsh=djliMm9nMTd0NHVi" target="_blank" rel="noreferrer">
               <b>INSTAGRAM</b>

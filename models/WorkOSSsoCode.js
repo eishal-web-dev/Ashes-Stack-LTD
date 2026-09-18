@@ -6,6 +6,7 @@ const WorkOSSsoCodeSchema = new mongoose.Schema(
     userId: { type: mongoose.Schema.Types.ObjectId, required: true, index: true },
     name: { type: String, default: "" },
     email: { type: String, required: true, lowercase: true, trim: true },
+    role: { type: String, enum: ["admin", "team", "client", "user"], default: "user" },
     expiresAt: { type: Date, required: true, index: { expires: 0 } },
   },
   { timestamps: true }
